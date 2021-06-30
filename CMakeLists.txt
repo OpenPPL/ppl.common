@@ -1,0 +1,41 @@
+cmake_minimum_required(VERSION 3.11)
+project(ppl.common)
+
+include(cmake/deps.cmake)
+
+# --------------------------------------------------------------------------- #
+
+option(PPLCOMMON_BUILD_TESTS "build tests" ON)
+option(PPLCOMMON_BUILD_BENCHMARK "build benchmark" ON)
+
+# --------------------------------------------------------------------------- #
+
+file(GLOB PPLCOMMON_SRC
+    src/ppl/common/*.cc)
+
+set(PPLCOMMON_INCLUDES)
+list(APPEND PPLCOMMON_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/src)
+
+set(PPLCOMMON_LIBS)
+set(PPLCOMMON_DEFINITIONS)
+
+include(cmake/x86.cmake)
+
+list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_unittest\\.cc$")
+list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_benchmark\\.cc$")
+
+# --------------------------------------------------------------------------- #
+
+add_library(pplcommon_static STATIC ${PPLCOMMON_SRC})
+target_include_directories(pplcommon_static PUBLIC ${PPLCOMMON_INCLUDES})
+target_compile_definitions(pplcommon_static PUBLIC ${PPLCOMMON_DEFINITIONS})
+
+include(cmake/install.cmake)
+
+if(PPLCOMMON_BUILD_TESTS)
+    include(cmake/unittest.cmake)
+endif()
+
+if(PPLCOMMON_BUILD_BENCHMARK)
+    include(cmake/benchmark.cmake)
+endif()
