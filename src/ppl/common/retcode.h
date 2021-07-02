@@ -16,6 +16,8 @@ enum {
     RC_EXISTS,
     RC_NOT_FOUND,
     RC_PERMISSION_DENIED,
+    RC_HOST_MEMORY_ERROR,
+    RC_DEVICE_MEMORY_ERROR,
 };
 
 static inline const char* GetRetCodeStr(RetCode rc) {
