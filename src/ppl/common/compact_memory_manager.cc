@@ -35,6 +35,7 @@ void CompactMemoryManager::Clear() {
     }
 
     allocated_bytes_ = 0;
+    chunks_.clear();
     addr2bytes_.clear();
     bytes2addr_.clear();
 }
