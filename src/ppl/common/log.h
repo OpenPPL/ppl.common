@@ -68,8 +68,12 @@ public:
     LogMessage& operator<<(int64_t i64);
     LogMessage& operator<<(uint64_t u64);
 
+#if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
+    LogMessage& operator<<(size_t s);
+#else
     LogMessage& operator<<(long long ll);
     LogMessage& operator<<(unsigned long long ull);
+#endif
 
     LogMessage& operator<<(const char*);
     LogMessage& operator<<(const std::string&);
