@@ -16,7 +16,7 @@ file(GLOB PPLCOMMON_SRC
 set(PPLCOMMON_INCLUDES)
 list(APPEND PPLCOMMON_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
-set(PPLCOMMON_LIBS)
+set(PPLCOMMON_LINK_LIBRARIES)
 set(PPLCOMMON_DEFINITIONS)
 
 include(cmake/x86.cmake)
@@ -27,6 +27,7 @@ list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_benchmark\\.cc$")
 # --------------------------------------------------------------------------- #
 
 add_library(pplcommon_static STATIC ${PPLCOMMON_SRC})
+target_link_libraries(pplcommon_static PUBLIC ${PPLCOMMON_LINK_LIBRARIES})
 target_include_directories(pplcommon_static PUBLIC ${PPLCOMMON_INCLUDES})
 target_compile_definitions(pplcommon_static PUBLIC ${PPLCOMMON_DEFINITIONS})
 

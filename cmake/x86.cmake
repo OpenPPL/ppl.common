@@ -21,6 +21,7 @@ set_property(SOURCE src/ppl/common/half.cc PROPERTY COMPILE_FLAGS "-mf16c")
 set_property(SOURCE src/ppl/common/x86/sysinfo.cc APPEND PROPERTY COMPILE_FLAGS "${FMA_ENABLED_FLAGS}")
 
 list(APPEND PPLCOMMON_SRC ${PPLCOMMON_X86_SRC})
+list(APPEND PPLCOMMON_LINK_LIBRARIES pthread)
 
 # ----- installation ----- #
 
