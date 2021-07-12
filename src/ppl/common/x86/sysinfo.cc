@@ -230,7 +230,7 @@ testIsaAVX512() {
 //}
 
 static void GetCacheInfo(const int &eax, const int &ebx, const int &ecx, const int &edx,
-                        size_t* cache_size, bool* inclusive) {
+                        uint64_t* cache_size, bool* inclusive) {
     int cache_type = eax & 31;
     if (cache_type == 0) {
         *cache_size = 0;
@@ -243,7 +243,7 @@ static void GetCacheInfo(const int &eax, const int &ebx, const int &ecx, const i
         int cacheline_size = (ebx & 0xfff) + 1;
         int cacheline_partitions = ((ebx >> 12) & 0x3ff) + 1;
         int cache_ways = ((ebx >> 22) & 0x3ff) + 1;
-        *cache_size = static_cast<size_t>(cache_ways * cacheline_partitions * cacheline_size * cache_sets);
+        *cache_size = static_cast<uint64_t>(cache_ways * cacheline_partitions * cacheline_size * cache_sets);
         if (inclusive != nullptr) {
             *inclusive = (edx >> 1) & 1;
         }

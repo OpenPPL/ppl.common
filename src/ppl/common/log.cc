@@ -92,8 +92,12 @@ DEF_READ_OPERATOR_FUNC(uint32_t, "%u");
 DEF_READ_OPERATOR_FUNC(int64_t, "%ld");
 DEF_READ_OPERATOR_FUNC(uint64_t, "%lu");
 
+#if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
+DEF_READ_OPERATOR_FUNC(size_t, "%lu");
+#else
 DEF_READ_OPERATOR_FUNC(long long, "%lld");
 DEF_READ_OPERATOR_FUNC(unsigned long long, "%llu");
+#endif
 
 DEF_READ_OPERATOR_FUNC(const void*, "%p");
 
