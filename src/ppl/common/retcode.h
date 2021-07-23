@@ -35,12 +35,14 @@ enum {
     RC_PERMISSION_DENIED,
     RC_HOST_MEMORY_ERROR,
     RC_DEVICE_MEMORY_ERROR,
+    RC_DEVICE_RUNTIME_ERROR,
 };
 
 static inline const char* GetRetCodeStr(RetCode rc) {
     static const char* code_str[] = {
         "success",       "other error", "unsupported", "out of memory",
         "invalid value", "exists",      "not found",   "perimission denied",
+        "host memory error", "device memory error", "device runtime error",
     };
     return code_str[rc];
 }
