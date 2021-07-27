@@ -7,8 +7,13 @@ include(cmake/deps.cmake)
 
 option(PPLCOMMON_BUILD_TESTS "build tests" ON)
 option(PPLCOMMON_BUILD_BENCHMARK "build benchmark" ON)
+option(PPLCOMMON_ENABLE_PYTHON_API "enable python api support" ON)
 
 # --------------------------------------------------------------------------- #
+
+if(PPLCOMMON_ENABLE_PYTHON_API)
+    add_subdirectory(python)
+endif()
 
 file(GLOB PPLCOMMON_SRC
     src/ppl/common/*.cc)

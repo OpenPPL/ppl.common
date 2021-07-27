@@ -24,6 +24,10 @@ endif()
 
 # --------------------------------------------------------------------------- #
 
+hpcc_declare_git_dep(pybind11
+    https://github.com/pybind/pybind11.git
+    v2.7.0)
+
 hpcc_declare_git_dep(googletest
     https://github.com/google/googletest.git
     release-1.10.0)
