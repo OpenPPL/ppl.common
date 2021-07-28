@@ -24,16 +24,26 @@ endif()
 
 # --------------------------------------------------------------------------- #
 
+set(PYBIND11_INSTALL OFF CACHE BOOL "disable pybind11 installation")
+set(PYBIND11_TEST OFF CACHE BOOL "disable pybind11 tests")
+set(PYBIND11_NOPYTHON ON CACHE BOOL "disable pybind11 tests")
+set(PYBIND11_FINDPYTHON OFF CACHE BOOL "disable pybind11 tests")
+
 hpcc_declare_git_dep(pybind11
     https://github.com/pybind/pybind11.git
     v2.7.0)
+
+# --------------------------------------------------------------------------- #
 
 hpcc_declare_git_dep(googletest
     https://github.com/google/googletest.git
     release-1.10.0)
 
+# --------------------------------------------------------------------------- #
+
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "disable benchmark tests")
 set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "")
+
 hpcc_declare_git_dep(benchmark
     https://github.com/google/benchmark.git
     v1.5.5)
