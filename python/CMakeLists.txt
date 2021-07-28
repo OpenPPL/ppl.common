@@ -1,10 +1,11 @@
 hpcc_populate_dep(pybind11)
 
 if(NOT PYTHON3_INCLUDE_DIRS)
-    find_package(PYTHON3 COMPONENTS Development REQUIRED)
-    if(NOT PYTHON3_Development_FOUND)
+    find_package(Python3 COMPONENTS Development REQUIRED)
+    if(NOT Python3_Development_FOUND)
         message("python dev lib is required.")
     endif()
+    set(PYTHON3_INCLUDE_DIRS ${Python3_INCLUDE_DIRS})
 endif()
 
 file(GLOB_RECURSE PPLCOMMON_PYTHON_API_SRC
