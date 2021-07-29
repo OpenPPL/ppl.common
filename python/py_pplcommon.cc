@@ -23,7 +23,7 @@ void RegisterLog(pybind11::module*);
 void RegisterRetCode(pybind11::module*);
 void RegisterTypes(pybind11::module*);
 
-PYBIND11_MODULE(pypplcommon, m) {
+PYBIND11_MODULE(common, m) {
     RegisterLog(&m);
     RegisterRetCode(&m);
     RegisterTypes(&m);
