@@ -24,7 +24,9 @@ list(APPEND PPLCOMMON_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(PPLCOMMON_LINK_LIBRARIES)
 set(PPLCOMMON_DEFINITIONS)
 
-include(cmake/x86.cmake)
+if(HPCC_USE_X86)
+    include(cmake/x86.cmake)
+endif()
 
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_unittest\\.cc$")
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_benchmark\\.cc$")
