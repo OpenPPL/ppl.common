@@ -1,20 +1,9 @@
-if (NOT IS_X86)
-    return()
-endif()
-
 list(APPEND PPLCOMMON_DEFINITIONS PPLCOMMON_USE_X86)
-if(IS_X64)
-    list(APPEND PPLCOMMON_DEFINITIONS PPLCOMMON_USE_X64)
-endif()
 
 file(GLOB_RECURSE PPLCOMMON_X86_SRC src/ppl/common/x86/*.cc)
 
 if(NOT MSVC)
-    if(IS_X64)
-        list(APPEND PPLCOMMON_X86_SRC src/ppl/common/x86/cpuid_x86_64.S)
-    else()
-        list(APPEND PPLCOMMON_X86_SRC src/ppl/common/x86/cpuid_x86_32.S)
-    endif()
+    list(APPEND PPLCOMMON_X86_SRC src/ppl/common/x86/cpuid_x86_64.S)
 endif()
 
 set_property(SOURCE src/ppl/common/half.cc PROPERTY COMPILE_FLAGS "-mf16c")
