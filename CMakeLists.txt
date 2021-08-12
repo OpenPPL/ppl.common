@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.11)
+cmake_minimum_required(VERSION 3.14)
 project(ppl.common)
 
 include(cmake/deps.cmake)
@@ -24,7 +24,7 @@ list(APPEND PPLCOMMON_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(PPLCOMMON_LINK_LIBRARIES)
 set(PPLCOMMON_DEFINITIONS)
 
-if(HPCC_USE_X86)
+if(HPCC_USE_X86_64)
     include(cmake/x86.cmake)
 endif()
 
