@@ -24,12 +24,13 @@ namespace ppl { namespace common { namespace hip {
 
 static inline uint32_t GetDataFormatChannelAlignment(dataformat_t dt) {
     static const uint32_t data_format_alignment[] = {
-        0, // UNKNOWN
-        1, // NDARRAY
-        8, // NHWC
-        2, // N2CX
-        4, // N4CX
-        8, // N8CX
+        0,  // UNKNOWN
+        1,  // NDARRAY
+        8,  // NHWC8
+        16, // NHWC16
+        2,  // N2CX
+        4,  // N4CX
+        8,  // N8CX
         16, // N16CX
         32, // N32CX
     };

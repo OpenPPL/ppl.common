@@ -82,19 +82,20 @@ static inline uint32_t GetSizeOfDataType(datatype_t dt) {
 enum {
     DATAFORMAT_UNKNOWN = 0,
     DATAFORMAT_NDARRAY = 1,
-    DATAFORMAT_NHWC = 2,
-    DATAFORMAT_N2CX = 3,
-    DATAFORMAT_N4CX = 4,
-    DATAFORMAT_N8CX = 5,
-    DATAFORMAT_N16CX = 6,
-    DATAFORMAT_N32CX = 7,
+    DATAFORMAT_NHWC8 = 2,
+    DATAFORMAT_NHWC16 = 3,
+    DATAFORMAT_N2CX = 4,
+    DATAFORMAT_N4CX = 5,
+    DATAFORMAT_N8CX = 6,
+    DATAFORMAT_N16CX = 7,
+    DATAFORMAT_N32CX = 8,
     DATAFORMAT_MAX,
 };
 typedef uint32_t dataformat_t;
 
 static inline const char* GetDataFormatStr(dataformat_t df) {
     static const char* data_format_str[] = {
-        "UNKNOWN", "NDARRAY", "NHWC", "N2CX", "N4CX", "N8CX", "N16CX", "N32CX",
+        "UNKNOWN", "NDARRAY", "NHWC8", "NHWC16", "N2CX", "N4CX", "N8CX", "N16CX", "N32CX",
     };
 
     if (df >= DATAFORMAT_MAX) {
