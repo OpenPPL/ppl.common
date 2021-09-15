@@ -42,7 +42,8 @@ void RegisterTypes(pybind11::module* m) {
 
     m->attr("DATAFORMAT_UNKNOWN") = (uint32_t)DATAFORMAT_UNKNOWN;
     m->attr("DATAFORMAT_NDARRAY") = (uint32_t)DATAFORMAT_NDARRAY;
-    m->attr("DATAFORMAT_NHWC") = (uint32_t)DATAFORMAT_NHWC;
+    m->attr("DATAFORMAT_NHWC8") = (uint32_t)DATAFORMAT_NHWC8;
+    m->attr("DATAFORMAT_NHWC16") = (uint32_t)DATAFORMAT_NHWC16;
     m->attr("DATAFORMAT_N2CX") = (uint32_t)DATAFORMAT_N2CX;
     m->attr("DATAFORMAT_N4CX") = (uint32_t)DATAFORMAT_N4CX;
     m->attr("DATAFORMAT_N8CX") = (uint32_t)DATAFORMAT_N8CX;
