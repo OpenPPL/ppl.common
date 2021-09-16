@@ -20,4 +20,6 @@ target_include_directories(pypplcommon_shared PUBLIC
 set_target_properties(pypplcommon_shared PROPERTIES PREFIX "")
 set_target_properties(pypplcommon_shared PROPERTIES OUTPUT_NAME "common")
 
-install(TARGETS pypplcommon_shared LIBRARY DESTINATION pyppl)
+if(PPLCOMMON_INSTALL)
+    install(TARGETS pypplcommon_shared LIBRARY DESTINATION pyppl)
+endif()
