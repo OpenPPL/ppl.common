@@ -8,6 +8,7 @@ include(cmake/deps.cmake)
 option(PPLCOMMON_BUILD_TESTS "build tests" ON)
 option(PPLCOMMON_BUILD_BENCHMARK "build benchmark" ON)
 option(PPLCOMMON_ENABLE_PYTHON_API "enable python api support" ON)
+option(PPLCOMMON_INSTALL "install ppl.common headers and libs" ON)
 
 # --------------------------------------------------------------------------- #
 
@@ -38,7 +39,9 @@ target_link_libraries(pplcommon_static PUBLIC ${PPLCOMMON_LINK_LIBRARIES})
 target_include_directories(pplcommon_static PUBLIC ${PPLCOMMON_INCLUDES})
 target_compile_definitions(pplcommon_static PUBLIC ${PPLCOMMON_DEFINITIONS})
 
-include(cmake/install.cmake)
+if(PPLCOMMON_INSTALL)
+    include(cmake/install.cmake)
+endif()
 
 if(PPLCOMMON_BUILD_TESTS)
     include(cmake/unittest.cmake)
