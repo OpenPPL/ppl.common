@@ -17,9 +17,17 @@
 
 #include "ppl/common/log.h"
 #include "ppl/common/stripfilename.h"
-#include <sys/time.h>
 #include <memory>
 using namespace std;
+
+#if defined(_WIN32) || defined(_WIN64)
+    #include <windows.h>
+    #if _MSC_VER < 1900
+        #define snprintf _snprintf
+    #endif
+#else
+    #include <sys/time.h>
+#endif
 
 namespace ppl { namespace common {
 
@@ -94,7 +102,7 @@ DEF_READ_OPERATOR_FUNC(uint64_t, "%lu");
 
 #if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
 DEF_READ_OPERATOR_FUNC(size_t, "%lu");
-#else
+#elif !defined(_WIN32) && !defined(_WIN64)
 DEF_READ_OPERATOR_FUNC(long long, "%lld");
 DEF_READ_OPERATOR_FUNC(unsigned long long, "%llu");
 #endif
