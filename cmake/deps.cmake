@@ -35,6 +35,14 @@ hpcc_declare_git_dep(pybind11
 
 # --------------------------------------------------------------------------- #
 
+set(LUACPP_INSTALL OFF CACHE BOOL "")
+
+hpcc_declare_git_dep(luacpp
+    https://github.com/ouonline/lua-cpp.git
+    cf8481951f83e35121e61e3aff95443f53630073)
+
+# --------------------------------------------------------------------------- #
+
 set(INSTALL_GTEST OFF CACHE BOOL "")
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
 
