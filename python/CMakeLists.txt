@@ -10,7 +10,10 @@ if(NOT PYTHON3_INCLUDE_DIRS)
         endif()
     endif()
     set(PYTHON3_INCLUDE_DIRS ${Python3_INCLUDE_DIRS})
-    set(PYTHON3_LIBRARIES ${Python3_LIBRARIES})
+
+    if(MSVC)
+        set(PYTHON3_LIBRARIES ${Python3_LIBRARIES})
+    endif()
 endif()
 
 if(MSVC)
