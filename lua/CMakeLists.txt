@@ -21,4 +21,4 @@ target_include_directories(luapplcommon_shared PUBLIC
 set_target_properties(luapplcommon_shared PROPERTIES PREFIX "")
 set_target_properties(luapplcommon_shared PROPERTIES OUTPUT_NAME "common")
 
-install(TARGETS luapplcommon_shared LIBRARY DESTINATION luappl)
+install(TARGETS luapplcommon_shared DESTINATION luappl)
