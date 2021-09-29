@@ -8,4 +8,4 @@ file(GLOB PPLCOMMON_PARAM_HEADERS
 install(FILES ${PPLCOMMON_PARAM_HEADERS}
     DESTINATION include/ppl/common/params)
 
-install(TARGETS pplcommon_static LIBRARY DESTINATION lib)
+install(TARGETS pplcommon_static DESTINATION lib)
