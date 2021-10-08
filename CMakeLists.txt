@@ -43,6 +43,7 @@ add_library(pplcommon_static STATIC ${PPLCOMMON_SRC})
 target_link_libraries(pplcommon_static PUBLIC ${PPLCOMMON_LINK_LIBRARIES})
 target_include_directories(pplcommon_static PUBLIC ${PPLCOMMON_INCLUDES})
 target_compile_definitions(pplcommon_static PUBLIC ${PPLCOMMON_DEFINITIONS})
+target_compile_features(pplcommon_static PUBLIC cxx_std_11)
 
 if(PPLCOMMON_INSTALL)
     include(cmake/install.cmake)

@@ -29,6 +29,7 @@ target_link_libraries(pypplcommon_shared PUBLIC pplcommon_static ${PYTHON3_LIBRA
 target_include_directories(pypplcommon_shared PUBLIC
     ${pybind11_SOURCE_DIR}/include
     ${PYTHON3_INCLUDE_DIRS})
+target_compile_features(pypplcommon_shared PUBLIC cxx_std_11)
 
 # rename target for python import
 set_target_properties(pypplcommon_shared PROPERTIES PREFIX "")
