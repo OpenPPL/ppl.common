@@ -16,6 +16,7 @@
 // under the License.
 
 #include "ppl/common/sys.h"
+#include "sysinfo.h"
 #include <string.h>
 #include <mutex>
 #ifdef _WIN32
