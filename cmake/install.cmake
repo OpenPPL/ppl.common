@@ -9,3 +9,7 @@ install(FILES ${PPLCOMMON_PARAM_HEADERS}
     DESTINATION include/ppl/common/params)
 
 install(TARGETS pplcommon_static DESTINATION lib)
+
+configure_file(cmake/pplcommon-config.cmake.in
+    ${CMAKE_INSTALL_PREFIX}/lib/cmake/ppl/pplcommon-config.cmake
+    @ONLY)
