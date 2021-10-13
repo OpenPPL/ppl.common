@@ -1,0 +1,39 @@
+cmake_minimum_required(VERSION 3.10)
+
+if(TARGET "pplcommon_static")
+    return()
+endif()
+
+add_library(pplcommon_static STATIC IMPORTED)
+
+# --------------------------------------------------------------------------- #
+
+# exported definitions
+set(PPLCOMMON_USE_X86 @HPCC_USE_X86_64@)
+
+# --------------------------------------------------------------------------- #
+
+set(__PPLCOMMON_PACKAGE_ROOTDIR__ "${CMAKE_CURRENT_LIST_DIR}/../../..")
+
+set_target_properties(pplcommon_static PROPERTIES
+    INTERFACE_INCLUDE_DIRECTORIES "${__PPLCOMMON_PACKAGE_ROOTDIR__}/include")
+
+if(MSVC)
+    set_target_properties(pplcommon_static PROPERTIES
+        IMPORTED_LOCATION "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.lib"
+        IMPORTED_LOCATION_DEBUG "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.lib"
+        IMPORTED_LOCATION_RELEASE "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.lib")
+else()
+    set_target_properties(pplcommon_static PROPERTIES
+        IMPORTED_LOCATION "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.a"
+        IMPORTED_LOCATION_DEBUG "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.a"
+        IMPORTED_LOCATION_RELEASE "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.a")
+endif()
+
+# exported definitions
+set(pplcommon_INCLUDE_DIRS "${__PPLCOMMON_PACKAGE_ROOTDIR__}/include")
+set(pplcommon_LIBRARIES "pplcommon_static")
+
+# --------------------------------------------------------------------------- #
+
+unset(__PPLCOMMON_PACKAGE_ROOTDIR__)
