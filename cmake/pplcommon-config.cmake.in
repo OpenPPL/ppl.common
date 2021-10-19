@@ -31,8 +31,8 @@ else()
 endif()
 
 # exported definitions
-set(pplcommon_INCLUDE_DIRS "${__PPLCOMMON_PACKAGE_ROOTDIR__}/include")
-set(pplcommon_LIBRARIES "pplcommon_static")
+set(PPLCOMMON_INCLUDE_DIRS "${__PPLCOMMON_PACKAGE_ROOTDIR__}/include")
+set(PPLCOMMON_LIBRARIES "pplcommon_static")
 
 # --------------------------------------------------------------------------- #
 
