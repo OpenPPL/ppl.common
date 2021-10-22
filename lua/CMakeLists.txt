@@ -21,4 +21,8 @@ target_compile_features(luapplcommon_shared PRIVATE cxx_std_14)
 set_target_properties(luapplcommon_shared PROPERTIES PREFIX "")
 set_target_properties(luapplcommon_shared PROPERTIES OUTPUT_NAME "common")
 
+if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+    set_target_properties(luapplcommon_shared PROPERTIES SUFFIX ".so") # using .so instead of .dylib
+endif()
+
 install(TARGETS luapplcommon_shared DESTINATION luappl)
