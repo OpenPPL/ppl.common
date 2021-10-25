@@ -36,9 +36,9 @@ hpcc_declare_pkg_dep(pybind11
 
 set(LUACPP_INSTALL OFF CACHE BOOL "")
 
-hpcc_declare_git_dep(luacpp
-    https://github.com/ouonline/lua-cpp.git
-    cf8481951f83e35121e61e3aff95443f53630073)
+hpcc_declare_pkg_dep(luacpp
+    https://github.com/ouonline/lua-cpp/archive/30d40b248e25e2c72a552c70fde48a289365b9ea.zip
+    1c7e50a374d5e7b6c2a697f3f2e9f765)
 
 # --------------------------------------------------------------------------- #
 
