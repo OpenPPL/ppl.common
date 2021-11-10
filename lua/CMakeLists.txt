@@ -25,4 +25,4 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
     set_target_properties(luapplcommon_shared PROPERTIES SUFFIX ".so") # using .so instead of .dylib
 endif()
 
-install(TARGETS luapplcommon_shared DESTINATION luappl)
+install(TARGETS luapplcommon_shared DESTINATION lib/luappl)

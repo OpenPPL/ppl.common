@@ -41,5 +41,5 @@ if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
 endif()
 
 if(PPLCOMMON_INSTALL)
-    install(TARGETS pypplcommon_shared DESTINATION pyppl)
+    install(TARGETS pypplcommon_shared DESTINATION lib/pyppl)
 endif()
