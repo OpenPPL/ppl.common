@@ -9,8 +9,10 @@ set(FETCHCONTENT_QUIET OFF)
 
 FetchContent_Declare(hpcc
     GIT_REPOSITORY https://github.com/openppl-public/hpcc.git
-    GIT_TAG f5cc50c66fc179acb561a0d2cde75d635f829c56
+    GIT_TAG af532951283fa95861e8c14f3d797818ee526156
     SOURCE_DIR ${HPCC_DEPS_DIR}/hpcc
+    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/hpcc-build
+    SUBBUILD_DIR ${CMAKE_CURRENT_BINARY_DIR}/hpcc-subbuild
     UPDATE_DISCONNECTED True)
 
 FetchContent_GetProperties(hpcc)
