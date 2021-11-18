@@ -21,9 +21,10 @@
 namespace ppl { namespace common {
 
 enum {
-    ISA_ARMV8_2 = 0x1,
-    ISA_ARMV8_6 = 0x2,
-    ISA_ARMV9 = 0x4,
+    ISA_ARMV8 = 0x1,
+    ISA_ARMV8_2 = 0x2,
+    ISA_ARMV8_6 = 0x4,
+    ISA_ARMV9 = 0x8,
 };
 
 }}
