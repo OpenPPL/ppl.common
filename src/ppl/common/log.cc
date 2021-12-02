@@ -97,14 +97,19 @@ DEF_READ_OPERATOR_FUNC(int16_t, "%d");
 DEF_READ_OPERATOR_FUNC(uint16_t, "%u");
 DEF_READ_OPERATOR_FUNC(int32_t, "%d");
 DEF_READ_OPERATOR_FUNC(uint32_t, "%u");
+
+#ifdef _MSC_VER
+DEF_READ_OPERATOR_FUNC(int64_t, "%lld");
+DEF_READ_OPERATOR_FUNC(uint64_t, "%llu");
+#else
 DEF_READ_OPERATOR_FUNC(int64_t, "%ld");
 DEF_READ_OPERATOR_FUNC(uint64_t, "%lu");
+DEF_READ_OPERATOR_FUNC(long long, "%lld");
+DEF_READ_OPERATOR_FUNC(unsigned long long, "%llu");
+#endif
 
 #if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
 DEF_READ_OPERATOR_FUNC(size_t, "%lu");
-#elif !defined(_WIN32) && !defined(_WIN64)
-DEF_READ_OPERATOR_FUNC(long long, "%lld");
-DEF_READ_OPERATOR_FUNC(unsigned long long, "%llu");
 #endif
 
 DEF_READ_OPERATOR_FUNC(const void*, "%p");
