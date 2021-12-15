@@ -25,10 +25,9 @@
 
 namespace ppl { namespace common {
 
-class GenericCpuAllocator : public Allocator {
+class GenericCpuAllocator final : public Allocator {
 public:
-    GenericCpuAllocator(uint64_t alignment = 64) : Allocator(alignment) {}
-    virtual ~GenericCpuAllocator() {}
+    GenericCpuAllocator(uint64_t alignment = 64) : alignment_(alignment) {}
 
     template <typename T, typename... Args>
     T* TypedAlloc(Args&&... args) {
@@ -47,13 +46,16 @@ public:
         }
     }
 
-    void* Alloc(uint64_t size) override final {
+    void* Alloc(uint64_t size) override {
         return ppl::common::AlignedAlloc(size, alignment_);
     }
 
-    void Free(void* ptr) override final {
+    void Free(void* ptr) override {
         ppl::common::AlignedFree(ptr);
     }
+
+private:
+    uint64_t alignment_;
 };
 
 }} // namespace ppl::common

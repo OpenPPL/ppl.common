@@ -19,6 +19,7 @@
 #define _ST_HPC_PPL_COMMON_COMPACT_MEMORY_MANAGER_H_
 
 #include "ppl/common/allocator.h"
+#include "ppl/common/retcode.h"
 #include <vector>
 #include <map>
 #include <set>
@@ -33,6 +34,10 @@ public:
     void* Alloc(uint64_t bytes);
     void Free(void* addr, uint64_t bytes);
     void Clear();
+
+    /** @brief make sure that this manager is newly created or clear before Reserve() */
+    ppl::common::RetCode Reserve(uint64_t bytes);
+
     uint64_t GetAllocatedBytes() const {
         return allocated_bytes_;
     }

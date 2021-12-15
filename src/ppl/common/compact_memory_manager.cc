@@ -26,7 +26,9 @@ CompactMemoryManager::CompactMemoryManager(Allocator* ar, uint64_t block_bytes)
 }
 
 CompactMemoryManager::~CompactMemoryManager() {
-    Clear();
+    for (auto x = chunks_.begin(); x != chunks_.end(); ++x) {
+        allocator_->Free(*x);
+    }
 }
 
 void CompactMemoryManager::Clear() {
@@ -59,6 +61,26 @@ static void AddFreeBlock(void* new_addr, uint64_t new_bytes, map<uint64_t, set<v
 
 static inline uint64_t Align(uint64_t x, uint64_t n) {
     return (x + n - 1) & (~(n - 1));
+}
+
+RetCode CompactMemoryManager::Reserve(uint64_t bytes) {
+    if (!chunks_.empty()) {
+        return RC_PERMISSION_DENIED;
+    }
+
+    if (bytes == 0) {
+        return RC_SUCCESS;
+    }
+
+    bytes = Align(bytes, block_bytes_);
+    auto addr = allocator_->Alloc(bytes);
+    if (!addr) {
+        return RC_OUT_OF_MEMORY;
+    }
+
+    chunks_.push_back(addr);
+    AddFreeBlock(addr, bytes, &bytes2addr_, &addr2bytes_);
+    return RC_SUCCESS;
 }
 
 void* CompactMemoryManager::Alloc(uint64_t bytes_needed) {
