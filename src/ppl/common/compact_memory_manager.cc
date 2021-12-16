@@ -21,25 +21,25 @@ using namespace std;
 namespace ppl { namespace common {
 
 CompactMemoryManager::CompactMemoryManager(Allocator* ar, uint64_t block_bytes)
-    : block_bytes_(block_bytes), allocator_(ar) {
-    chunks_.reserve(256);
+    : block_bytes_(block_bytes), allocator_(ar), allocated_bytes_(0) {
+    blocks_.reserve(64);
 }
 
 CompactMemoryManager::~CompactMemoryManager() {
-    for (auto x = chunks_.begin(); x != chunks_.end(); ++x) {
+    for (auto x = blocks_.begin(); x != blocks_.end(); ++x) {
         allocator_->Free(*x);
     }
 }
 
 void CompactMemoryManager::Clear() {
-    for (auto x = chunks_.begin(); x != chunks_.end(); ++x) {
+    for (auto x = blocks_.begin(); x != blocks_.end(); ++x) {
         allocator_->Free(*x);
     }
 
     allocated_bytes_ = 0;
-    chunks_.clear();
     addr2bytes_.clear();
     bytes2addr_.clear();
+    blocks_.clear();
 }
 
 static void RemoveFromBytes2Addr(void* addr, uint64_t bytes, map<uint64_t, set<void*>>* bytes2addr) {
@@ -63,11 +63,16 @@ static inline uint64_t Align(uint64_t x, uint64_t n) {
     return (x + n - 1) & (~(n - 1));
 }
 
-RetCode CompactMemoryManager::Reserve(uint64_t bytes) {
-    if (!chunks_.empty()) {
-        return RC_PERMISSION_DENIED;
+RetCode CompactMemoryManager::Defragment() {
+    if (blocks_.size() <= 1) {
+        return RC_SUCCESS;
     }
 
+    return Reset(allocated_bytes_);
+}
+
+RetCode CompactMemoryManager::Reset(uint64_t bytes) {
+    Clear();
     if (bytes == 0) {
         return RC_SUCCESS;
     }
@@ -78,8 +83,9 @@ RetCode CompactMemoryManager::Reserve(uint64_t bytes) {
         return RC_OUT_OF_MEMORY;
     }
 
-    chunks_.push_back(addr);
+    allocated_bytes_ = bytes;
     AddFreeBlock(addr, bytes, &bytes2addr_, &addr2bytes_);
+    blocks_.push_back(addr);
     return RC_SUCCESS;
 }
 
@@ -94,7 +100,7 @@ void* CompactMemoryManager::Alloc(uint64_t bytes_needed) {
             return nullptr;
         }
         allocated_bytes_ += bytes_allocated;
-        chunks_.push_back(new_block);
+        blocks_.push_back(new_block);
 
         if (bytes_needed < bytes_allocated) {
             AddFreeBlock((char*)new_block + bytes_needed, bytes_allocated - bytes_needed, &bytes2addr_, &addr2bytes_);

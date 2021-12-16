@@ -22,7 +22,7 @@
 #ifdef PPLCOMMON_USE_X86
 TEST(pplcommon, x86SysInfo) {
     using namespace ppl::common;
-    fprintf(stdout, "[x86SysInfo] 0x%lX\n", GetCpuInfo()->isa);
+    fprintf(stdout, "[x86SysInfo] 0x%u\n", GetCpuInfo()->isa);
 }
 #endif //! PPLCOMMON_USE_X86
 
