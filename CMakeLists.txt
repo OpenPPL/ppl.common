@@ -10,6 +10,7 @@ option(PPLCOMMON_BUILD_BENCHMARK "build benchmark" ON)
 option(PPLCOMMON_INSTALL "install ppl.common headers and libs" ON)
 option(PPLCOMMON_ENABLE_PYTHON_API "enable python api support" OFF)
 option(PPLCOMMON_ENABLE_LUA_API "enable lua api support" OFF)
+option(PPLCOMMON_HOLD_DEPS "don't update dependencies" OFF)
 
 # --------------------------------------------------------------------------- #
 

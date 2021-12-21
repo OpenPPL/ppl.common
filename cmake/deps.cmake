@@ -7,13 +7,16 @@ include(FetchContent)
 set(FETCHCONTENT_BASE_DIR ${HPCC_DEPS_DIR})
 set(FETCHCONTENT_QUIET OFF)
 
+if(PPLCOMMON_HOLD_DEPS)
+    set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
+endif()
+
 FetchContent_Declare(hpcc
     GIT_REPOSITORY https://github.com/openppl-public/hpcc.git
-    GIT_TAG ba8f4bb547a53d296eda8db2ac13f7a983ccbe09
+    GIT_TAG 4ac9367ff6b2af7ad8adc4fb7ba1c0fa27793ae0
     SOURCE_DIR ${HPCC_DEPS_DIR}/hpcc
     BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/hpcc-build
-    SUBBUILD_DIR ${HPCC_DEPS_DIR}/hpcc-subbuild
-    UPDATE_DISCONNECTED True)
+    SUBBUILD_DIR ${HPCC_DEPS_DIR}/hpcc-subbuild)
 
 FetchContent_GetProperties(hpcc)
 if(NOT hpcc_POPULATED)
