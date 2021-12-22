@@ -143,9 +143,7 @@ void CompactMemoryManager::Free(void* addr, uint64_t bytes) {
 
     // find and merge with its predecessor
     a2b_iter = addr2bytes_.lower_bound(addr);
-    if (a2b_iter == addr2bytes_.end()) {
-        a2b_iter = addr2bytes_.rbegin().base();
-    } else if (a2b_iter == addr2bytes_.begin()) {
+    if (a2b_iter == addr2bytes_.begin()) {
         a2b_iter = addr2bytes_.end();
     } else {
         --a2b_iter;
