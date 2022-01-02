@@ -98,7 +98,7 @@ DEF_READ_OPERATOR_FUNC(uint16_t, "%u");
 DEF_READ_OPERATOR_FUNC(int32_t, "%d");
 DEF_READ_OPERATOR_FUNC(uint32_t, "%u");
 
-#ifdef _MSC_VER
+#if defined(_MSC_VER) || defined(__APPLE__)
 DEF_READ_OPERATOR_FUNC(int64_t, "%lld");
 DEF_READ_OPERATOR_FUNC(uint64_t, "%llu");
 #else
