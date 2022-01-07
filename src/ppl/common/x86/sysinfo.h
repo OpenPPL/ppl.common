@@ -32,6 +32,7 @@ enum {
     ISA_X86_FMA = 0x100,
     ISA_X86_F16C = 0x200,
     ISA_X86_AVX512 = 0x1000,
+    ISA_X86_AVX512VNNI = 0x8000,
 };
 
 }}

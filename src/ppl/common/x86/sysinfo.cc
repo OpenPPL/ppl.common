@@ -234,6 +234,7 @@ void GetCPUInfoByCPUID(struct CpuInfo* info) {
     DoCpuid(0x7, 0x0, &eax, &ebx, &ecx, &edx);
     info->isa |= (BIT_TEST(ebx, 5) ? ISA_X86_AVX2 : 0x0UL);   // ISA_X86_AVX2
     info->isa |= (BIT_TEST(ebx, 16) ? ISA_X86_AVX512 : 0x0UL);   // ISA_X86_AVX512
+    info->isa |= (BIT_TEST(ecx, 11) ? ISA_X86_AVX512VNNI : 0x0UL);   // ISA_X86_AVX512VNNI
 #undef BIT_TEST
     // detect cache
     DoCpuid(4, 0, &eax, &ebx, &ecx, &edx);
