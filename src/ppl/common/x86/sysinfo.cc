@@ -199,13 +199,7 @@ TestIsaAVX512() {
 static void GetCacheInfoIntel(const int &eax, const int &ebx, const int &ecx, const int &edx,
                         uint64_t* cache_size, bool* inclusive) {
     int cache_type = eax & 31;
-    if (cache_type == 0) {
-        *cache_size = 0;
-        if (inclusive != nullptr) {
-            *inclusive = false;
-        }
-    } else {
-        // int cache_level = (eax >> 5) & 0x7;
+    if (cache_type == 1 || cache_type == 3) {
         int cache_sets = ecx + 1;
         int cacheline_size = (ebx & 0xfff) + 1;
         int cacheline_partitions = ((ebx >> 12) & 0x3ff) + 1;
@@ -254,14 +248,15 @@ void GetCPUInfoByCPUID(struct CpuInfo* info) {
         info->l3_cache_size = 0;
         temp = edx;
         if (temp) info->l3_cache_size = ((temp >> 18) & 0x3FFF) << 19;
-    } else {
-        DoCpuid(4, 0, &eax, &ebx, &ecx, &edx);
-        GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l1_cache_size), nullptr);
-        DoCpuid(4, 2, &eax, &ebx, &ecx, &edx);
-        GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l2_cache_size), nullptr);
-        DoCpuid(4, 3, &eax, &ebx, &ecx, &edx);
-        GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l3_cache_size), nullptr);
     }
+
+    DoCpuid(4, 0, &eax, &ebx, &ecx, &edx);
+    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l1_cache_size), nullptr);
+    DoCpuid(4, 2, &eax, &ebx, &ecx, &edx);
+    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l2_cache_size), nullptr);
+    DoCpuid(4, 3, &eax, &ebx, &ecx, &edx);
+    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l3_cache_size), nullptr);
+
 }
 
 void GetCPUInfoByRun(CpuInfo* info) {
@@ -298,14 +293,14 @@ void GetCPUInfoByRun(CpuInfo* info) {
         info->l3_cache_size = 0;
         temp = edx;
         if (temp) info->l3_cache_size = ((temp >> 18) & 0x3FFF) << 19;
-    } else {
-        DoCpuid(4, 0, &eax, &ebx, &ecx, &edx);
-        GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l1_cache_size), nullptr);
-        DoCpuid(4, 2, &eax, &ebx, &ecx, &edx);
-        GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l2_cache_size), nullptr);
-        DoCpuid(4, 3, &eax, &ebx, &ecx, &edx);
-        GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l3_cache_size), nullptr);
     }
+
+    DoCpuid(4, 0, &eax, &ebx, &ecx, &edx);
+    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l1_cache_size), nullptr);
+    DoCpuid(4, 2, &eax, &ebx, &ecx, &edx);
+    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l2_cache_size), nullptr);
+    DoCpuid(4, 3, &eax, &ebx, &ecx, &edx);
+    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l3_cache_size), nullptr);
 }
 
 static CpuInfo __st_cpuinfo {0, 0, 0, 0};
