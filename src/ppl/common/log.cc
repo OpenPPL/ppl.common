@@ -115,7 +115,9 @@ DEF_READ_OPERATOR_FUNC(size_t, "%lu");
 DEF_READ_OPERATOR_FUNC(const void*, "%p");
 
 LogMessage& LogMessage::operator<<(const char* str) {
-    content_.append(str);
+    if (str) {
+        content_.append(str);
+    }
     return *this;
 }
 
