@@ -211,26 +211,8 @@ static void GetCacheInfoIntel(const int &eax, const int &ebx, const int &ecx, co
     }
 }
 
-
-void GetCPUInfoByCPUID(struct CpuInfo* info) {
-#define BIT_TEST(bit_map, pos) (((bit_map) & (0x1 << (pos))) ? 1 : 0)
+static void GetCacheInfo(struct CpuInfo* info) {
     int eax, ebx, ecx, edx;
-    DoCpuid(0x1, 0x0, &eax, &ebx, &ecx, &edx);
-    info->isa = 0;
-    info->isa |= (BIT_TEST(edx, 25) ? ISA_X86_SSE : 0x0UL);   // ISA_X86_SSE
-    info->isa |= (BIT_TEST(edx, 26) ? ISA_X86_SSE2 : 0x0UL);   // ISA_X86_SSE2
-    info->isa |= (BIT_TEST(ecx, 0) ? ISA_X86_SSE3 : 0x0UL);    // ISA_X86_SSE3
-    info->isa |= (BIT_TEST(ecx, 9) ? ISA_X86_SSSE3 : 0x0UL);    // ISA_X86_SSSE3
-    info->isa |= (BIT_TEST(ecx, 19) ? ISA_X86_SSE41 : 0x0UL);  // ISA_X86_SSE41
-    info->isa |= (BIT_TEST(ecx, 20) ? ISA_X86_SSE42 : 0x0UL);  // ISA_X86_SSE42
-    info->isa |= (BIT_TEST(ecx, 28) ? ISA_X86_AVX : 0x0UL);  // ISA_X86_AVX
-    info->isa |= (BIT_TEST(ecx, 12) ? ISA_X86_FMA : 0x0UL); // ISA_X86_FMA
-    DoCpuid(0x7, 0x0, &eax, &ebx, &ecx, &edx);
-    info->isa |= (BIT_TEST(ebx, 5) ? ISA_X86_AVX2 : 0x0UL);   // ISA_X86_AVX2
-    info->isa |= (BIT_TEST(ebx, 16) ? ISA_X86_AVX512 : 0x0UL);   // ISA_X86_AVX512
-    info->isa |= (BIT_TEST(ecx, 11) ? ISA_X86_AVX512VNNI : 0x0UL);   // ISA_X86_AVX512VNNI
-#undef BIT_TEST
-
     // detect cache
     DoCpuid(0x80000000, 0x0, &eax, &ebx, &ecx, &edx);
     if ((unsigned int)eax >= 0x80000005) {
@@ -259,6 +241,39 @@ void GetCPUInfoByCPUID(struct CpuInfo* info) {
 
 }
 
+static void GetVendorId(struct CpuInfo* info) {
+    int eax, ebx, ecx, edx;
+    DoCpuid(0x00000000, 0x0, &eax, &ebx, &ecx, &edx);
+    int* vendor_id_int = (int*)info->vendor_id;
+    vendor_id_int[0] = ebx;
+    vendor_id_int[1] = edx;
+    vendor_id_int[2] = ecx;
+    vendor_id_int[3] = 0;
+}
+
+void GetCPUInfoByCPUID(struct CpuInfo* info) {
+#define BIT_TEST(bit_map, pos) (((bit_map) & (0x1 << (pos))) ? 1 : 0)
+    int eax, ebx, ecx, edx;
+    DoCpuid(0x1, 0x0, &eax, &ebx, &ecx, &edx);
+    info->isa = 0;
+    info->isa |= (BIT_TEST(edx, 25) ? ISA_X86_SSE : 0x0UL);   // ISA_X86_SSE
+    info->isa |= (BIT_TEST(edx, 26) ? ISA_X86_SSE2 : 0x0UL);   // ISA_X86_SSE2
+    info->isa |= (BIT_TEST(ecx, 0) ? ISA_X86_SSE3 : 0x0UL);    // ISA_X86_SSE3
+    info->isa |= (BIT_TEST(ecx, 9) ? ISA_X86_SSSE3 : 0x0UL);    // ISA_X86_SSSE3
+    info->isa |= (BIT_TEST(ecx, 19) ? ISA_X86_SSE41 : 0x0UL);  // ISA_X86_SSE41
+    info->isa |= (BIT_TEST(ecx, 20) ? ISA_X86_SSE42 : 0x0UL);  // ISA_X86_SSE42
+    info->isa |= (BIT_TEST(ecx, 28) ? ISA_X86_AVX : 0x0UL);  // ISA_X86_AVX
+    info->isa |= (BIT_TEST(ecx, 12) ? ISA_X86_FMA : 0x0UL); // ISA_X86_FMA
+    DoCpuid(0x7, 0x0, &eax, &ebx, &ecx, &edx);
+    info->isa |= (BIT_TEST(ebx, 5) ? ISA_X86_AVX2 : 0x0UL);   // ISA_X86_AVX2
+    info->isa |= (BIT_TEST(ebx, 16) ? ISA_X86_AVX512 : 0x0UL);   // ISA_X86_AVX512
+    info->isa |= (BIT_TEST(ecx, 11) ? ISA_X86_AVX512VNNI : 0x0UL);   // ISA_X86_AVX512VNNI
+#undef BIT_TEST
+
+    GetCacheInfo(info);
+    GetVendorId(info);
+}
+
 void GetCPUInfoByRun(CpuInfo* info) {
 #if (GCC_VERSION >= 40902 || _MSC_VER >= 1910)
     if (0 == try_run(&TestIsaAVX512)) {
@@ -275,32 +290,8 @@ void GetCPUInfoByRun(CpuInfo* info) {
         info->isa |= ISA_X86_SSE;
     }
 
-    // detect cache
-    int eax, ebx, ecx, edx;
-    DoCpuid(0x80000000, 0x0, &eax, &ebx, &ecx, &edx);
-    if ((unsigned int)eax >= 0x80000005) {
-        uint64_t temp;
-        // L1D
-        DoCpuid(0x80000005, 0x0, &eax, &ebx, &ecx, &edx);
-        temp = ecx;
-        info->l1_cache_size = ((temp >> 24) & 0xFF) << 10;
-        // L2
-        info->l2_cache_size = 0;
-        DoCpuid(0x80000006, 0x0, &eax, &ebx, &ecx, &edx);
-        temp = ecx;
-        if (temp) info->l2_cache_size = ((temp >> 16) & 0xFFFF) << 10;
-        // L3
-        info->l3_cache_size = 0;
-        temp = edx;
-        if (temp) info->l3_cache_size = ((temp >> 18) & 0x3FFF) << 19;
-    }
-
-    DoCpuid(4, 0, &eax, &ebx, &ecx, &edx);
-    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l1_cache_size), nullptr);
-    DoCpuid(4, 2, &eax, &ebx, &ecx, &edx);
-    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l2_cache_size), nullptr);
-    DoCpuid(4, 3, &eax, &ebx, &ecx, &edx);
-    GetCacheInfoIntel(eax, ebx, ecx, edx, &(info->l3_cache_size), nullptr);
+    GetCacheInfo(info);
+    GetVendorId(info);
 }
 
 static CpuInfo __st_cpuinfo {0, 0, 0, 0};
