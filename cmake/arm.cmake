@@ -1,8 +1,4 @@
-option(PPLCOMMON_USE_ARMV8_2 "build with arm v8.2 instruction set" OFF)
-
-if (PPL_USE_ARMV8_2)
-    set(PPLCOMMON_USE_ARMV8_2 ON)
-endif()
+option(PPLCOMMON_USE_ARMV8_2 "build pplcommon with armv8.2-a support." OFF)
 
 file(GLOB_RECURSE PPLCOMMON_ARM_SRC src/ppl/common/arm/*.cc)
 list(APPEND PPLCOMMON_ARM_SRC src/ppl/common/arm/fp16fp32_cvt.S)
