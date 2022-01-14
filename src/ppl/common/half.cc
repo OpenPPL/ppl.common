@@ -21,7 +21,7 @@
 #ifdef PPLCOMMON_USE_X86
 #include <immintrin.h>
 #elif defined(PPLCOMMON_USE_ARM)
-#include "ppl/common/arm/fp16fp32.h"
+#include "ppl/common/arm/fp16fp32_cvt.h"
 #include <arm_neon.h>
 #endif
 
@@ -118,13 +118,13 @@ void ConvertFp16ToFp32(const void* fp16, void* fp32, size_t count) {
 float half2float(uint16_t half) {
     uint16_t f16[8] = {half};
     float f32[8];
-    ppl3CoreArmFp16fp32_asm(8, f16, f32);
+    CvtFp16ToFp32(8, f16, f32);
     return f32[0];
 }
 uint16_t float2half(float value) {
     float f32[8] = {value, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 0.0f};
     uint16_t f16[8];
-    ppl3CoreArmFp32fp16_asm(8, f32, f16);
+    CvtFp32ToFp16(8, f32, f16);
     return f16[0];
 }
 void ConvertFp32ToFp16(const void* f32, void* f16, size_t count) {
@@ -132,7 +132,7 @@ void ConvertFp32ToFp16(const void* f32, void* f16, size_t count) {
     float const* fp32 = reinterpret_cast<float const*>(f32);
     size_t n8 = count & (~7);
     if (n8 != 0) {
-        ppl3CoreArmFp32fp16_asm(n8, fp32, fp16);
+        CvtFp32ToFp16(n8, fp32, fp16);
     }
     size_t n7 = count - n8;
 
@@ -144,7 +144,7 @@ void ConvertFp32ToFp16(const void* f32, void* f16, size_t count) {
             fp32_tmp[i] = fp32[n8 + i];
         }
 
-        ppl3CoreArmFp32fp16_asm(8, fp32_tmp, fp16_tmp);
+        CvtFp32ToFp16(8, fp32_tmp, fp16_tmp);
 
         for (size_t i = 0; i < n7; ++i) {
             fp16[n8 + i] = fp16_tmp[i];
@@ -156,7 +156,7 @@ void ConvertFp16ToFp32(const void* f16, void* f32, size_t count) {
     float* fp32 = reinterpret_cast<float*>(f32);
     size_t n8 = count & (~7);
     if (n8 != 0) {
-        ppl3CoreArmFp16fp32_asm(n8, fp16, fp32);
+        CvtFp16ToFp32(n8, fp16, fp32);
     }
     size_t n7 = count - n8;
 
@@ -168,7 +168,7 @@ void ConvertFp16ToFp32(const void* f16, void* f32, size_t count) {
             fp16_tmp[i] = fp16[n8 + i];
         }
 
-        ppl3CoreArmFp16fp32_asm(8, fp16_tmp, fp32_tmp);
+        CvtFp16ToFp32(8, fp16_tmp, fp32_tmp);
 
         for (size_t i = 0; i < n7; ++i) {
             fp32[n8 + i] = fp32_tmp[i];

@@ -35,6 +35,10 @@ if(HPCC_USE_X86_64)
     include(cmake/x86.cmake)
 endif()
 
+if(HPCC_USE_AARCH64)
+    include(cmake/arm.cmake)
+endif()
+
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_unittest\\.cc$")
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_benchmark\\.cc$")
 
