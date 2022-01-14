@@ -30,6 +30,7 @@ struct CpuInfo {
     uint64_t l1_cache_size;
     uint64_t l2_cache_size;
     uint64_t l3_cache_size;
+    char vendor_id[64];
 };
 
 const CpuInfo* GetCpuInfo(int which = 0);
@@ -42,6 +43,9 @@ static inline uint64_t GetCpuCacheL2(int which = 0) {
 }
 static inline uint64_t GetCpuCacheL3(int which = 0) {
     return GetCpuInfo(which)->l3_cache_size;
+}
+static inline const char* GetCpuVendor(int which = 0) {
+    return GetCpuInfo(which)->vendor_id;
 }
 
 static inline bool CpuSupports(isa_t flag, int which = 0) {
