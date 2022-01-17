@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "luacpp.h"
+#include "luacpp/luacpp.h"
 #include "ppl/common/common.h"
 #include <memory>
 using namespace std;

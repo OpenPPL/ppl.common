@@ -16,7 +16,7 @@
 // under the License.
 
 #include "ppl/common/retcode.h"
-#include "luacpp.h"
+#include "luacpp/luacpp.h"
 #include <memory>
 using namespace std;
 using namespace luacpp;
