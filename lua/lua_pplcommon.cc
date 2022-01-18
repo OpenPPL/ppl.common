@@ -42,7 +42,8 @@ int PPLCOMMON_PUBLIC luaopen_luappl_common(lua_State* l) {
     RegisterRetCode(lstate, lmodule);
     RegisterTypes(lstate, lmodule);
 
-    lmodule->PushSelf();
+    lstate->Push(*lmodule);
     return 1;
 }
+
 }
