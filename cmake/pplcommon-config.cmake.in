@@ -20,9 +20,9 @@ set_target_properties(pplcommon_static PROPERTIES
 
 if(MSVC)
     set_target_properties(pplcommon_static PROPERTIES
-        IMPORTED_LOCATION "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.lib"
-        IMPORTED_LOCATION_DEBUG "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.lib"
-        IMPORTED_LOCATION_RELEASE "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.lib")
+        IMPORTED_LOCATION "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/pplcommon_static.lib"
+        IMPORTED_LOCATION_DEBUG "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/pplcommon_static.lib"
+        IMPORTED_LOCATION_RELEASE "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/pplcommon_static.lib")
 else()
     set_target_properties(pplcommon_static PROPERTIES
         IMPORTED_LOCATION "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.a"
