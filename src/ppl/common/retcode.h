@@ -36,6 +36,7 @@ enum {
     RC_HOST_MEMORY_ERROR,
     RC_DEVICE_MEMORY_ERROR,
     RC_DEVICE_RUNTIME_ERROR,
+    RC_OUT_OF_RANGE,
 };
 
 static inline const char* GetRetCodeStr(RetCode rc) {
@@ -43,6 +44,7 @@ static inline const char* GetRetCodeStr(RetCode rc) {
         "success",       "other error", "unsupported", "out of memory",
         "invalid value", "exists",      "not found",   "perimission denied",
         "host memory error", "device memory error", "device runtime error",
+        "out of range",
     };
     return code_str[rc];
 }
