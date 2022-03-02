@@ -70,7 +70,7 @@ public:
 
 #if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
     LogMessage& operator<<(size_t s);
-#elif !defined(_WIN32) && !defined(_WIN64)
+#elif !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__)
     LogMessage& operator<<(long long ll);
     LogMessage& operator<<(unsigned long long ull);
 #endif

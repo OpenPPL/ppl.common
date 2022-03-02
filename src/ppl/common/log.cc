@@ -102,10 +102,15 @@ DEF_READ_OPERATOR_FUNC(uint32_t, "%u");
 DEF_READ_OPERATOR_FUNC(int64_t, "%lld");
 DEF_READ_OPERATOR_FUNC(uint64_t, "%llu");
 #else
+#ifndef __ANDROID__
 DEF_READ_OPERATOR_FUNC(int64_t, "%ld");
 DEF_READ_OPERATOR_FUNC(uint64_t, "%lu");
 DEF_READ_OPERATOR_FUNC(long long, "%lld");
 DEF_READ_OPERATOR_FUNC(unsigned long long, "%llu");
+#else
+DEF_READ_OPERATOR_FUNC(int64_t, "%lld");
+DEF_READ_OPERATOR_FUNC(uint64_t, "%llu");
+#endif
 #endif
 
 #if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
