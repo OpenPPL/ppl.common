@@ -11,6 +11,10 @@ set_property(SOURCE src/ppl/common/x86/sysinfo.cc APPEND PROPERTY COMPILE_FLAGS 
 
 list(APPEND PPLCOMMON_SRC ${PPLCOMMON_X86_SRC})
 
+if (CMAKE_COMPILER_IS_GNUCC)
+    list(APPEND PPLCOMMON_LINK_LIBRARIES pthread)
+endif()
+
 add_executable(cpuinfo tools/x86/cpuinfo.cc)
 
 target_link_libraries(cpuinfo PRIVATE pplcommon_static)
