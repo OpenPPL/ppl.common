@@ -298,7 +298,7 @@ static CpuInfo __st_cpuinfo {0, 0, 0, 0};
 static std::once_flag __st_cpuinfo_once_flag;
 
 static void detect_cpuinfo_once() {
-    GetCPUInfoByRun(&__st_cpuinfo);
+    GetCPUInfoByCPUID(&__st_cpuinfo);
 }
 
 const CpuInfo* GetCpuInfo(int) {
