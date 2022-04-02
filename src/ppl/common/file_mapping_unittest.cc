@@ -31,3 +31,17 @@ TEST(FileMappingTest, data_and_size) {
     EXPECT_TRUE(fm.Size() > 0);
     EXPECT_NE(nullptr, fm.Data());
 }
+
+TEST(FileMappingTest, offset_and_length) {
+    FileMapping fm;
+    const uint64_t offset = 22;
+    const uint64_t length = 14;
+    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, offset, length));
+    EXPECT_EQ(14, fm.Size());
+    EXPECT_NE(nullptr, fm.Data());
+
+    auto data = fm.Data();
+    EXPECT_EQ('c', data[0]);
+    EXPECT_EQ('h', data[1]);
+    EXPECT_EQ('e', data[2]);
+}

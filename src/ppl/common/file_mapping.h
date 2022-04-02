@@ -19,6 +19,7 @@
 #define _ST_HPC_PPL_COMMON_FILE_MAPPING_H_
 
 #include "ppl/common/retcode.h"
+#include <limits> // UINT64_MAX
 
 #ifdef _MSC_VER
 #define NO_MINMAX
@@ -37,9 +38,10 @@ public:
     FileMapping();
     ~FileMapping();
 
-    ppl::common::RetCode Init(const char* filename);
+    /** @param offset no alignment is required. */
+    ppl::common::RetCode Init(const char* filename, uint64_t offset = 0, uint64_t length = UINT64_MAX);
     const char* Data() const {
-        return (const char*)buffer_;
+        return (const char*)start_;
     }
     uint64_t Size() const {
         return size_;
@@ -53,9 +55,10 @@ private:
     HANDLE h_file_;
     HANDLE h_map_file_;
 #else
-    int file_fd_;
+    int fd_;
 #endif
-    void* buffer_;
+    void* base_;
+    void* start_;
     uint64_t size_;
     char error_message_[MAX_MSG_BUF_SIZE];
 };

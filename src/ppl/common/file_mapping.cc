@@ -27,6 +27,7 @@
 #endif //! non windows
 #include <cstring>
 #include <cstdlib>
+#include <cstdio> // for sprintf
 
 namespace ppl { namespace common {
 
@@ -35,27 +36,28 @@ FileMapping::FileMapping()
     : h_file_(nullptr)
     , h_map_file_(nullptr)
 #else
-    : file_fd_(0)
+    : fd_(0)
 #endif
-    , buffer_(nullptr)
+    , base_(nullptr)
+    , start_(nullptr)
     , size_(0) {
 }
 
 FileMapping::~FileMapping() {
-    if (buffer_) {
+    if (start_) {
 #ifdef _MSC_VER
-        UnmapViewOfFile(buffer_);
+        UnmapViewOfFile(base_);
         CloseHandle(h_map_file_);
         CloseHandle(h_file_);
 #else
-        munmap(buffer_, size_);
-        close(file_fd_);
+        munmap(base_, size_);
+        close(fd_);
 #endif
     }
 }
 
 #ifdef _MSC_VER
-RetCode FileMapping::Init(const char* filename) {
+RetCode FileMapping::Init(const char* filename, uint64_t offset, uint64_t length) {
     h_file_ =
         CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (h_file_ == INVALID_HANDLE_VALUE) {
@@ -70,6 +72,24 @@ RetCode FileMapping::Init(const char* filename) {
         goto errout;
     }
 
+    if (offset >= file_size) {
+        sprintf(error_message_, "offset[%lu] >= file size[%lu]\n", offset, file_size);
+        return RC_INVALID_VALUE;
+    }
+
+    auto max_length = file_size - offset;
+    if (length > max_length) {
+        length = max_length;
+    }
+
+    /*
+      https://docs.microsoft.com/en-us/windows/win32/memory/creating-a-file-mapping-object
+
+      Since it does not cost you any system resources to create a larger file mapping object, create a file mapping
+      object that is the size of the file (set the dwMaximumSizeHigh and dwMaximumSizeLow parameters of
+      CreateFileMapping both to zero) even if you do not expect to view the entire file. The cost in system resources
+      comes in creating the views and accessing them.
+    */
     h_map_file_ = CreateFileMapping(h_file_, nullptr, PAGE_READONLY, 0, 0, nullptr);
     if (!h_map_file_) {
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
@@ -77,14 +97,21 @@ RetCode FileMapping::Init(const char* filename) {
         goto errout;
     }
 
-    buffer_ = MapViewOfFile(h_map_file_, FILE_MAP_READ, 0, 0, 0);
-    if (!buffer_) {
+    SYSTEM_INFO sys_info;  // system information; used to get granularity
+    GetSystemInfo(&sys_info);
+
+    DWORD mapping_start_offset = (offset / sys_info.dwAllocationGranularity) * sys_info.dwAllocationGranularity;
+    DWORD file_offset_high = (mapping_start_offset >> 32), file_offset_low = (mapping_start_offset & 0xffffffff);
+
+    base_ = MapViewOfFile(h_map_file_, FILE_MAP_READ, file_offset_high, file_offset_low, length);
+    if (!base_) {
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
                       error_message_, MAX_MSG_BUF_SIZE, nullptr);
         goto errout2;
     }
 
-    size_ = file_size;
+    start_ = (char*)base_ + (offset - mapping_start_offset);
+    size_ = length;
     return RC_SUCCESS;
 
 errout2:
@@ -96,28 +123,45 @@ errout:
     return RC_INVALID_VALUE;
 }
 #else
-RetCode FileMapping::Init(const char* filename) {
-    void* buf = nullptr;
+RetCode FileMapping::Init(const char* filename, uint64_t offset, uint64_t length) {
+    auto page_size = sysconf(_SC_PAGE_SIZE);
+    auto mapping_start_offset = (offset / page_size) * page_size;
     struct stat file_stat_info;
+
     int fd = open(filename, O_RDONLY | O_CLOEXEC);
     if (fd < 0) {
-        goto Error_Handler1;
+        goto errout1;
     }
+
     memset(&file_stat_info, 0, sizeof(file_stat_info));
     if (fstat(fd, &file_stat_info) < 0 || file_stat_info.st_size < 0) {
-        goto Error_Handler2;
+        goto errout2;
     }
-    buf = mmap(NULL, file_stat_info.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
-    if (buf) {
-        this->file_fd_ = fd;
-        this->buffer_ = buf;
-        this->size_ = file_stat_info.st_size;
+
+    {
+        uint64_t file_size = file_stat_info.st_size;
+        if (offset >= file_size) {
+            sprintf(error_message_, "offset[%lu] >= file size[%lu]\n", offset, file_size);
+            return RC_INVALID_VALUE;
+        }
+
+        auto max_length = file_size - offset;
+        if (length > max_length) {
+            length = max_length;
+        }
+    }
+
+    base_ = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, mapping_start_offset);
+    if (base_ != MAP_FAILED) {
+        fd_ = fd;
+        start_ = (char*)base_ + (offset - mapping_start_offset);
+        size_ = length;
         return RC_SUCCESS;
     }
 
-Error_Handler2:
+errout2:
     close(fd);
-Error_Handler1:
+errout1:
     strcpy(error_message_, strerror(errno));
     return RC_INVALID_VALUE;
 }
