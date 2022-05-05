@@ -38,6 +38,8 @@ set_target_properties(pypplcommon_shared PROPERTIES OUTPUT_NAME "common")
 if(CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
     target_link_options(pypplcommon_shared PUBLIC "LINKER:-undefined,dynamic_lookup") # required by pybind11
     set_target_properties(pypplcommon_shared PROPERTIES SUFFIX ".so") # using .so instead of .dylib
+elseif(CMAKE_HOST_SYSTEM_NAME STREQUAL "Windows")
+    set_target_properties(pypplcommon_shared PROPERTIES SUFFIX ".pyd") # using .pyd instead of .dll
 endif()
 
 if(PPLCOMMON_INSTALL)
