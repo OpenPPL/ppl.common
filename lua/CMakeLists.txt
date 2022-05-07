@@ -1,10 +1,3 @@
-if(NOT LUA_INCLUDE_DIR OR NOT LUA_LIBRARIES)
-    find_package(Lua QUIET)
-    if (NOT Lua_FOUND)
-        message(FATAL_ERROR "lua dev lib >= 5.4.0 is required. please install lua development files or specify `LUA_INCLUDE_DIR` and `LUA_LIBRARIES` manually.")
-    endif()
-endif()
-
 hpcc_populate_dep(luacpp)
 
 file(GLOB_RECURSE PPLCOMMON_LUA_API_SRC ${CMAKE_CURRENT_SOURCE_DIR}/*.cc)
