@@ -11,12 +11,32 @@ if(PPLCOMMON_HOLD_DEPS)
     set(FETCHCONTENT_UPDATES_DISCONNECTED ON)
 endif()
 
-FetchContent_Declare(hpcc
-    GIT_REPOSITORY https://github.com/openppl-public/hpcc.git
-    GIT_TAG cab69f864c3ce185ab9c4d69fcd2aa17e6eaf34d
-    SOURCE_DIR ${HPCC_DEPS_DIR}/hpcc
-    BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/hpcc-build
-    SUBBUILD_DIR ${HPCC_DEPS_DIR}/hpcc-subbuild)
+# --------------------------------------------------------------------------- #
+
+set(__HPCC_COMMIT__ d3302ce75b8bca78f25c770517e99d29a16c8ccb)
+
+if(PPLCOMMON_DEP_HPCC_PKG)
+    FetchContent_Declare(hpcc
+        URL ${PPLCOMMON_DEP_HPCC_PKG}
+        SOURCE_DIR ${HPCC_DEPS_DIR}/hpcc
+        BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/hpcc-build
+        SUBBUILD_DIR ${HPCC_DEPS_DIR}/hpcc-subbuild)
+elseif(PPLCOMMON_DEP_HPCC_GIT)
+    FetchContent_Declare(hpcc
+        GIT_REPOSITORY ${PPLCOMMON_DEP_HPCC_GIT}
+        GIT_TAG ${__HPCC_COMMIT__}
+        SOURCE_DIR ${HPCC_DEPS_DIR}/hpcc
+        BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/hpcc-build
+        SUBBUILD_DIR ${HPCC_DEPS_DIR}/hpcc-subbuild)
+else()
+    FetchContent_Declare(hpcc
+        URL https://github.com/openppl-public/hpcc/archive/${__HPCC_COMMIT__}.zip
+        SOURCE_DIR ${HPCC_DEPS_DIR}/hpcc
+        BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/hpcc-build
+        SUBBUILD_DIR ${HPCC_DEPS_DIR}/hpcc-subbuild)
+endif()
+
+unset(__HPCC_COMMIT__)
 
 FetchContent_GetProperties(hpcc)
 if(NOT hpcc_POPULATED)
@@ -31,33 +51,81 @@ set(PYBIND11_TEST OFF CACHE BOOL "disable pybind11 tests")
 set(PYBIND11_NOPYTHON ON CACHE BOOL "do not find python")
 set(PYBIND11_FINDPYTHON OFF CACHE BOOL "do not find python")
 
-hpcc_declare_pkg_dep(pybind11
-    https://github.com/pybind/pybind11/archive/refs/tags/v2.9.2.zip
-    399d924015f477723ddedbf6f044ab5b)
+set(__PYBIND11_TAG__ v2.9.2)
+
+if(PPLCOMMON_DEP_PYBIND11_PKG)
+    hpcc_declare_pkg_dep(pybind11
+        ${PPLCOMMON_DEP_PYBIND11_PKG})
+elseif(PPLCOMMON_DEP_PYBIND11_GIT)
+    hpcc_declare_git_dep(pybind11
+        ${PPLCOMMON_DEP_PYBIND11_GIT}
+        ${__PYBIND11_TAG__})
+else()
+    hpcc_declare_pkg_dep(pybind11
+        https://github.com/pybind/pybind11/archive/refs/tags/${__PYBIND11_TAG__}.zip)
+endif()
+
+unset(__PYBIND11_TAG__)
 
 # --------------------------------------------------------------------------- #
 
 set(LUACPP_INSTALL OFF CACHE BOOL "")
 set(LUACPP_BUILD_TESTS OFF CACHE BOOL "")
 
-hpcc_declare_pkg_dep(luacpp
-    https://github.com/ouonline/lua-cpp/archive/d79c270eee56646f22eba76c71f1ff1c0e5f9ac6.zip
-    c067bcb0618f179867d293e179f75ffc)
+set(__LUACPP_COMMIT__ d79c270eee56646f22eba76c71f1ff1c0e5f9ac6)
+
+if(PPLCOMMON_DEP_LUACPP_PKG)
+    hpcc_declare_pkg_dep(luacpp
+        ${PPLCOMMON_DEP_LUACPP_PKG})
+elseif(PPLCOMMON_DEP_LUACPP_GIT)
+    hpcc_declare_git_dep(luacpp
+        ${PPLCOMMON_DEP_LUACPP_GIT}
+        ${__LUACPP_COMMIT__})
+else()
+    hpcc_declare_pkg_dep(luacpp
+        https://github.com/ouonline/lua-cpp/archive/${__LUACPP_COMMIT__}.zip)
+endif()
+
+unset(__LUACPP_COMMIT__)
 
 # --------------------------------------------------------------------------- #
 
 Set(INSTALL_GTEST OFF CACHE BOOL "")
 set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
 
-hpcc_declare_pkg_dep(googletest
-    https://github.com/google/googletest/archive/refs/tags/release-1.10.0.zip
-    82358affdd7ab94854c8ee73a180fc53)
+set(__GOOGLETEST_TAG__ release-1.10.0)
+
+if(PPLCOMMON_DEP_GOOGLETEST_PKG)
+    hpcc_declare_pkg_dep(googletest
+        ${PPLCOMMON_DEP_GOOGLETEST_PKG})
+elseif(PPLCOMMON_DEP_GOOGLETEST_GIT)
+    hpcc_declare_git_dep(googletest
+        ${PPLCOMMON_DEP_GOOGLETEST_GIT}
+        ${__GOOGLETEST_TAG__})
+else()
+    hpcc_declare_pkg_dep(googletest
+        https://github.com/google/googletest/archive/refs/tags/${__GOOGLETEST_TAG__}.zip)
+endif()
+
+unset(__GOOGLETEST_TAG__)
 
 # --------------------------------------------------------------------------- #
 
 set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "disable benchmark tests")
 set(BENCHMARK_ENABLE_INSTALL OFF CACHE BOOL "")
 
-hpcc_declare_pkg_dep(benchmark
-    https://github.com/google/benchmark/archive/refs/tags/v1.5.5.zip
-    a63769bd25b5c924b5f4210603fec191)
+set(__BENCHMARK__TAG__ v1.5.6)
+
+if(PPLCOMMON_DEP_BENCHMARK_PKG)
+    hpcc_declare_pkg_dep(benchmark
+        ${PPLCOMMON_DEP_BENCHMARK_PKG})
+elseif(PPLCOMMON_DEP_BENCHMARK_GIT)
+    hpcc_declare_git_dep(benchmark
+        ${PPLCOMMON_DEP_BENCHMARK_GIT}
+        ${__BENCHMARK__TAG__})
+else()
+    hpcc_declare_pkg_dep(benchmark
+        https://github.com/google/benchmark/archive/refs/tags/${__BENCHMARK__TAG__}.zip)
+endif()
+
+unset(__BENCHMARK__TAG__)
