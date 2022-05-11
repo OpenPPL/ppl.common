@@ -8,11 +8,6 @@ add_library(pplcommon_static STATIC IMPORTED)
 
 # --------------------------------------------------------------------------- #
 
-# exported definitions
-set(PPLCOMMON_USE_X86 @HPCC_USE_X86_64@)
-
-# --------------------------------------------------------------------------- #
-
 set(__PPLCOMMON_PACKAGE_ROOTDIR__ "${CMAKE_CURRENT_LIST_DIR}/../../..")
 
 set_target_properties(pplcommon_static PROPERTIES
