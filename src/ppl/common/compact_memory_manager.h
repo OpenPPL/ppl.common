@@ -29,7 +29,7 @@ namespace ppl { namespace common {
 class CompactMemoryManager final {
 public:
     /** @param block_bytes MUST be power of 2 */
-    CompactMemoryManager(Allocator* ar, uint64_t block_bytes = 1048576);
+    CompactMemoryManager(Allocator* ar, uint64_t block_bytes = 65536);
     ~CompactMemoryManager();
 
     void* Alloc(uint64_t bytes);
