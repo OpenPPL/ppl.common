@@ -31,19 +31,30 @@
 namespace ppl { namespace common {
 
 class FileMapping final {
+public:
+    static constexpr uint32_t READ = 1;
+    static constexpr uint32_t WRITE = 2;
+
 private:
-    static const uint32_t MAX_MSG_BUF_SIZE = 1024;
+    static constexpr uint32_t MAX_MSG_BUF_SIZE = 1024;
 
 public:
     FileMapping();
     ~FileMapping();
 
-    /** @param offset no alignment is required. */
-    ppl::common::RetCode Init(const char* filename, uint64_t offset = 0, uint64_t length = UINT64_MAX);
-    const char* Data() const {
-        return (const char*)start_;
+    /**
+       @param permission MUST be one of: READ_ONLY, WRITE_ONLY or READ_WRITE
+       @param offset no alignment is required.
+    */
+    ppl::common::RetCode Init(const char* filename, uint32_t permission, uint64_t offset = 0,
+                              uint64_t length = UINT64_MAX);
+    char* GetData() {
+        return static_cast<char*>(start_);
     }
-    uint64_t Size() const {
+    const char* GetData() const {
+        return static_cast<const char*>(start_);
+    }
+    uint64_t GetSize() const {
         return size_;
     }
     const char* GetErrorMessage() const {

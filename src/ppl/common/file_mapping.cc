@@ -57,9 +57,15 @@ FileMapping::~FileMapping() {
 }
 
 #ifdef _MSC_VER
-RetCode FileMapping::Init(const char* filename, uint64_t offset, uint64_t length) {
-    h_file_ =
-        CreateFile(filename, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+RetCode FileMapping::Init(const char* filename, uint32_t permission, uint64_t offset, uint64_t length) {
+    DWORD flags = 0;
+    if (permission & FileMapping::READ) {
+        flags |= GENERIC_READ;
+    }
+    if (permission & FileMapping::WRITE) {
+        flags |= GENERIC_WRITE;
+    }
+    h_file_ = CreateFile(filename, flags, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (h_file_ == INVALID_HANDLE_VALUE) {
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
                       error_message_, MAX_MSG_BUF_SIZE, nullptr);
@@ -73,7 +79,7 @@ RetCode FileMapping::Init(const char* filename, uint64_t offset, uint64_t length
     }
 
     if (offset >= file_size) {
-        sprintf(error_message_, "offset[%lu] >= file size[%lu]\n", offset, file_size);
+        sprintf(error_message_, "offset[%llu] >= file size[%lu]\n", offset, file_size);
         return RC_INVALID_VALUE;
     }
 
@@ -82,6 +88,12 @@ RetCode FileMapping::Init(const char* filename, uint64_t offset, uint64_t length
         length = max_length;
     }
 
+    flags = 0;
+    if (permission & FileMapping::WRITE) {
+        flags = PAGE_READWRITE;
+    } else if (permission & FileMapping::READ) {
+        flags = PAGE_READONLY;
+    }
     /*
       https://docs.microsoft.com/en-us/windows/win32/memory/creating-a-file-mapping-object
 
@@ -90,20 +102,27 @@ RetCode FileMapping::Init(const char* filename, uint64_t offset, uint64_t length
       CreateFileMapping both to zero) even if you do not expect to view the entire file. The cost in system resources
       comes in creating the views and accessing them.
     */
-    h_map_file_ = CreateFileMapping(h_file_, nullptr, PAGE_READONLY, 0, 0, nullptr);
+    h_map_file_ = CreateFileMapping(h_file_, nullptr, flags, 0, 0, nullptr);
     if (!h_map_file_) {
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
                       error_message_, MAX_MSG_BUF_SIZE, nullptr);
         goto errout;
     }
 
-    SYSTEM_INFO sys_info;  // system information; used to get granularity
+    SYSTEM_INFO sys_info; // system information; used to get granularity
     GetSystemInfo(&sys_info);
 
-    DWORD mapping_start_offset = (offset / sys_info.dwAllocationGranularity) * sys_info.dwAllocationGranularity;
+    uint64_t mapping_start_offset = (offset / sys_info.dwAllocationGranularity) * sys_info.dwAllocationGranularity;
     DWORD file_offset_high = (mapping_start_offset >> 32), file_offset_low = (mapping_start_offset & 0xffffffff);
 
-    base_ = MapViewOfFile(h_map_file_, FILE_MAP_READ, file_offset_high, file_offset_low, length);
+    flags = 0;
+    if (permission & FileMapping::READ) {
+        flags |= FILE_MAP_READ;
+    }
+    if (permission & FileMapping::WRITE) {
+        flags |= FILE_MAP_WRITE;
+    }
+    base_ = MapViewOfFile(h_map_file_, flags, file_offset_high, file_offset_low, length);
     if (!base_) {
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
                       error_message_, MAX_MSG_BUF_SIZE, nullptr);
@@ -123,12 +142,20 @@ errout:
     return RC_INVALID_VALUE;
 }
 #else
-RetCode FileMapping::Init(const char* filename, uint64_t offset, uint64_t length) {
+RetCode FileMapping::Init(const char* filename, uint32_t permission, uint64_t offset, uint64_t length) {
     auto page_size = sysconf(_SC_PAGE_SIZE);
     auto mapping_start_offset = (offset / page_size) * page_size;
     struct stat file_stat_info;
 
-    int fd = open(filename, O_RDONLY | O_CLOEXEC);
+    int flags = O_CLOEXEC;
+    if ((permission & FileMapping::READ) && (permission & FileMapping::WRITE)) {
+        flags |= O_RDWR;
+    } else if (permission & FileMapping::WRITE) {
+        flags |= O_WRONLY;
+    } else if (permission & FileMapping::READ) {
+        flags |= O_RDONLY;
+    }
+    int fd = open(filename, flags);
     if (fd < 0) {
         goto errout1;
     }
@@ -151,7 +178,14 @@ RetCode FileMapping::Init(const char* filename, uint64_t offset, uint64_t length
         }
     }
 
-    base_ = mmap(NULL, length, PROT_READ, MAP_PRIVATE, fd, mapping_start_offset);
+    flags = 0;
+    if (permission & FileMapping::READ) {
+        flags |= PROT_READ;
+    }
+    if (permission & FileMapping::WRITE) {
+        flags |= PROT_WRITE;
+    }
+    base_ = mmap(NULL, length, flags, MAP_PRIVATE, fd, mapping_start_offset);
     if (base_ != MAP_FAILED) {
         fd_ = fd;
         start_ = (char*)base_ + (offset - mapping_start_offset);

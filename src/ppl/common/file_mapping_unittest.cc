@@ -21,26 +21,26 @@ using namespace ppl::common;
 
 TEST(FileMappingTest, init) {
     FileMapping fm;
-    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__));
-    EXPECT_NE(RC_SUCCESS, fm.Init("a"));
+    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, FileMapping::READ));
+    EXPECT_NE(RC_SUCCESS, fm.Init("a", FileMapping::READ));
 }
 
 TEST(FileMappingTest, data_and_size) {
     FileMapping fm;
-    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__));
-    EXPECT_TRUE(fm.Size() > 0);
-    EXPECT_NE(nullptr, fm.Data());
+    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, FileMapping::READ));
+    EXPECT_TRUE(fm.GetSize() > 0);
+    EXPECT_NE(nullptr, fm.GetData());
 }
 
 TEST(FileMappingTest, offset_and_length) {
     FileMapping fm;
     const uint64_t offset = 22;
     const uint64_t length = 14;
-    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, offset, length));
-    EXPECT_EQ(14, fm.Size());
-    EXPECT_NE(nullptr, fm.Data());
+    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, FileMapping::READ, offset, length));
+    EXPECT_EQ(14, fm.GetSize());
+    EXPECT_NE(nullptr, fm.GetData());
 
-    auto data = fm.Data();
+    auto data = fm.GetData();
     EXPECT_EQ('c', data[0]);
     EXPECT_EQ('h', data[1]);
     EXPECT_EQ('e', data[2]);
