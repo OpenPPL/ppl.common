@@ -31,14 +31,5 @@ TEST(LogTest, int_type) {
     float f = 9.0;
     double d = 10.0;
 
-    short s = 11;
-    int i = 12;
-    unsigned int ui = 13;
-    long l = 14;
-    unsigned long ul = 15;
-    long long ll = 16;
-    unsigned long long ull = 17;
-
-    LOG(DEBUG) << i8 << u8 << i16 << u16 << i32 << u32 << i64 << u64 << f << d << s << i << ui
-               << l << ul << ll << ull;
+    LOG(DEBUG) << i8 << u8 << i16 << u16 << i32 << u32 << i64 << u64 << f << d;
 }
