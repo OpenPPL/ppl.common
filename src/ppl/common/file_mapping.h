@@ -72,6 +72,10 @@ private:
     void* start_;
     uint64_t size_;
     char error_message_[MAX_MSG_BUF_SIZE];
+
+private:
+    FileMapping(const FileMapping&) = delete;
+    FileMapping& operator=(const FileMapping&) = delete;
 };
 
 }} // namespace ppl::common

@@ -94,6 +94,10 @@ private:
     std::vector<T*> free_objects_;
     std::vector<void*> slabs_;
     GenericCpuAllocator allocator_;
+
+private:
+    ObjectPool(const ObjectPool&) = delete;
+    ObjectPool& operator=(const ObjectPool&) = delete;
 };
 
 }} // namespace ppl::common

@@ -62,6 +62,10 @@ private:
     std::map<void*, uint64_t> addr2bytes_;
     std::map<uint64_t, std::set<void*>> bytes2addr_;
     std::vector<void*> blocks_;
+
+private:
+    CompactMemoryManager(const CompactMemoryManager&) = delete;
+    CompactMemoryManager& operator=(const CompactMemoryManager&) = delete;
 };
 
 }} // namespace ppl::common
