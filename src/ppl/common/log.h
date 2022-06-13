@@ -68,11 +68,13 @@ public:
     LogMessage& operator<<(int64_t i64);
     LogMessage& operator<<(uint64_t u64);
 
+#if !defined(PPLCOMMON_USE_ARMV7)
 #if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
     LogMessage& operator<<(size_t s);
 #elif !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__)
     LogMessage& operator<<(long long ll);
     LogMessage& operator<<(unsigned long long ull);
+#endif
 #endif
 
     LogMessage& operator<<(const char*);

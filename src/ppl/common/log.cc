@@ -102,7 +102,7 @@ DEF_READ_OPERATOR_FUNC(uint32_t, "%u");
 DEF_READ_OPERATOR_FUNC(int64_t, "%lld");
 DEF_READ_OPERATOR_FUNC(uint64_t, "%llu");
 #else
-#ifndef __ANDROID__
+#if !defined(__ANDROID__) && !defined(PPLCOMMON_USE_ARMV7)
 DEF_READ_OPERATOR_FUNC(int64_t, "%ld");
 DEF_READ_OPERATOR_FUNC(uint64_t, "%lu");
 DEF_READ_OPERATOR_FUNC(long long, "%lld");
@@ -113,7 +113,7 @@ DEF_READ_OPERATOR_FUNC(uint64_t, "%llu");
 #endif
 #endif
 
-#if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
+#if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__)) && !defined(PPLCOMMON_USE_ARMV7)
 DEF_READ_OPERATOR_FUNC(size_t, "%lu");
 #endif
 

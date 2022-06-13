@@ -5,6 +5,16 @@ list(APPEND PPLCOMMON_ARM_SRC src/ppl/common/arm/fp16fp32_cvt.S)
 
 list(APPEND PPLCOMMON_DEFINITIONS PPLCOMMON_USE_ARM)
 
+if (PPLCOMMON_USE_AARCH64)
+    list(APPEND PPLCOMMON_DEFINITIONS PPLCOMMON_USE_AARCH64)
+endif()
+
+if (PPLCOMMON_USE_ARMV7)
+    set_property(SOURCE src/ppl/common/half.cc PROPERTY COMPILE_FLAGS "-march=armv7-a -mfpu=neon-fp16")
+    set_property(SOURCE src/ppl/common/arm/sysinfo.cc APPEND PROPERTY COMPILE_FLAGS "-march=armv7-a -mfpu=neon-fp16")
+    list(APPEND PPLCOMMON_DEFINITIONS PPLCOMMON_USE_ARMV7)
+endif()
+
 if (PPLCOMMON_USE_ARMV8_2)
     set_property(SOURCE src/ppl/common/half.cc PROPERTY COMPILE_FLAGS "-march=armv8.2-a+fp16")
     set_property(SOURCE src/ppl/common/arm/sysinfo.cc APPEND PROPERTY COMPILE_FLAGS "-march=armv8.2-a+fp16")
