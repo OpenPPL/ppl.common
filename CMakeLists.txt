@@ -14,6 +14,7 @@ option(PPLCOMMON_HOLD_DEPS "don't update dependencies" OFF)
 
 option(PPLCOMMON_USE_X86_64 "" OFF)
 option(PPLCOMMON_USE_AARCH64 "" OFF)
+option(PPLCOMMON_USE_ARMV7 "" OFF)
 option(PPLCOMMON_USE_CUDA "" OFF)
 
 # deprecated options
@@ -50,7 +51,7 @@ if(PPLCOMMON_USE_X86_64)
     include(cmake/x86.cmake)
 endif()
 
-if(PPLCOMMON_USE_AARCH64)
+if(PPLCOMMON_USE_AARCH64 OR PPLCOMMON_USE_ARMV7)
     include(cmake/arm.cmake)
 endif()
 
