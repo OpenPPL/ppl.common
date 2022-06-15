@@ -52,7 +52,7 @@ if(PPLCOMMON_USE_X86_64)
 endif()
 
 if(PPLCOMMON_USE_AARCH64 OR PPLCOMMON_USE_ARMV7)
-include(cmake/arm.cmake)
+    include(cmake/arm.cmake)
 endif()
 
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_unittest\\.cc$")
