@@ -19,6 +19,7 @@
 #define _ST_HPC_PPL_COMMON_LOG_H_
 
 #include "ppl/common/retcode.h"
+#include <ctime>
 #include <string>
 
 namespace ppl { namespace common {
