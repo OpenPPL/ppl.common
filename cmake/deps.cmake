@@ -13,7 +13,7 @@ endif()
 
 # --------------------------------------------------------------------------- #
 
-set(__HPCC_COMMIT__ 4fbf05b9f76d3c89245d086bae78c8b9e2841da4)
+set(__HPCC_COMMIT__ c042271a4438d6cd173eccb2f38d9057f5eafa92)
 
 if(PPLCOMMON_DEP_HPCC_PKG)
     FetchContent_Declare(hpcc
@@ -72,7 +72,7 @@ unset(__PYBIND11_TAG__)
 set(LUACPP_INSTALL OFF CACHE BOOL "")
 set(LUACPP_BUILD_TESTS OFF CACHE BOOL "")
 
-set(__LUACPP_COMMIT__ 09070faa6de6cd5dbb3a247d66667d369f89f3c8)
+set(__LUACPP_COMMIT__ f381a4702017b61ee9662ae9fa7bceec8b5c7b32)
 
 if(PPLCOMMON_DEP_LUACPP_PKG)
     hpcc_declare_pkg_dep(luacpp
@@ -90,8 +90,8 @@ unset(__LUACPP_COMMIT__)
 
 # --------------------------------------------------------------------------- #
 
+set(BUILD_GMOCK OFF CACHE BOOL "")
 Set(INSTALL_GTEST OFF CACHE BOOL "")
-set(BUILD_SHARED_LIBS OFF CACHE BOOL "")
 
 set(__GOOGLETEST_TAG__ release-1.10.0)
 
