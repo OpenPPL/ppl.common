@@ -10,8 +10,8 @@ if (PPLCOMMON_USE_AARCH64)
 endif()
 
 if (PPLCOMMON_USE_ARMV7)
-    set_property(SOURCE src/ppl/common/half.cc PROPERTY COMPILE_FLAGS "-march=armv7-a -mfpu=neon-fp16")
-    set_property(SOURCE src/ppl/common/arm/sysinfo.cc APPEND PROPERTY COMPILE_FLAGS "-march=armv7-a -mfpu=neon-fp16")
+    set_property(SOURCE src/ppl/common/half.cc PROPERTY COMPILE_FLAGS "-mfpu=neon-fp16")
+    set_property(SOURCE src/ppl/common/arm/sysinfo.cc APPEND PROPERTY COMPILE_FLAGS " -mfpu=neon-fp16")
     list(APPEND PPLCOMMON_DEFINITIONS PPLCOMMON_USE_ARMV7)
 endif()
 
