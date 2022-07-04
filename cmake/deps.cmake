@@ -13,7 +13,7 @@ endif()
 
 # --------------------------------------------------------------------------- #
 
-set(__HPCC_COMMIT__ 635d33f4a911af2cac17f0542fe63318ab2e3dd1)
+set(__HPCC_COMMIT__ 0d4b0965108af80da66d2bdc57d54662c2e9d378)
 
 if(PPLCOMMON_DEP_HPCC_PKG)
     FetchContent_Declare(hpcc
