@@ -66,11 +66,6 @@ target_include_directories(pplcommon_static PUBLIC ${PPLCOMMON_INCLUDES})
 target_compile_definitions(pplcommon_static PUBLIC ${PPLCOMMON_DEFINITIONS})
 target_compile_features(pplcommon_static PUBLIC cxx_std_11)
 
-if(CMAKE_COMPILER_IS_GNUCC)
-    # requires a virtual destructor when having virtual functions, though it is not necessary for all cases
-    target_compile_options(pplcommon_static PRIVATE -Werror=non-virtual-dtor)
-endif()
-
 if(PPLCOMMON_INSTALL)
     include(cmake/install.cmake)
 endif()
