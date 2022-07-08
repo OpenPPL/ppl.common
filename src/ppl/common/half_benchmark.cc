@@ -17,14 +17,10 @@
 
 #include "ppl/common/half.h"
 #include <benchmark/benchmark.h>
-#include <string.h>
-#include <iostream>
 
 static void BM_fp32tofp16(benchmark::State& state) {
     float* f32 = new float[state.range(0)];
     ppl::common::float16_t* f16 = new ppl::common::float16_t[state.range(0)];
-    memset(f32, 0, 4 * state.range(0));
-    memset(f16, 0, 2 * state.range(0));
     for (auto _ : state) {
         ppl::common::ConvertFp32ToFp16(f32, f16, state.range(0));
     }
@@ -37,8 +33,6 @@ static void BM_fp32tofp16(benchmark::State& state) {
 static void BM_fp16tofp32(benchmark::State& state) {
     float* f32 = new float[state.range(0)];
     ppl::common::float16_t* f16 = new ppl::common::float16_t[state.range(0)];
-    memset(f32, 0, 4 * state.range(0));
-    memset(f16, 0, 2 * state.range(0));
     for (auto _ : state) {
         ppl::common::ConvertFp16ToFp32(f16, f32, state.range(0));
     }
@@ -54,8 +48,6 @@ BENCHMARK(BM_fp16tofp32)->Arg(1)->Arg(2)->Arg(3)->Arg(4)->Arg(5)->RangeMultiplie
 static void BM_fp32tofp16_single_soft(benchmark::State& state) {
     float* f32 = new float[state.range(0)];
     ppl::common::float16_t* f16 = new ppl::common::float16_t[state.range(0)];
-    memset(f32, 0, 4 * state.range(0));
-    memset(f16, 0, 2 * state.range(0));
 
     for (auto _ : state) {
         for (int i = 0; i < state.range(0); ++i) {
@@ -72,8 +64,6 @@ static void BM_fp32tofp16_single_soft(benchmark::State& state) {
 static void BM_fp16tofp32_single_soft(benchmark::State& state) {
     float* f32 = new float[state.range(0)];
     ppl::common::float16_t* f16 = new ppl::common::float16_t[state.range(0)];
-    memset(f32, 0, 4 * state.range(0));
-    memset(f16, 0, 2 * state.range(0));
 
     for (auto _ : state) {
         for (int i = 0; i < state.range(0); ++i) {
@@ -93,8 +83,6 @@ BENCHMARK(BM_fp16tofp32_single_soft)->Arg(1);
 static void BM_fp32tofp16_single(benchmark::State& state) {
     float* f32 = new float[state.range(0)];
     ppl::common::float16_t* f16 = new ppl::common::float16_t[state.range(0)];
-    memset(f32, 0, 4 * state.range(0));
-    memset(f16, 0, 2 * state.range(0));
 
     for (auto _ : state) {
         for (int i = 0; i < state.range(0); ++i) {
@@ -111,8 +99,6 @@ static void BM_fp32tofp16_single(benchmark::State& state) {
 static void BM_fp16tofp32_single(benchmark::State& state) {
     float* f32 = new float[state.range(0)];
     ppl::common::float16_t* f16 = new ppl::common::float16_t[state.range(0)];
-    memset(f32, 0, 4 * state.range(0));
-    memset(f16, 0, 2 * state.range(0));
 
     for (auto _ : state) {
         for (int i = 0; i < state.range(0); ++i) {
