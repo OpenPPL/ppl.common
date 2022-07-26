@@ -63,32 +63,6 @@ static inline uint64_t Align(uint64_t x, uint64_t n) {
     return (x + n - 1) & (~(n - 1));
 }
 
-RetCode CompactMemoryManager::Defragment() {
-    if (blocks_.size() <= 1) {
-        return RC_SUCCESS;
-    }
-
-    return Reset(allocated_bytes_);
-}
-
-RetCode CompactMemoryManager::Reset(uint64_t bytes) {
-    Clear();
-    if (bytes == 0) {
-        return RC_SUCCESS;
-    }
-
-    bytes = Align(bytes, block_bytes_);
-    auto addr = allocator_->Alloc(bytes);
-    if (!addr) {
-        return RC_OUT_OF_MEMORY;
-    }
-
-    allocated_bytes_ = bytes;
-    AddFreeBlock(addr, bytes, &bytes2addr_, &addr2bytes_);
-    blocks_.push_back(addr);
-    return RC_SUCCESS;
-}
-
 void* CompactMemoryManager::Alloc(uint64_t bytes_needed) {
     // find a best-fit bytes block in free blocks
     auto b2a_iter = bytes2addr_.lower_bound(bytes_needed);

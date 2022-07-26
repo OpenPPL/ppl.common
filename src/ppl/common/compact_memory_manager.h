@@ -35,19 +35,6 @@ public:
     void* Alloc(uint64_t bytes);
     void Free(void* addr, uint64_t bytes);
 
-    /**
-       @brief replaces all blocks with a new single block.
-       @note make sure that this manager is not used when calling Defragment().
-    */
-    ppl::common::RetCode Defragment();
-
-    /**
-       @brief frees all blocks and reserve a new single block with size `bytes`.
-       @note make sure that this manager is not used when calling `Reset()`.
-       @param reserved_bytes if it is 0, all blocks are freed.
-    */
-    ppl::common::RetCode Reset(uint64_t reserved_bytes = 0);
-
     uint64_t GetAllocatedBytes() const {
         return allocated_bytes_;
     }
