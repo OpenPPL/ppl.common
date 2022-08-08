@@ -93,6 +93,33 @@ static void TestISASupportARMV8_2() {
 }
 #endif
 
+#if defined(__aarch64__) && defined(PPLCOMMON_USE_ARMV8_2_BF16)
+static void TestISASupportARMV8_2_BF16() {
+    asm volatile(
+        "bfmmla  v2.4s,     v0.8h,      v1.8h       \r\n"
+        "bfdot   v2.4s,     v0.8h,      v1.8h       \r\n"
+        "bfcvtn  v0.4h,     v1.4s                   \r\n"
+        "bfcvtn2 v0.8h,     v1.4s                   \r\n"
+        :
+        :
+        :"memory", "cc", "v0", "v1", "v2"
+    );
+}
+#endif
+
+#if defined(__aarch64__) && defined(PPLCOMMON_USE_ARMV8_2_I8MM)
+static void TestISASupportARMV8_2_I8MM() {
+    asm volatile(
+        "smmla   v2.4s,     v0.16b,     v0.16b      \r\n"
+        "ummla   v2.4s,     v0.16b,     v0.16b      \r\n"
+        "usmmla  v2.4s,     v0.16b,     v0.16b      \r\n"
+        :
+        :
+        :"memory", "cc", "v0", "v1", "v2"
+    );
+}
+#endif
+
 static void GetCPUISAByRun(CpuInfo* info) {
     info->isa = 0;
 #ifdef __aarch64__
@@ -101,6 +128,16 @@ static void GetCPUISAByRun(CpuInfo* info) {
 #if defined(__aarch64__) && defined(PPLCOMMON_USE_ARMV8_2)
     if (0 == try_run(TestISASupportARMV8_2)) {
         info->isa |= ISA_ARMV8_2;
+    }
+#endif
+#if defined(__aarch64__) && defined(PPLCOMMON_USE_ARMV8_2_BF16)
+    if (0 == try_run(TestISASupportARMV8_2_BF16)) {
+        info->isa |= ISA_ARMV8_2_BF16;
+    }
+#endif
+#if defined(__aarch64__) && defined(PPLCOMMON_USE_ARMV8_2_I8MM)
+    if (0 == try_run(TestISASupportARMV8_2_I8MM)) {
+        info->isa |= ISA_ARMV8_2_I8MM;
     }
 #endif
 }

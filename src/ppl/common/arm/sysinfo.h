@@ -21,12 +21,16 @@
 namespace ppl { namespace common {
 
 enum {
+    // isa versions
     ISA_ARMV8 = 0x1,
     ISA_ARMV8_2 = 0x2,
     ISA_ARMV8_6 = 0x4,
     ISA_ARMV9 = 0x8,
+    // sub features
+    ISA_ARMV8_2_BF16 = (0x1 << 16),
+    ISA_ARMV8_2_I8MM = (0x2 << 16)
 };
 
-}}
+}} // namespace ppl::common
 
 #endif
