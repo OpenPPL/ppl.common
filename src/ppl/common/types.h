@@ -89,13 +89,14 @@ enum {
     DATAFORMAT_N8CX = 6,
     DATAFORMAT_N16CX = 7,
     DATAFORMAT_N32CX = 8,
+    DATAFORMAT_NHWC = 9,
     DATAFORMAT_MAX,
 };
 typedef uint32_t dataformat_t;
 
 static inline const char* GetDataFormatStr(dataformat_t df) {
     static const char* data_format_str[] = {
-        "UNKNOWN", "NDARRAY", "NHWC8", "NHWC16", "N2CX", "N4CX", "N8CX", "N16CX", "N32CX",
+        "UNKNOWN", "NDARRAY", "NHWC8", "NHWC16", "N2CX", "N4CX", "N8CX", "N16CX", "N32CX", "NHWC",
     };
 
     if (df >= DATAFORMAT_MAX) {
