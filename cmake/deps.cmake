@@ -13,7 +13,7 @@ endif()
 
 # --------------------------------------------------------------------------- #
 
-set(__HPCC_COMMIT__ e6e445437fba399cc86867536fdf4252bbefae61)
+set(__HPCC_COMMIT__ 4b2a9d55d1fdf459c2adf1ede038771aebef1b82)
 
 if(PPLCOMMON_DEP_HPCC_PKG)
     FetchContent_Declare(hpcc
@@ -69,7 +69,7 @@ unset(__PYBIND11_TAG__)
 set(LUACPP_INSTALL OFF CACHE BOOL "")
 set(LUACPP_BUILD_TESTS OFF CACHE BOOL "")
 
-set(__LUACPP_COMMIT__ f381a4702017b61ee9662ae9fa7bceec8b5c7b32)
+set(__LUACPP_COMMIT__ 066ab88d31dccdeb730919458caa4aa8985632d4)
 
 if(PPLCOMMON_DEP_LUACPP_PKG)
     hpcc_declare_pkg_dep(luacpp
