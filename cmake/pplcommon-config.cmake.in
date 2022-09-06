@@ -11,19 +11,11 @@ add_library(pplcommon_static STATIC IMPORTED)
 set(__PPLCOMMON_PACKAGE_ROOTDIR__ "${CMAKE_CURRENT_LIST_DIR}/../../..")
 
 set_target_properties(pplcommon_static PROPERTIES
-    INTERFACE_INCLUDE_DIRECTORIES "${__PPLCOMMON_PACKAGE_ROOTDIR__}/include")
+    IMPORTED_LOCATION "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/@__PPLCOMMON_LIB_NAME__@"
+    IMPORTED_LOCATION_DEBUG "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/@__PPLCOMMON_LIB_NAME__@"
+    IMPORTED_LOCATION_RELEASE "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/@__PPLCOMMON_LIB_NAME__@")
 
-if(MSVC)
-    set_target_properties(pplcommon_static PROPERTIES
-        IMPORTED_LOCATION "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/pplcommon_static.lib"
-        IMPORTED_LOCATION_DEBUG "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/pplcommon_static.lib"
-        IMPORTED_LOCATION_RELEASE "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/pplcommon_static.lib")
-else()
-    set_target_properties(pplcommon_static PROPERTIES
-        IMPORTED_LOCATION "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.a"
-        IMPORTED_LOCATION_DEBUG "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.a"
-        IMPORTED_LOCATION_RELEASE "${__PPLCOMMON_PACKAGE_ROOTDIR__}/lib/libpplcommon_static.a")
-endif()
+# --------------------------------------------------------------------------- #
 
 # exported definitions
 set(PPLCOMMON_INCLUDE_DIRS "${__PPLCOMMON_PACKAGE_ROOTDIR__}/include")
