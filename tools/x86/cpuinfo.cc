@@ -25,7 +25,7 @@ int main () {
     ppl::common::GetCPUInfoByRun(&info_run);
 
     LOG(INFO) << "Info From CPUID:";
-    LOG(INFO) << "Vendor: " << info_id.vendor_id;
+    LOG(INFO) << "Vendor: " << (const char*)info_id.vendor_id;
     LOG(INFO) << "VNNI  : " << (bool)(info_id.isa & ppl::common::ISA_X86_AVX512VNNI);
     LOG(INFO) << "AVX512: " << (bool)(info_id.isa & ppl::common::ISA_X86_AVX512);
     LOG(INFO) << "AVX2  : " << (bool)(info_id.isa & ppl::common::ISA_X86_AVX2);
@@ -37,7 +37,7 @@ int main () {
     LOG(INFO) << "L3 Cahce: " << info_id.l3_cache_size;
 
     LOG(INFO) << "Info From RUN:";
-    LOG(INFO) << "Vendor: " << info_run.vendor_id;
+    LOG(INFO) << "Vendor: " << (const char*)info_run.vendor_id;
     LOG(INFO) << "VNNI  : " << (bool)(info_run.isa & ppl::common::ISA_X86_AVX512VNNI);
     LOG(INFO) << "AVX512: " << (bool)(info_run.isa & ppl::common::ISA_X86_AVX512);
     LOG(INFO) << "AVX2  : " << (bool)(info_run.isa & ppl::common::ISA_X86_AVX2);

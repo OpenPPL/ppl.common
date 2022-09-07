@@ -35,8 +35,8 @@ static const char* g_log_level_str[] = {
     "DEBUG", "INFO", "WARNING", "ERROR", "FATAL",
 };
 
-LogMessage::LogMessage(uint32_t level, Logger* logger, const char* filename, int linenum)
-    : level_(level), logger_(logger), filename_(filename), linenum_(linenum) {
+LogMessage::LogMessage(uint32_t level, Logger* logger, const char* filename, uint32_t linenum)
+    : level_(level), linenum_(linenum), logger_(logger), filename_(filename) {
     content_.reserve(4096);
 }
 
@@ -88,48 +88,8 @@ LogMessage::~LogMessage() {
         return *this;                                \
     }
 
-DEF_READ_OPERATOR_FUNC(float, "%.6f");
-DEF_READ_OPERATOR_FUNC(double, "%.6lf");
-
-DEF_READ_OPERATOR_FUNC(int8_t, "%d");
-DEF_READ_OPERATOR_FUNC(uint8_t, "%u");
-DEF_READ_OPERATOR_FUNC(int16_t, "%d");
-DEF_READ_OPERATOR_FUNC(uint16_t, "%u");
-DEF_READ_OPERATOR_FUNC(int32_t, "%d");
-DEF_READ_OPERATOR_FUNC(uint32_t, "%u");
-
-#if defined(_MSC_VER) || defined(__APPLE__)
-DEF_READ_OPERATOR_FUNC(int64_t, "%lld");
-DEF_READ_OPERATOR_FUNC(uint64_t, "%llu");
-#else
-#if !defined(__ANDROID__) && !defined(PPLCOMMON_USE_ARMV7)
-DEF_READ_OPERATOR_FUNC(int64_t, "%ld");
-DEF_READ_OPERATOR_FUNC(uint64_t, "%lu");
-DEF_READ_OPERATOR_FUNC(long long, "%lld");
-DEF_READ_OPERATOR_FUNC(unsigned long long, "%llu");
-#else
-DEF_READ_OPERATOR_FUNC(int64_t, "%lld");
-DEF_READ_OPERATOR_FUNC(uint64_t, "%llu");
-#endif
-#endif
-
-#if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__)) && !defined(PPLCOMMON_USE_ARMV7)
-DEF_READ_OPERATOR_FUNC(size_t, "%lu");
-#endif
-
+DEF_READ_OPERATOR_FUNC(void*, "%p");
 DEF_READ_OPERATOR_FUNC(const void*, "%p");
-
-LogMessage& LogMessage::operator<<(const char* str) {
-    if (str) {
-        content_.append(str);
-    }
-    return *this;
-}
-
-LogMessage& LogMessage::operator<<(const string& str) {
-    content_.append(str);
-    return *this;
-}
 
 /* -------------------------------------------------------------------------- */
 

@@ -21,6 +21,7 @@
 #include "ppl/common/retcode.h"
 #include <ctime>
 #include <string>
+#include <type_traits> // static_assert
 
 namespace ppl { namespace common {
 
@@ -54,40 +55,41 @@ private:
 
 class LogMessage final {
 public:
-    LogMessage(uint32_t, Logger*, const char* filename, int linenum);
+    LogMessage(uint32_t, Logger*, const char* filename, uint32_t linenum);
     ~LogMessage();
 
-    LogMessage& operator<<(float f);
-    LogMessage& operator<<(double d);
+    template <typename T>
+    LogMessage& operator<<(const T& value) {
+        static_assert(std::is_floating_point<T>::value || std::is_integral<T>::value, "is not a number type.");
+        content_.append(std::to_string(value));
+        return *this;
+    }
 
-    LogMessage& operator<<(int8_t i8);
-    LogMessage& operator<<(uint8_t u8);
-    LogMessage& operator<<(int16_t i16);
-    LogMessage& operator<<(uint16_t u16);
-    LogMessage& operator<<(int32_t i32);
-    LogMessage& operator<<(uint32_t u32);
-    LogMessage& operator<<(int64_t i64);
-    LogMessage& operator<<(uint64_t u64);
+    LogMessage& operator<<(const char* str) {
+        if (str) {
+            content_.append(str);
+        }
+        return *this;
+    }
+    LogMessage& operator<<(char* str) {
+        if (str) {
+            content_.append(str);
+        }
+        return *this;
+    }
+    LogMessage& operator<<(const std::string& str) {
+        content_.append(str);
+        return *this;
+    }
 
-#if !defined(PPLCOMMON_USE_ARMV7)
-#if defined(__APPLE__) && (defined(__GNUC__) || defined(__xlC__) || defined(__xlc__))
-    LogMessage& operator<<(size_t s);
-#elif !defined(_WIN32) && !defined(_WIN64) && !defined(__ANDROID__)
-    LogMessage& operator<<(long long ll);
-    LogMessage& operator<<(unsigned long long ull);
-#endif
-#endif
-
-    LogMessage& operator<<(const char*);
-    LogMessage& operator<<(const std::string&);
-
+    LogMessage& operator<<(void* p);
     LogMessage& operator<<(const void* p);
 
 private:
     uint32_t level_;
+    uint32_t linenum_;
     Logger* logger_;
     const char* filename_;
-    int linenum_;
     std::string content_;
 };
 

@@ -78,11 +78,4 @@ TEST(CompactMemoryManagerTest, reset) {
 
     mgr.Free(ret1, alloc_size);
     mgr.Free(ret2, alloc_size);
-
-    EXPECT_EQ(RC_SUCCESS, mgr.Reset(block_bytes * 3));
-    alloc_size = block_bytes * 3;
-    auto ret = mgr.Alloc(alloc_size);
-    EXPECT_NE(nullptr, ret);
-    EXPECT_EQ(block_bytes * 3, mgr.GetAllocatedBytes());
-    mgr.Free(ret, alloc_size);
 }
