@@ -69,14 +69,14 @@ unset(__PYBIND11_TAG__)
 set(LUACPP_INSTALL OFF CACHE BOOL "")
 set(LUACPP_BUILD_TESTS OFF CACHE BOOL "")
 
-set(__LUACPP_COMMIT__ 4b2a9d55d1fdf459c2adf1ede038771aebef1b82)
+set(__LUACPP_COMMIT__ d4e60a321a19a05a34bd15d3d508647f394007f3)
 
 if(PPLCOMMON_DEP_LUACPP_PKG)
     hpcc_declare_pkg_dep(luacpp
         ${PPLCOMMON_DEP_LUACPP_PKG})
 else()
     if(NOT PPLCOMMON_DEP_LUACPP_GIT)
-        set(PPLCOMMON_DEP_LUACPP_GIT "https://github.com/ouonline/lua-cpp.git")
+        set(PPLCOMMON_DEP_LUACPP_GIT "https://github.com/ouonline/luacpp.git")
     endif()
     hpcc_declare_git_dep(luacpp
         ${PPLCOMMON_DEP_LUACPP_GIT}
