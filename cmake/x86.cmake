@@ -22,7 +22,7 @@ endif()
 
 # ----- installation ----- #
 
-file(GLOB PPLCOMMON_X86_HEADERS
-    src/ppl/common/x86/*.h)
-install(FILES ${PPLCOMMON_X86_HEADERS}
-    DESTINATION include/ppl/common/x86)
+if(PPLCOMMON_INSTALL)
+    file(GLOB PPLCOMMON_X86_HEADERS src/ppl/common/x86/*.h)
+    install(FILES ${PPLCOMMON_X86_HEADERS} DESTINATION include/ppl/common/x86)
+endif()

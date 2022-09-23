@@ -43,7 +43,7 @@ list(APPEND PPLCOMMON_SRC ${PPLCOMMON_ARM_SRC})
 
 # ----- installation ----- #
 
-file(GLOB PPLCOMMON_ARM_HEADERS
-    src/ppl/common/arm/*.h)
-install(FILES ${PPLCOMMON_ARM_HEADERS}
-    DESTINATION include/ppl/common/arm)
+if(PPLCOMMON_INSTALL)
+    file(GLOB PPLCOMMON_ARM_HEADERS src/ppl/common/arm/*.h)
+    install(FILES ${PPLCOMMON_ARM_HEADERS} DESTINATION include/ppl/common/arm)
+endif()
