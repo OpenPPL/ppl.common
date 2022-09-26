@@ -16,15 +16,16 @@ option(PPLCOMMON_USE_X86_64 "" OFF)
 option(PPLCOMMON_USE_AARCH64 "" OFF)
 option(PPLCOMMON_USE_ARMV7 "" OFF)
 option(PPLCOMMON_USE_CUDA "" OFF)
+option(PPLCOMMON_USE_OPENCL "" OFF)
 
 # deprecated options
-if(HPCC_USE_X86_64 AND NOT PPLCOMMON_USE_X86_64)
+if(HPCC_USE_X86_64)
     message(FATAL_ERROR "`HPCC_USE_X86_64` is deprecated. use `PPLCOMMON_USE_X86_64` instead.")
 endif()
-if(HPCC_USE_AARCH64 AND NOT PPLCOMMON_USE_AARCH64)
+if(HPCC_USE_AARCH64)
     message(FATAL_ERROR "`HPCC_USE_AARCH64` is deprecated. use `PPLCOMMON_USE_AARCH64` instead.")
 endif()
-if(HPCC_USE_CUDA AND NOT PPLCOMMON_USE_CUDA)
+if(HPCC_USE_CUDA)
     message(FATAL_ERROR "`HPCC_USE_CUDA` is deprecated. use `PPLCOMMON_USE_CUDA` instead.")
 endif()
 
@@ -53,6 +54,10 @@ endif()
 
 if(PPLCOMMON_USE_AARCH64 OR PPLCOMMON_USE_ARMV7)
     include(cmake/arm.cmake)
+endif()
+
+if(PPLCOMMON_USE_OPENCL)
+    include(cmake/ocl.cmake)
 endif()
 
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_unittest\\.cc$")
