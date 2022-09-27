@@ -19,7 +19,7 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-bool compileOclKernels(FrameChain& frame_chain, 
+bool compileOclKernels(FrameChain& frame_chain,
                        const char* build_options) {
     bool succeeded;
     succeeded = frame_chain.queryContext();
@@ -29,10 +29,10 @@ bool compileOclKernels(FrameChain& frame_chain,
 
     cl_int error_code;
     cl_program program;
-    program = clCreateProgramWithSource(frame_chain.getContext(), 1, 
+    program = clCreateProgramWithSource(frame_chain.getContext(), 1,
                                         &strings, &lengths, &error_code);
     if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: " 
+        LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: "
                    << error_code;
         return false;
     }
@@ -42,10 +42,10 @@ bool compileOclKernels(FrameChain& frame_chain,
     if (!succeeded) return false;
     cl_device_id device_id = frame_chain.getDeviceId();
 
-    error_code = clBuildProgram(program, 1, &device_id, build_options, nullptr, 
+    error_code = clBuildProgram(program, 1, &device_id, build_options, nullptr,
                                  nullptr);
     if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clBuildProgram() failed with code: " 
+        LOG(ERROR) << "Call clBuildProgram() failed with code: "
                    << error_code;
         return false;
     }
@@ -59,11 +59,11 @@ bool compileOclKernels(FrameChain& frame_chain,
     if (error_code != CL_SUCCESS) {                                            \
         LOG(ERROR) << "Call clGetEventProfilingInfo() failed with code: "      \
                    << error_code;                                              \
-    } 
+    }
 
-bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name, 
-                      const cl_kernel& kernel, cl_uint work_dims, 
-                      const size_t* global_work_size,  
+bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
+                      const cl_kernel& kernel, cl_uint work_dims,
+                      const size_t* global_work_size,
                       const size_t* local_work_size) {
     frame_chain.queryProfiling();
     bool profiling = frame_chain.isProfiling();
@@ -71,14 +71,14 @@ bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
     cl_int error_code;
     cl_event event;
     if (profiling) {
-        error_code = clEnqueueNDRangeKernel(frame_chain.getQueue(), kernel, 
-                         work_dims, nullptr, global_work_size, local_work_size, 
+        error_code = clEnqueueNDRangeKernel(frame_chain.getQueue(), kernel,
+                         work_dims, nullptr, global_work_size, local_work_size,
                          0, nullptr, &event);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: " 
+            LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: "
                        << error_code;
             return false;
-        } 
+        }
 
         cl_ulong enqueue = 0;
         cl_ulong submit = 0;
@@ -93,26 +93,26 @@ bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
         PROFILE_INFO(CL_PROFILING_COMMAND_END, end);
         PROFILE_INFO(CL_PROFILING_COMMAND_COMPLETE, complete);
 
-        time = end - start; 
-        LOG(INFO) << "Execution time of " << kernel_name << ": " << time 
+        time = end - start;
+        LOG(INFO) << "Execution time of " << kernel_name << ": " << time
                   << " ns.";
 
         error_code = clReleaseEvent(event);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clReleaseEvent() failed with code: " 
+            LOG(ERROR) << "Call clReleaseEvent() failed with code: "
                        << error_code;
             return false;
-        }         
+        }
     }
     else {
-        error_code = clEnqueueNDRangeKernel(frame_chain.getQueue(), kernel, 
-                         work_dims, nullptr, global_work_size, local_work_size, 
+        error_code = clEnqueueNDRangeKernel(frame_chain.getQueue(), kernel,
+                         work_dims, nullptr, global_work_size, local_work_size,
                          0, nullptr, nullptr);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: " 
+            LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: "
                     << error_code;
             return false;
-        }        
+        }
     }
 
     return true;

@@ -41,34 +41,14 @@ class FrameChain {
     bool queryDevice();
     bool queryContext();
     bool queryProfiling();
-    
-    char* getCodeString() const {
-      return source_string_;
-    }
 
-    cl_platform_id getPlatformId() const {
-        return platform_id_;
-    }
-
-    cl_device_id getDeviceId() const {
-        return device_id_;
-    }
-
-    cl_context getContext() const {
-        return context_;
-    }
-
-    cl_command_queue getQueue() const {
-        return queue_;
-    }
-
-    cl_program getProgram() const {
-        return program_;
-    }
-
-    bool isProfiling() const {
-        return profiling_;
-    }
+    char* getCodeString() const { return source_string_; }
+    cl_platform_id getPlatformId() const { return platform_id_; }
+    cl_device_id getDeviceId() const { return device_id_; }
+    cl_context getContext() const { return context_; }
+    cl_command_queue getQueue() const { return queue_; }
+    cl_program getProgram() const { return program_; }
+    bool isProfiling() const { return profiling_; }
 
   private:
     char* source_string_;

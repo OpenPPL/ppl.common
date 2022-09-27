@@ -18,7 +18,7 @@
 #ifndef _ST_HPC_PPL_COMMON_OCL_GPU_INFO_H_
 #define _ST_HPC_PPL_COMMON_OCL_GPU_INFO_H_
 
-#include "device.h"
+#include "ppl/common/ocl/device.h"
 
 namespace ppl { namespace common { namespace ocl {
 
@@ -28,6 +28,8 @@ class OclGpuInfo : public Device {
     ~OclGpuInfo() {}
 
     void showGpuInformation(int platform_index, int device_index);
+};
+
 }}}
 
 #endif

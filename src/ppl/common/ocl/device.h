@@ -18,31 +18,30 @@
 #ifndef _ST_HPC_PPL_COMMON_OCL_DEVICE_H_
 #define _ST_HPC_PPL_COMMON_OCL_DEVICE_H_
 
-#include <string>
 #include <vector>
+#include <string>
 
 #include "CL/cl.h"
 
 namespace ppl { namespace common { namespace ocl {
 
-#define MAX_ENTRIES  64
-#define PARAM_SIZE0  32
-#define PARAM_SIZE1  1024
+#define PARAM_SIZE 64
 
 enum GpuTypes {
     ADRENO_GPU,
     MALI_GPU,
-    // IMAGINATION_GPU,
-    // INTEL_GPU,
-    // NVIDIA_GPU,
-    // AMD_GPU,
+    IMAGINATION_GPU,
+    INTEL_GPU,
+    NVIDIA_GPU,
+    AMD_GPU,
     OTHER_GPU,
+    INVALID_GPU,
 };
 
 class Device {
   public:
-    Device() {}
-    ~Device() {}
+    Device();
+    ~Device();
 
     bool detectPlatforms();
     int getPlatformNum() const;
@@ -60,7 +59,7 @@ class Device {
     bool getDeviceThoroughInfos(const cl_device_id& device_id);
     bool getDeviceThoroughInfos();
 
-    GpuTypes checkOpenCLType(const cl_device_id& device_id);
+    GpuTypes checkGpuType(const cl_device_id& device_id);
     int checkOpenCLVersion(const cl_device_id& device_id);
 
     GpuTypes getGpuType() const { return gpu_type_; }
@@ -68,50 +67,51 @@ class Device {
     cl_uint getCUNum() const { return compute_units_; }
     cl_uint getMaxWorkDims() const { return max_work_dim_; }
     size_t getMaxWorkItemsInGroup() const { return max_items_in_group_; }
-    cl_uint3 getMaxItemsPerGroupDim() const { return max_group_items_per_dim_; }
+    std::vector<size_t> getMaxItemsPerGroupDim() const { 
+        return max_group_items_per_dim_; 
+    }
     cl_ulong getGlobalMemSize() const { return global_mem_size_; }
 
   private:
     bool queryPlatformInfo(const cl_platform_id& platform_id, 
-                           cl_platform_info param_name, size_t value_size, 
+                           cl_platform_info param_name,  
                            std::string& param_value);
     bool queryDeviceInfo(const cl_device_id& device_id, 
-                         cl_device_info param_name, size_t value_size,
-                         std::vector<unsigned char>& param_value);
+                         cl_device_info param_name, std::string& param_value, 
+                         bool scaling);
 
   protected:
-    bool platform_detected_ = false;
-    bool device_detected_ = false;
-    int platform_id_ = 0;
-    int device_id_ = 0;
+    bool platform_detected_;
+    bool device_detected_;
+    int platform_index_;
+    int device_index_;
 
     GpuTypes gpu_type_;
     int opencl_version_;
 
-    std::vector<cl_platform_id> platform_ids_(MAX_ENTRIES);
-    std::vector<cl_device_id> device_ids_(MAX_ENTRIES);
-    std::string platform_name_(PARAM_SIZE0);
-    std::string platform_vendor_(PARAM_SIZE0);
-    std::string platform_profile_(PARAM_SIZE0);
-    std::string platform_version_(PARAM_SIZE0);
-    std::string platform_extensions_(PARAM_SIZE1);
+    std::vector<cl_platform_id> platform_ids_;
+    std::vector<cl_device_id> device_ids_;
+    std::string platform_name_;
+    std::string platform_vendor_;
+    std::string platform_profile_;
+    std::string platform_version_;
+    std::string platform_extensions_;
 
-    std::string device_name_(PARAM_SIZE0);
-    std::string device_vendor_(PARAM_SIZE0);
-    std::string device_profile_(PARAM_SIZE0);
-    std::string device_version_(PARAM_SIZE0);
-    std::string driver_version_(PARAM_SIZE0);
-    std::string device_opencl_c_version_(PARAM_SIZE0); 
-    std::string device_extensions_(PARAM_SIZE1);
+    std::string device_name_;
+    std::string device_vendor_;
+    std::string device_profile_;
+    std::string device_version_;
+    std::string driver_version_;
+    std::string device_opencl_c_version_; 
+    std::string device_extensions_;
     
-    std::string device_il_version_(PARAM_SIZE0);
-    std::string built_in_kernels_(PARAM_SIZE1);
+    // std::string device_il_version_;
+    std::string built_in_kernels_;
 
     cl_uint compute_units_;
     cl_uint max_work_dim_;
     size_t max_items_in_group_;
-    // size_t max_group_items_per_dim_[3];
-    cl_uint3 max_group_items_per_dim_;
+    std::vector<size_t> max_group_items_per_dim_;
 
     cl_int native_vector_width_char_;
     cl_int native_vector_width_short_;
