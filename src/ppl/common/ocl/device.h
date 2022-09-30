@@ -67,17 +67,17 @@ class Device {
     cl_uint getCUNum() const { return compute_units_; }
     cl_uint getMaxWorkDims() const { return max_work_dim_; }
     size_t getMaxWorkItemsInGroup() const { return max_items_in_group_; }
-    std::vector<size_t> getMaxItemsPerGroupDim() const { 
-        return max_group_items_per_dim_; 
+    std::vector<size_t> getMaxItemsPerGroupDim() const {
+        return max_group_items_per_dim_;
     }
     cl_ulong getGlobalMemSize() const { return global_mem_size_; }
 
   private:
-    bool queryPlatformInfo(const cl_platform_id& platform_id, 
-                           cl_platform_info param_name,  
+    bool queryPlatformInfo(const cl_platform_id& platform_id,
+                           cl_platform_info param_name,
                            std::string& param_value);
-    bool queryDeviceInfo(const cl_device_id& device_id, 
-                         cl_device_info param_name, std::string& param_value, 
+    bool queryDeviceInfo(const cl_device_id& device_id,
+                         cl_device_info param_name, std::string& param_value,
                          bool scaling);
 
   protected:
@@ -102,9 +102,9 @@ class Device {
     std::string device_profile_;
     std::string device_version_;
     std::string driver_version_;
-    std::string device_opencl_c_version_; 
+    std::string device_opencl_c_version_;
     std::string device_extensions_;
-    
+
     // std::string device_il_version_;
     std::string built_in_kernels_;
 
@@ -131,13 +131,13 @@ class Device {
 
     cl_device_fp_config single_fp_config_;
     cl_device_fp_config double_fp_config_;
-    
+
     cl_ulong max_mem_alloc_size_;
     cl_ulong global_mem_size_;
     cl_uint global_mem_cacheline_size_;
     cl_ulong global_mem_cache_size_;
     cl_device_mem_cache_type global_mem_cache_type_;
-    
+
     bool image_supported_;
     cl_uint max_read_image_args_;
     cl_uint max_write_image_args_;

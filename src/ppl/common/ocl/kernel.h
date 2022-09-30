@@ -28,6 +28,8 @@ namespace ppl { namespace common { namespace ocl {
 
 bool compileOclKernels(FrameChain& frame_chain,
                        const char* build_options = nullptr);
+bool validateNDrange(FrameChain& frame_chain, cl_uint work_dims,
+                     size_t* global_work_size, size_t* local_work_size);
 bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
                       const cl_kernel& kernel, cl_uint work_dims,
                       const size_t* global_work_size,
@@ -61,8 +63,8 @@ cl_int setKernelArg(const cl_kernel& kernel, const T& value,
 
 template <typename... Args>
 bool runOclKernel(FrameChain& frame_chain, const char* kernel_name,
-                  cl_uint work_dims, const size_t* global_work_size,
-                  const size_t* local_work_size, Args... args) {
+                  cl_uint work_dims, size_t* global_work_size,
+                  size_t* local_work_size, Args... args) {
     cl_int error_code;
     cl_kernel kernel;
     kernel = clCreateKernel(frame_chain.getProgram(), kernel_name, &error_code);
@@ -76,9 +78,15 @@ bool runOclKernel(FrameChain& frame_chain, const char* kernel_name,
         return false;
     }
 
-    bool succeeded = enqueueOclKernel(frame_chain, kernel_name, kernel,
-                                      work_dims, global_work_size,
-                                      local_work_size);
+    bool succeeded = validateNDrange(frame_chain, work_dims, global_work_size,
+                                     local_work_size);
+    if (!succeeded) {
+        LOG(ERROR) << "Invalid NDrange of work items.";
+        return false;
+    }
+
+    succeeded = enqueueOclKernel(frame_chain, kernel_name, kernel, work_dims,
+                                 global_work_size, local_work_size);
     if (!succeeded) {
         LOG(ERROR) << "Failed to enqueue kernel: " << kernel_name;
         return false;

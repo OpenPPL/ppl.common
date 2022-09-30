@@ -96,8 +96,7 @@ bool Device::detectDevices() {
                                 CL_DEVICE_TYPE_GPU, num_devices,
                                 device_ids_.data(), nullptr);
     if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clGetDeviceIDs() failed with code: "
-                    << error_code;
+        LOG(ERROR) << "Call clGetDeviceIDs() failed with code: " << error_code;
         return false;
     }
 

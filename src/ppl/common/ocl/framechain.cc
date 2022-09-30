@@ -55,7 +55,7 @@ void FrameChain::setFunctionName(const char* function_name) {
         LOG(ERROR) << "Invalid address of the function name.";
     }
 
-    strcpy(function_name_, function_name);
+    function_name_ = function_name;
 }
 
 void FrameChain::setProgram(const cl_program& program) {
@@ -111,6 +111,9 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
         if (profiling) {
             queue_properties = CL_QUEUE_PROFILING_ENABLE;
         }
+        else {
+            queue_properties = 0;
+        }
         queue_ = clCreateCommandQueue(context_, device_id_, queue_properties,
                                       &error_code);
         if (error_code != CL_SUCCESS) {
@@ -129,6 +132,9 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
         if (profiling) {
             queue_properties[1] =
                 (cl_queue_properties)CL_QUEUE_PROFILING_ENABLE;
+        }
+        else {
+            queue_properties[1] = (cl_queue_properties)0;
         }
         queue_properties[2] = 0;
         queue_ = clCreateCommandQueueWithProperties(context_, device_id_,
@@ -209,10 +215,10 @@ bool FrameChain::queryProfiling() {
     std::vector<cl_command_queue_properties> queue_properties(5);
     error_code = clGetCommandQueueInfo(queue_, CL_QUEUE_PROPERTIES,
                                        sizeof(cl_command_queue_properties),
-                                       &queue_properties, nullptr);
+                                       (void*)queue_properties.data(), nullptr);
     if (error_code != CL_SUCCESS) {
         LOG(ERROR) << "Call clGetCommandQueueInfo failed with code: "
-                << error_code;
+                   << error_code;
         return false;
     }
 

@@ -18,11 +18,9 @@
 #ifndef _ST_HPC_PPL_COMMON_OCL_FRAMECHAIN_H_
 #define _ST_HPC_PPL_COMMON_OCL_FRAMECHAIN_H_
 
-#include <string.h>
+#include <string>
 
 #include "CL/cl.h"
-
-#define NAME_LENGTH 32
 
 namespace ppl { namespace common { namespace ocl {
 
@@ -43,6 +41,7 @@ class FrameChain {
     bool queryProfiling();
 
     char* getCodeString() const { return source_string_; }
+    std::string getFunctionName() const { return function_name_; }
     cl_platform_id getPlatformId() const { return platform_id_; }
     cl_device_id getDeviceId() const { return device_id_; }
     cl_context getContext() const { return context_; }
@@ -52,7 +51,7 @@ class FrameChain {
 
   private:
     char* source_string_;
-    char function_name_[NAME_LENGTH];
+    std::string function_name_;
     cl_platform_id platform_id_;
     cl_device_id device_id_;
     cl_context context_;
