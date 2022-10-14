@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#if defined(PPLCOMMON_USE_X86) || defined(PPLCOMMON_USE_ARM)
+
 #include "ppl/common/half.h"
 #include <benchmark/benchmark.h>
 
@@ -114,3 +116,5 @@ static void BM_fp16tofp32_single(benchmark::State& state) {
 
 BENCHMARK(BM_fp32tofp16_single)->Arg(1);
 BENCHMARK(BM_fp16tofp32_single)->Arg(1);
+
+#endif

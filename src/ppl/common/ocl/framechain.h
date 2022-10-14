@@ -30,7 +30,7 @@ class FrameChain {
     FrameChain(const cl_command_queue& queue);
     ~FrameChain();
 
-    void setSource(char* source_string);
+    void setSource(const char* source_string);
     void setFunctionName(const char* function_name);
     void setProgram(const cl_program& program);
     void setProfiling(const bool profiling) {profiling_ = profiling;}

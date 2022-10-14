@@ -42,12 +42,12 @@ FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
 FrameChain::~FrameChain() {
 }
 
-void FrameChain::setSource(char* source_string) {
+void FrameChain::setSource(const char* source_string) {
     if (source_string == nullptr) {
         LOG(ERROR) << "Invalid address of the source string.";
     }
 
-    source_string_ = source_string;
+    source_string_ = (char*)source_string;
 }
 
 void FrameChain::setFunctionName(const char* function_name) {
