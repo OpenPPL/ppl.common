@@ -30,7 +30,7 @@ namespace ppl { namespace common { namespace ocl {
 enum GpuTypes {
     ADRENO_GPU,
     MALI_GPU,
-    IMAGINATION_GPU,
+    // IMAGINATION_GPU,
     INTEL_GPU,
     NVIDIA_GPU,
     AMD_GPU,

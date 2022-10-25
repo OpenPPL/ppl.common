@@ -31,8 +31,9 @@ class FrameChain {
     ~FrameChain();
 
     void setSource(const char* source_string);
-    void setFunctionName(const char* function_name);
-    void setProgram(const cl_program& program);
+    void setProjectName(const char* project_name);
+    void setProgram(const cl_program program);
+    void setCompileOptions(const char* options);
     void setProfiling(const bool profiling) {profiling_ = profiling;}
 
     bool createDefaultOclFrame(bool profiling);
@@ -40,23 +41,25 @@ class FrameChain {
     bool queryContext();
     bool queryProfiling();
 
-    char* getCodeString() const { return source_string_; }
-    std::string getFunctionName() const { return function_name_; }
     cl_platform_id getPlatformId() const { return platform_id_; }
     cl_device_id getDeviceId() const { return device_id_; }
     cl_context getContext() const { return context_; }
     cl_command_queue getQueue() const { return queue_; }
     cl_program getProgram() const { return program_; }
+    char* getCodeString() const { return source_string_; }
+    std::string getProjectName() const { return project_name_; }
+    std::string getCompileOptions() const { return compile_options_; }
     bool isProfiling() const { return profiling_; }
 
   private:
-    char* source_string_;
-    std::string function_name_;
     cl_platform_id platform_id_;
     cl_device_id device_id_;
     cl_context context_;
     cl_command_queue queue_;
     cl_program program_;
+    char* source_string_;
+    std::string project_name_;
+    std::string compile_options_;
     bool profiling_;
 };
 

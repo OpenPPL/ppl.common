@@ -18,7 +18,10 @@
 #include "kernel.h"
 
 #include <string.h>
+#include <string>
 #include <vector>
+
+#include <iostream>  // debug
 
 #include "device.h"
 
@@ -29,17 +32,18 @@ namespace ppl { namespace common { namespace ocl {
 #define SHIFT0 5
 #define SHIFT1 2
 
-bool compileOclKernels(FrameChain& frame_chain, const char* build_options) {
-    bool succeeded;
-    succeeded = frame_chain.queryContext();
+bool compileOclKernels(FrameChain& frame_chain) {
+    bool succeeded = frame_chain.queryContext();
     if (!succeeded) return false;
-    const char* strings = frame_chain.getCodeString();
-    const size_t lengths = strlen(strings);
+    cl_context context = frame_chain.getContext();
+
+    const char* source_str = frame_chain.getCodeString();
+    const size_t kernel_length = strlen(source_str);
 
     cl_int error_code;
     cl_program program;
-    program = clCreateProgramWithSource(frame_chain.getContext(), 1,
-                                        &strings, &lengths, &error_code);
+    program = clCreateProgramWithSource(context, 1, &source_str, &kernel_length,
+                                        &error_code);
     if (error_code != CL_SUCCESS) {
         LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: "
                    << error_code;
@@ -51,10 +55,9 @@ bool compileOclKernels(FrameChain& frame_chain, const char* build_options) {
     if (!succeeded) return false;
     cl_device_id device_id = frame_chain.getDeviceId();
 
-    // char options[32] = "-cl-std=CL1.2";
-    error_code = clBuildProgram(program, 1, &device_id, build_options, nullptr,
-    // error_code = clBuildProgram(program, 1, &device_id, options, nullptr,
-                                nullptr);
+    std::string build_options = frame_chain.getCompileOptions();
+    error_code = clBuildProgram(program, 1, &device_id, build_options.c_str(),
+                                nullptr, nullptr);
     if (error_code != CL_SUCCESS) {
         size_t log_length;
         cl_int code = clGetProgramBuildInfo(program, device_id,
@@ -62,6 +65,7 @@ bool compileOclKernels(FrameChain& frame_chain, const char* build_options) {
         if (code != CL_SUCCESS) {
             LOG(ERROR) << "Call clGetProgramBuildInfo() failed with code: "
                        << code;
+            return false;
         }
 
         std::string log_buffer((int)log_length, '0');
@@ -71,9 +75,10 @@ bool compileOclKernels(FrameChain& frame_chain, const char* build_options) {
         if (code != CL_SUCCESS) {
             LOG(ERROR) << "Call clGetProgramBuildInfo() failed with code: "
                        << code;
+            return false;
         }
-        LOG(ERROR) << "clBuildProgram() log: " << log_buffer;
         LOG(ERROR) << "Call clBuildProgram() failed with code: " << error_code;
+        LOG(ERROR) << "clBuildProgram() log: " << log_buffer;
 
         return false;
     }
@@ -83,8 +88,12 @@ bool compileOclKernels(FrameChain& frame_chain, const char* build_options) {
 
 bool validateNDrange(FrameChain& frame_chain, cl_uint work_dims,
                      size_t* global_work_size, size_t* local_work_size) {
+    bool succeeded = frame_chain.queryDevice();
+    if (!succeeded) return false;
+    cl_device_id device_id = frame_chain.getDeviceId();
+
     Device device;
-    device.getDeviceBasicInfos(frame_chain.getDeviceId());
+    device.getDeviceBasicInfos(device_id);  // optimize!!!!
     size_t max_work_dim = device.getMaxWorkDims();
     size_t max_items_in_group = device.getMaxWorkItemsInGroup();
     std::vector<size_t> max_group_items_per_dim =
@@ -164,7 +173,7 @@ bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
                       const cl_kernel& kernel, cl_uint work_dims,
                       const size_t* global_work_size,
                       const size_t* local_work_size) {
-    frame_chain.queryProfiling();
+    frame_chain.queryProfiling();  // optimize?
     bool profiling = frame_chain.isProfiling();
 
     cl_int error_code;

@@ -24,19 +24,36 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-FrameChain::FrameChain() : platform_id_(nullptr),
-        device_id_(nullptr), context_(nullptr), queue_(nullptr),
-        program_(nullptr), profiling_(false) {
+FrameChain::FrameChain() : platform_id_(nullptr), device_id_(nullptr),
+        context_(nullptr), queue_(nullptr), program_(nullptr),
+        source_string_(nullptr), profiling_(false) {
 }
 
 FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
         device_id_(nullptr), context_(nullptr), program_(nullptr),
-        profiling_(false) {
+        source_string_(nullptr), profiling_(false) {
     if (queue == nullptr) {
         LOG(ERROR) << "Invalid command queue.";
     }
 
     queue_ = queue;
+
+    cl_int error_code;
+    error_code = clGetCommandQueueInfo(queue_, CL_QUEUE_CONTEXT,
+                                       sizeof(cl_context), &context_,
+                                       nullptr);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clGetCommandQueueInfo failed with code: "
+                   << error_code;
+    }
+
+    error_code = clGetCommandQueueInfo(queue_, CL_QUEUE_DEVICE,
+                                       sizeof(cl_device_id), &device_id_,
+                                       nullptr);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clGetCommandQueueInfo failed with code: "
+                   << error_code;
+    }
 }
 
 FrameChain::~FrameChain() {
@@ -50,20 +67,27 @@ void FrameChain::setSource(const char* source_string) {
     source_string_ = (char*)source_string;
 }
 
-void FrameChain::setFunctionName(const char* function_name) {
-    if (function_name == nullptr) {
-        LOG(ERROR) << "Invalid address of the function name.";
+void FrameChain::setProjectName(const char* project_name) {
+    if (project_name == nullptr) {
+        LOG(ERROR) << "Invalid address of the project name.";
     }
 
-    function_name_ = function_name;
+    project_name_ = project_name;
 }
 
-void FrameChain::setProgram(const cl_program& program) {
+void FrameChain::setProgram(const cl_program program) {
     if (program == nullptr) {
         LOG(ERROR) << "Invalid OpenCL program.";
     }
 
     program_ = program;
+}
+
+// void FrameChain::setCompileStatus() {
+//     kernel_compiled_ = true;
+// }
+void FrameChain::setCompileOptions(const char* options) {
+    compile_options_ = options;
 }
 
 bool FrameChain::createDefaultOclFrame(bool profiling) {
