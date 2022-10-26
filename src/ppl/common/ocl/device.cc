@@ -22,7 +22,38 @@
 namespace ppl { namespace common { namespace ocl {
 
 Device::Device() : platform_detected_(false), device_detected_(false),
-    platform_index_(0), device_index_(0) {}
+        platform_index_(0), device_index_(0) {
+    bool succeeded = detectValidPlatformDevice();
+    if (!succeeded) return;
+
+    getDeviceBasicInfos();
+}
+
+Device::Device(int platform_index, int device_index) :
+        platform_detected_(false), device_detected_(false),
+        platform_index_(platform_index), device_index_(device_index) {
+    bool succeeded = detectPlatforms();
+    if (!succeeded) return;
+
+    int number = getPlatformNum();
+    if (number <= platform_index) {
+        LOG(ERROR) << "The platform index must less than the number of "
+                   << "platforms.";
+        return;
+    }
+
+    succeeded = detectDevices();
+    if (!succeeded) return;
+
+    number = getDeviceNum();
+    if (number <= device_index) {
+        LOG(ERROR) << "The device index must less than the number of "
+                   << "devices.";
+        return;
+    }
+
+    getDeviceBasicInfos();
+}
 
 Device::~Device() {}
 
@@ -118,12 +149,71 @@ void Device::setDeviceIndex(int index) {
     device_index_ = index;
 }
 
+bool Device::detectValidPlatformDevice() {
+    bool succeeded = detectPlatforms();
+    if (!succeeded) return false;
+
+    int platforms = getPlatformNum();
+    if (platforms <= 0) {
+        LOG(ERROR) << "There is no valid platform.";
+        return false;
+    }
+
+    for (int platform_index = 0; platform_index < platforms; platform_index++) {
+        setPlatformIndex(platform_index);
+        succeeded = detectDevices();
+        if (!succeeded) return false;
+
+        int devices = getDeviceNum();
+        if (devices == 0) continue;
+        for (int device_index = 0; device_index < devices; device_index++) {
+            cl_device_id device_id = device_ids_[device_index];
+            if (device_id != nullptr) {
+                platform_index_ = platform_index;
+                device_index_ = device_index;
+                return true;
+            }
+        }
+    }
+
+    LOG(ERROR) << "There is no valid platform and device.";
+    return false;
+}
+
+cl_platform_id Device::getPlatformId() {
+    if (platform_detected_) {
+        return platform_ids_[platform_index_];
+    }
+    else {
+        return nullptr;
+    }
+}
+
 cl_platform_id Device::getPlatformId(int index) {
-    return platform_ids_[index];
+    if (platform_detected_) {
+        return platform_ids_[index];
+    }
+    else {
+        return nullptr;
+    }
+}
+
+cl_device_id Device::getDeviceId() {
+    if (device_detected_) {
+        return device_ids_[device_index_];
+    }
+    else {
+        return nullptr;
+    }
 }
 
 cl_device_id Device::getDeviceId(int index) {
-    return device_ids_[index];
+    if (device_detected_) {
+        return device_ids_[index];
+    }
+    else {
+        return nullptr;
+    }
 }
 
 bool Device::queryPlatformInfo(const cl_platform_id& platform_id,
@@ -245,7 +335,7 @@ GpuTypes Device::checkGpuType(const cl_device_id& device_id) {
     bool succeeded = queryDeviceInfo(device_id, CL_DEVICE_VENDOR,
                                      device_vendor_, true);
     if (!succeeded) {
-        return OTHER_GPU;
+        return INVALID_GPU;
     }
     if (device_vendor_.find("QUALCOMM") != std::string::npos) {
         gpu_type_ = ADRENO_GPU;
@@ -561,6 +651,24 @@ bool Device::getDeviceThoroughInfos() {
     bool succeeded = getDeviceThoroughInfos(device_ids_[device_index_]);
 
     return succeeded;
+}
+
+static Device* shared_device;
+
+void createSharedDevice() {
+    static Device device;
+
+    shared_device = &device;
+}
+
+void createSharedDevice(int platform_index, int device_index) {
+    static Device device(platform_index, device_index);
+
+    shared_device = &device;
+}
+
+Device* getSharedDevice() {
+    return shared_device;
 }
 
 }}}

@@ -103,44 +103,26 @@ void FrameChain::setCompileOptions(const char* options) {
 
 bool FrameChain::createDefaultOclFrame(bool profiling) {
     cl_int error_code;
-    bool succeeded = false;
-    Device device;
-    device.detectPlatforms();
+    createSharedDevice();
+    Device* device = getSharedDevice();
+    platform_id_ = device->getPlatformId();
+    device_id_ = device->getDeviceId();
 
-    for (int index = 0; index < device.getPlatformNum(); index++) {
-        device.setPlatformIndex(index);
-        device.detectDevices();
-        if (device.getDeviceNum() == 0) {
-            continue;
-        }
-        cl_device_id device_id = device.getDeviceId(0);
-
-        std::vector<cl_context_properties> context_properties;
-        context_properties.resize(3);
-        context_properties[0] = CL_CONTEXT_PLATFORM;
-        context_properties[1] =
-                (cl_context_properties)device.getPlatformId(index);
-        context_properties[2] = 0;
-        context_ = clCreateContext(context_properties.data(), 1, &device_id,
-                                   nullptr, nullptr, &error_code);
-        if (error_code != CL_SUCCESS) {
-          LOG(ERROR) << "Call clCreateContext failed with code: " << error_code;
-          return false;
-        }
-
-        succeeded = true;
-        platform_id_ = device.getPlatformId(index);
-        device_id_ = device_id;
-        break;
-    }
-
-    if (succeeded == false) {
-        LOG(ERROR) << "No valid opencl platform and device is detected.";
+    std::vector<cl_context_properties> context_properties;
+    context_properties.resize(3);
+    context_properties[0] = CL_CONTEXT_PLATFORM;
+    context_properties[1] =
+            (cl_context_properties)device->getPlatformId();
+    context_properties[2] = 0;
+    context_ = clCreateContext(context_properties.data(), 1, &device_id_,
+                               nullptr, nullptr, &error_code);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clCreateContext failed with code: " << error_code;
         return false;
     }
 
     profiling_ = profiling;
-    int opencl_version = device.checkOpenCLVersion(device_id_);
+    int opencl_version = device->getOpenCLVersion();
     if (opencl_version < 200) {
         cl_command_queue_properties queue_properties;
         if (profiling) {
@@ -207,8 +189,8 @@ bool FrameChain::queryProfiling() {
         return false;
     }
 
-    Device device;
-    int opencl_version = device.checkOpenCLVersion(device_id_);
+    Device* device = getSharedDevice();
+    int opencl_version = device->getOpenCLVersion();
     if (opencl_version < 200) {
         if (queue_properties[0] == CL_QUEUE_PROFILING_ENABLE) {
             profiling_ = true;

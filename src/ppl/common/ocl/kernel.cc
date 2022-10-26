@@ -19,9 +19,8 @@
 
 #include <string.h>
 #include <string>
-#include <vector>
 
-#include <iostream>  // debug
+// #include <iostream>  // debug
 
 #include "device.h"
 
@@ -32,9 +31,59 @@ namespace ppl { namespace common { namespace ocl {
 #define SHIFT0 5
 #define SHIFT1 2
 
-bool compileOclKernels(FrameChain& frame_chain) {
-    cl_context context = frame_chain.getContext();
-    const char* source_str = frame_chain.getCodeString();
+void splitString(const std::string& str, const std::string& delimiter,
+                 std::vector<std::string >& segments) {
+    size_t last = 0;
+    size_t index = str.find_first_of(delimiter, last);
+    while (index != std::string::npos) {
+        segments.push_back(str.substr(last, index - last));
+        last = index + 1;
+        index = str.find_first_of(delimiter, last);
+    }
+
+    if (str.length() - last > 0) {
+        segments.push_back(str.substr(last));
+    }
+}
+
+bool getKernelNames(const cl_program program,
+                    std::vector<std::string>& kernel_names) {
+    cl_int error_code;
+    size_t returned_size;
+    error_code = clGetProgramInfo(program, CL_PROGRAM_KERNEL_NAMES, 0, nullptr,
+                                  &returned_size);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clGetProgramInfo() failed with code: "
+                   << error_code;
+        return false;
+    }
+
+    if (returned_size <= 0) {
+        LOG(ERROR) << "No kernel is detected by clGetProgramInfo().";
+        return false;
+    }
+
+    std::string param_value;
+    param_value.resize(returned_size - 1);
+    error_code = clGetProgramInfo(program, CL_PROGRAM_KERNEL_NAMES, returned_size,
+                                 (void*)param_value.data(), nullptr);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clGetProgramInfo() failed with code: "
+                   << error_code;
+        return false;
+    }
+
+    // LOG(INFO) << "In getKernelNames, kernels name: " << param_value;
+    // LOG(INFO) << "In getKernelNames, kernels size: " << param_value.size();
+    // LOG(INFO) << "In getKernelNames, kernels size: " << returned_size;
+    splitString(param_value, ";", kernel_names);
+
+    return true;
+}
+
+bool compileOclKernels(FrameChain* frame_chain) {
+    cl_context context = frame_chain->getContext();
+    const char* source_str = frame_chain->getCodeString();
     const size_t kernel_length = strlen(source_str);
 
     cl_int error_code;
@@ -46,10 +95,10 @@ bool compileOclKernels(FrameChain& frame_chain) {
                    << error_code;
         return false;
     }
-    frame_chain.setProgram(program);
+    frame_chain->setProgram(program);
 
-    cl_device_id device_id = frame_chain.getDeviceId();
-    std::string build_options = frame_chain.getCompileOptions();
+    cl_device_id device_id = frame_chain->getDeviceId();
+    std::string build_options = frame_chain->getCompileOptions();
     error_code = clBuildProgram(program, 1, &device_id, build_options.c_str(),
                                 nullptr, nullptr);
     if (error_code != CL_SUCCESS) {
@@ -80,17 +129,14 @@ bool compileOclKernels(FrameChain& frame_chain) {
     return true;
 }
 
-bool validateNDrange(FrameChain& frame_chain, cl_uint work_dims,
-                     size_t* global_work_size, size_t* local_work_size) {
-    cl_device_id device_id = frame_chain.getDeviceId();
-
-    Device device;
-    device.getDeviceBasicInfos(device_id);  // optimize!!!!
-    size_t max_work_dim = device.getMaxWorkDims();
-    size_t max_items_in_group = device.getMaxWorkItemsInGroup();
+bool validateNDrange(cl_uint work_dims, size_t* global_work_size,
+                     size_t* local_work_size) {
+    Device* device = getSharedDevice();
+    size_t max_work_dim = device->getMaxWorkDims();
+    size_t max_items_in_group = device->getMaxWorkItemsInGroup();
     std::vector<size_t> max_group_items_per_dim =
-        device.getMaxItemsPerGroupDim();
-    int opencl_version = device.getOpenCLVersion();
+        device->getMaxItemsPerGroupDim();
+    int opencl_version = device->getOpenCLVersion();
 
     if (work_dims < 1 || work_dims > max_work_dim) {
         LOG(ERROR) << "Invalid dimensions of work items: " << work_dims;
@@ -142,7 +188,7 @@ bool validateNDrange(FrameChain& frame_chain, cl_uint work_dims,
         }
     }
 
-    if (opencl_version < 200) {
+    if (opencl_version < 200 || device->getGpuType() == MALI_GPU) {
         for (i = 0; i < work_dims; i++) {
             global_work_size[i] = ((global_work_size[i] + local_work_size[i] -
                                    1) / local_work_size[i]) *
@@ -161,16 +207,16 @@ bool validateNDrange(FrameChain& frame_chain, cl_uint work_dims,
                    << error_code;                                              \
     }
 
-bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
+bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
                       const cl_kernel& kernel, cl_uint work_dims,
                       const size_t* global_work_size,
                       const size_t* local_work_size) {
-    bool profiling = frame_chain.isProfiling();
+    bool profiling = frame_chain->isProfiling();
 
     cl_int error_code;
     if (profiling) {
         cl_event event;
-        error_code = clEnqueueNDRangeKernel(frame_chain.getQueue(), kernel,
+        error_code = clEnqueueNDRangeKernel(frame_chain->getQueue(), kernel,
                          work_dims, nullptr, global_work_size, local_work_size,
                          0, nullptr, &event);
         if (error_code != CL_SUCCESS) {
@@ -190,16 +236,18 @@ bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
         cl_ulong submit = 0;
         cl_ulong start = 0;
         cl_ulong end = 0;
+#if CL_TARGET_OPENCL_VERSION >= 200
         cl_ulong complete = 0;
+#endif
         cl_ulong time = 0;
 
         PROFILE_INFO(CL_PROFILING_COMMAND_QUEUED, enqueue);
         PROFILE_INFO(CL_PROFILING_COMMAND_SUBMIT, submit);
         PROFILE_INFO(CL_PROFILING_COMMAND_START, start);
         PROFILE_INFO(CL_PROFILING_COMMAND_END, end);
-// #if CL_TARGET_OPENCL_VERSION >= 200
-//         PROFILE_INFO(CL_PROFILING_COMMAND_COMPLETE, complete);
-// #endif
+#if CL_TARGET_OPENCL_VERSION >= 200
+        PROFILE_INFO(CL_PROFILING_COMMAND_COMPLETE, complete);
+#endif
         time = end - start;
         LOG(INFO) << "Execution time of " << kernel_name << ": " << time
                   << " ns.";
@@ -212,7 +260,7 @@ bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
         }
     }
     else {
-        error_code = clEnqueueNDRangeKernel(frame_chain.getQueue(), kernel,
+        error_code = clEnqueueNDRangeKernel(frame_chain->getQueue(), kernel,
                          work_dims, nullptr, global_work_size, local_work_size,
                          0, nullptr, nullptr);
         if (error_code != CL_SUCCESS) {
@@ -221,6 +269,8 @@ bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
             return false;
         }
     }
+    // clFinish(frame_chain->getQueue());
+    // clFlush(frame_chain->getQueue());
 
     return true;
 }

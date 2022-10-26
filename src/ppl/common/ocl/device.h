@@ -30,7 +30,6 @@ namespace ppl { namespace common { namespace ocl {
 enum GpuTypes {
     ADRENO_GPU,
     MALI_GPU,
-    // IMAGINATION_GPU,
     INTEL_GPU,
     NVIDIA_GPU,
     AMD_GPU,
@@ -41,6 +40,7 @@ enum GpuTypes {
 class Device {
   public:
     Device();
+    Device(int platform_index, int device_index);
     ~Device();
 
     bool detectPlatforms();
@@ -49,8 +49,11 @@ class Device {
     bool detectDevices();
     int getDeviceNum() const;
     void setDeviceIndex(int index);
+    bool detectValidPlatformDevice();
 
+    cl_platform_id getPlatformId();
     cl_platform_id getPlatformId(int index);
+    cl_device_id getDeviceId();
     cl_device_id getDeviceId(int index);
 
     bool getPlatformInfos();
@@ -167,6 +170,10 @@ class Device {
     cl_command_queue_properties host_queue_properties_;
     cl_command_queue_properties device_queue_properties_;
 };
+
+void createSharedDevice();
+void createSharedDevice(int platform_index, int device_index);
+Device* getSharedDevice();
 
 }}}
 
