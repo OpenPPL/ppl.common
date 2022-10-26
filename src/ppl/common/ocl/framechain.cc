@@ -24,9 +24,10 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-FrameChain::FrameChain() : platform_id_(nullptr), device_id_(nullptr),
-        context_(nullptr), queue_(nullptr), program_(nullptr),
-        source_string_(nullptr), profiling_(false) {
+FrameChain::FrameChain(bool profiling) : platform_id_(nullptr),
+        device_id_(nullptr), context_(nullptr), queue_(nullptr),
+        program_(nullptr), source_string_(nullptr), profiling_(false) {
+    createDefaultOclFrame(profiling);
 }
 
 FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
@@ -34,9 +35,11 @@ FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
         source_string_(nullptr), profiling_(false) {
     if (queue == nullptr) {
         LOG(ERROR) << "Invalid command queue.";
+        return;
     }
 
     queue_ = queue;
+    queryProfiling();
 
     cl_int error_code;
     error_code = clGetCommandQueueInfo(queue_, CL_QUEUE_CONTEXT,
@@ -45,6 +48,7 @@ FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
     if (error_code != CL_SUCCESS) {
         LOG(ERROR) << "Call clGetCommandQueueInfo failed with code: "
                    << error_code;
+        return;
     }
 
     error_code = clGetCommandQueueInfo(queue_, CL_QUEUE_DEVICE,
@@ -53,10 +57,28 @@ FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
     if (error_code != CL_SUCCESS) {
         LOG(ERROR) << "Call clGetCommandQueueInfo failed with code: "
                    << error_code;
+        return;
+    }
+
+    error_code = clGetDeviceInfo(device_id_, CL_DEVICE_PLATFORM,
+                                 sizeof(cl_platform_id), &platform_id_,
+                                 nullptr);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clGetDeviceInfo() failed with code: "
+                   << error_code;
+        return;
     }
 }
 
 FrameChain::~FrameChain() {
+}
+
+void FrameChain::setProgram(const cl_program program) {
+    if (program == nullptr) {
+        LOG(ERROR) << "Invalid OpenCL program.";
+    }
+
+    program_ = program;
 }
 
 void FrameChain::setSource(const char* source_string) {
@@ -75,17 +97,6 @@ void FrameChain::setProjectName(const char* project_name) {
     project_name_ = project_name;
 }
 
-void FrameChain::setProgram(const cl_program program) {
-    if (program == nullptr) {
-        LOG(ERROR) << "Invalid OpenCL program.";
-    }
-
-    program_ = program;
-}
-
-// void FrameChain::setCompileStatus() {
-//     kernel_compiled_ = true;
-// }
 void FrameChain::setCompileOptions(const char* options) {
     compile_options_ = options;
 }
@@ -174,52 +185,6 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
     }
 }
 
-bool FrameChain::queryDevice() {
-    if (queue_ == nullptr) {
-        LOG(ERROR) << "The command queue is uninitialized.";
-        return false;
-    }
-
-    if (device_id_ != nullptr) {
-        return true;
-    }
-
-    cl_int error_code;
-    error_code = clGetCommandQueueInfo(queue_, CL_QUEUE_DEVICE,
-                                       sizeof(cl_device_id), &device_id_,
-                                       nullptr);
-    if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clGetCommandQueueInfo failed with code: "
-                   << error_code;
-        return false;
-    }
-
-    return true;
-}
-
-bool FrameChain::queryContext() {
-    if (queue_ == nullptr) {
-        LOG(ERROR) << "The command queue is uninitialized.";
-        return false;
-    }
-
-    if (context_ != nullptr) {
-        return true;
-    }
-
-    cl_int error_code;
-    error_code = clGetCommandQueueInfo(queue_, CL_QUEUE_CONTEXT,
-                                       sizeof(cl_context), &context_,
-                                       nullptr);
-    if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clGetCommandQueueInfo failed with code: "
-                   << error_code;
-        return false;
-    }
-
-    return true;
-}
-
 bool FrameChain::queryProfiling() {
     if (queue_ == nullptr) {
         LOG(ERROR) << "The command queue is uninitialized.";
@@ -227,12 +192,8 @@ bool FrameChain::queryProfiling() {
     }
 
     if (device_id_ == nullptr) {
-        bool succeeded = queryDevice();
-        if (!succeeded) {
-            LOG(ERROR) << "Failed to query the profiling status of the "
-                       << "command queue.";
-            return false;
-        }
+        LOG(ERROR) << "The device id is uninitialized.";
+        return false;
     }
 
     cl_int error_code;
@@ -267,6 +228,24 @@ bool FrameChain::queryProfiling() {
     }
 
     return true;
+}
+
+static FrameChain* shared_frame_chain;
+
+void createSharedFrameChain(bool profiling) {
+    static FrameChain frame_chain(profiling);
+
+    shared_frame_chain = &frame_chain;
+}
+
+void createSharedFrameChain(const cl_command_queue& queue) {
+    static FrameChain frame_chain(queue);
+
+    shared_frame_chain = &frame_chain;
+}
+
+FrameChain* getSharedFrameChain() {
+    return shared_frame_chain;
 }
 
 }}}

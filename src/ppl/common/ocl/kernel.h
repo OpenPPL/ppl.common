@@ -28,7 +28,7 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-#define SET_PROGRAM_SOURCE(frame_chain) frame_chain.setSource(source_string);
+#define SET_PROGRAM_SOURCE(frame_chain) frame_chain->setSource(source_string);
 
 bool compileOclKernels(FrameChain& frame_chain);
 bool validateNDrange(FrameChain& frame_chain, cl_uint work_dims,

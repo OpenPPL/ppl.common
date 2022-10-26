@@ -26,20 +26,14 @@ namespace ppl { namespace common { namespace ocl {
 
 class FrameChain {
   public:
-    FrameChain();
+    FrameChain(bool profiling);
     FrameChain(const cl_command_queue& queue);
     ~FrameChain();
 
+    void setProgram(const cl_program program);
     void setSource(const char* source_string);
     void setProjectName(const char* project_name);
-    void setProgram(const cl_program program);
     void setCompileOptions(const char* options);
-    void setProfiling(const bool profiling) {profiling_ = profiling;}
-
-    bool createDefaultOclFrame(bool profiling);
-    bool queryDevice();
-    bool queryContext();
-    bool queryProfiling();
 
     cl_platform_id getPlatformId() const { return platform_id_; }
     cl_device_id getDeviceId() const { return device_id_; }
@@ -51,17 +45,28 @@ class FrameChain {
     std::string getCompileOptions() const { return compile_options_; }
     bool isProfiling() const { return profiling_; }
 
+  protected:
+    bool createDefaultOclFrame(bool profiling);
+    bool queryProfiling();
+
   private:
+    // shared by all functions/program.
     cl_platform_id platform_id_;
     cl_device_id device_id_;
     cl_context context_;
     cl_command_queue queue_;
+
+    // unique to each function/program.
     cl_program program_;
     char* source_string_;
     std::string project_name_;
     std::string compile_options_;
     bool profiling_;
 };
+
+void createSharedFrameChain(bool profiling);
+void createSharedFrameChain(const cl_command_queue& queue);
+FrameChain* getSharedFrameChain();
 
 }}}
 

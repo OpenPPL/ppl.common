@@ -33,10 +33,7 @@ namespace ppl { namespace common { namespace ocl {
 #define SHIFT1 2
 
 bool compileOclKernels(FrameChain& frame_chain) {
-    bool succeeded = frame_chain.queryContext();
-    if (!succeeded) return false;
     cl_context context = frame_chain.getContext();
-
     const char* source_str = frame_chain.getCodeString();
     const size_t kernel_length = strlen(source_str);
 
@@ -51,10 +48,7 @@ bool compileOclKernels(FrameChain& frame_chain) {
     }
     frame_chain.setProgram(program);
 
-    succeeded = frame_chain.queryDevice();
-    if (!succeeded) return false;
     cl_device_id device_id = frame_chain.getDeviceId();
-
     std::string build_options = frame_chain.getCompileOptions();
     error_code = clBuildProgram(program, 1, &device_id, build_options.c_str(),
                                 nullptr, nullptr);
@@ -88,8 +82,6 @@ bool compileOclKernels(FrameChain& frame_chain) {
 
 bool validateNDrange(FrameChain& frame_chain, cl_uint work_dims,
                      size_t* global_work_size, size_t* local_work_size) {
-    bool succeeded = frame_chain.queryDevice();
-    if (!succeeded) return false;
     cl_device_id device_id = frame_chain.getDeviceId();
 
     Device device;
@@ -173,7 +165,6 @@ bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
                       const cl_kernel& kernel, cl_uint work_dims,
                       const size_t* global_work_size,
                       const size_t* local_work_size) {
-    frame_chain.queryProfiling();  // optimize?
     bool profiling = frame_chain.isProfiling();
 
     cl_int error_code;
@@ -206,8 +197,9 @@ bool enqueueOclKernel(FrameChain& frame_chain, const char* kernel_name,
         PROFILE_INFO(CL_PROFILING_COMMAND_SUBMIT, submit);
         PROFILE_INFO(CL_PROFILING_COMMAND_START, start);
         PROFILE_INFO(CL_PROFILING_COMMAND_END, end);
-        PROFILE_INFO(CL_PROFILING_COMMAND_COMPLETE, complete);
-
+// #if CL_TARGET_OPENCL_VERSION >= 200
+//         PROFILE_INFO(CL_PROFILING_COMMAND_COMPLETE, complete);
+// #endif
         time = end - start;
         LOG(INFO) << "Execution time of " << kernel_name << ": " << time
                   << " ns.";
