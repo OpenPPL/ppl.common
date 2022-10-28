@@ -122,49 +122,47 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
     }
 
     profiling_ = profiling;
-    int opencl_version = device->getOpenCLVersion();
-    if (opencl_version < 200) {
-        cl_command_queue_properties queue_properties;
-        if (profiling) {
-            queue_properties = CL_QUEUE_PROFILING_ENABLE;
-        }
-        else {
-            queue_properties = 0;
-        }
-        queue_ = clCreateCommandQueue(context_, device_id_, queue_properties,
-                                      &error_code);
-        if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clCreateCommandQueue failed with code: "
-                       << error_code;
-            return false;
-        }
-        else {
-            return true;
-        }
+#if CL_TARGET_OPENCL_VERSION < 200
+    cl_command_queue_properties queue_properties;
+    if (profiling) {
+        queue_properties = CL_QUEUE_PROFILING_ENABLE;
     }
     else {
-        std::vector<cl_queue_properties> queue_properties;
-        queue_properties.resize(3);
-        queue_properties[0] = CL_QUEUE_PROPERTIES;
-        if (profiling) {
-            queue_properties[1] =
-                (cl_queue_properties)CL_QUEUE_PROFILING_ENABLE;
-        }
-        else {
-            queue_properties[1] = (cl_queue_properties)0;
-        }
-        queue_properties[2] = 0;
-        queue_ = clCreateCommandQueueWithProperties(context_, device_id_,
-                     queue_properties.data(), &error_code);
-        if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clCreateCommandQueueWithProperties failed "
-                       << "with code: " << error_code;
-            return false;
-        }
-        else {
-            return true;
-        }
+        queue_properties = 0;
     }
+    queue_ = clCreateCommandQueue(context_, device_id_, queue_properties,
+                                    &error_code);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clCreateCommandQueue failed with code: "
+                    << error_code;
+        return false;
+    }
+    else {
+        return true;
+    }
+#else
+    std::vector<cl_queue_properties> queue_properties;
+    queue_properties.resize(3);
+    queue_properties[0] = CL_QUEUE_PROPERTIES;
+    if (profiling) {
+        queue_properties[1] =
+            (cl_queue_properties)CL_QUEUE_PROFILING_ENABLE;
+    }
+    else {
+        queue_properties[1] = (cl_queue_properties)0;
+    }
+    queue_properties[2] = 0;
+    queue_ = clCreateCommandQueueWithProperties(context_, device_id_,
+                    queue_properties.data(), &error_code);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clCreateCommandQueueWithProperties failed "
+                    << "with code: " << error_code;
+        return false;
+    }
+    else {
+        return true;
+    }
+#endif
 }
 
 bool FrameChain::queryProfiling() {

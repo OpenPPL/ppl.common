@@ -91,7 +91,9 @@ void OclGpuInfo::showGpuInformation(int platform_index, int device_index) {
     FORMAT_ITEM_INFO0("OpenCL C version supported by compiler",
                       device_opencl_c_version_);
     FORMAT_ITEM_INFO0("Device extensions", device_extensions_);
-    // FORMAT_ITEM_INFO0("Device il version", device_il_version_);
+#if CL_TARGET_OPENCL_VERSION >= 220
+    FORMAT_ITEM_INFO0("Device il version", device_il_version_);
+#endif
     FORMAT_ITEM_INFO0("Device built in kernels", built_in_kernels_);
 
     FORMAT_ITEM_INFO0("Max compute unites", compute_units_);
@@ -207,8 +209,10 @@ void OclGpuInfo::showGpuInformation(int platform_index, int device_index) {
                       max_read_image_args_);
     FORMAT_ITEM_INFO0("Max write_only image arguments of a kernel",
                       max_write_image_args_);
+#if CL_TARGET_OPENCL_VERSION >= 200
     FORMAT_ITEM_INFO0("Max read/write only image arguments of a kernel",
                       max_read_write_image_args_);
+#endif
     FORMAT_ITEM_INFO0("Max image1d or image2d width in pixels",
                       image2d_max_width_);
     FORMAT_ITEM_INFO0("Max image2d height in pixels", image2d_max_height_);
@@ -219,7 +223,9 @@ void OclGpuInfo::showGpuInformation(int platform_index, int device_index) {
 
     FORMAT_ITEM_INFO0("Max constant buffer size", constant_buffer_size_);
     FORMAT_ITEM_INFO0("Max constant arguments in a kernel", max_constant_args_);
+#if CL_TARGET_OPENCL_VERSION >= 200
     FORMAT_ITEM_INFO0("Max global variable size", max_global_variable_size_);
+#endif
     // FORMAT_ITEM_INFO0("Local memory type", local_mem_type_);
     FORMAT_ITEM_INFO0("Local memory size in bytes", local_mem_size_);
 
@@ -236,6 +242,7 @@ void OclGpuInfo::showGpuInformation(int platform_index, int device_index) {
     FORMAT_ITEM_INFO1("Linker available", std::boolalpha,
                       (linker_abailable_ ? true : false));
 
+#if CL_TARGET_OPENCL_VERSION >= 200
     meaning = std::string("Properties of queue on host: ");
     std::cout << "  " << std::setw(WIDTH) << meaning;
     if (host_queue_properties_ & CL_QUEUE_OUT_OF_ORDER_EXEC_MODE_ENABLE) {
@@ -255,6 +262,7 @@ void OclGpuInfo::showGpuInformation(int platform_index, int device_index) {
         std::cout << "CL_QUEUE_PROFILING_ENABLE ";
     }
     std::cout << std::endl;
+#endif
 }
 
 }}}

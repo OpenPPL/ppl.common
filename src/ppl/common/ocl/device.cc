@@ -23,7 +23,7 @@ namespace ppl { namespace common { namespace ocl {
 
 Device::Device() : platform_detected_(false), device_detected_(false),
         platform_index_(0), device_index_(0) {
-    bool succeeded = detectValidPlatformDevice();
+    bool succeeded = detectAValidPlatformDevice();
     if (!succeeded) return;
 
     getDeviceBasicInfos();
@@ -37,7 +37,7 @@ Device::Device(int platform_index, int device_index) :
 
     int number = getPlatformNum();
     if (number <= platform_index) {
-        LOG(ERROR) << "The platform index must less than the number of "
+        LOG(ERROR) << "The platform index must be less than the number of "
                    << "platforms.";
         return;
     }
@@ -47,7 +47,7 @@ Device::Device(int platform_index, int device_index) :
 
     number = getDeviceNum();
     if (number <= device_index) {
-        LOG(ERROR) << "The device index must less than the number of "
+        LOG(ERROR) << "The device index must be less than the number of "
                    << "devices.";
         return;
     }
@@ -149,7 +149,7 @@ void Device::setDeviceIndex(int index) {
     device_index_ = index;
 }
 
-bool Device::detectValidPlatformDevice() {
+bool Device::detectAValidPlatformDevice() {
     bool succeeded = detectPlatforms();
     if (!succeeded) return false;
 
@@ -368,6 +368,9 @@ int Device::checkOpenCLVersion(const cl_device_id& device_id) {
     if (device_opencl_c_version_.find("3.0") != std::string::npos) {
         opencl_version_ = 300;
     }
+    else if (device_opencl_c_version_.find("2.2") != std::string::npos) {
+        opencl_version_ = 220;
+    }
     else if (device_opencl_c_version_.find("2.0") != std::string::npos) {
         opencl_version_ = 200;
     }
@@ -417,6 +420,9 @@ bool Device::getDeviceBasicInfos(const cl_device_id& device_id) {
                       device_opencl_c_version_, true);
     if (device_opencl_c_version_.find("3.0") != std::string::npos) {
         opencl_version_ = 300;
+    }
+    else if (device_opencl_c_version_.find("2.2") != std::string::npos) {
+        opencl_version_ = 220;
     }
     else if (device_opencl_c_version_.find("2.0") != std::string::npos) {
         opencl_version_ = 200;
@@ -517,8 +523,10 @@ bool Device::getDeviceThoroughInfos(const cl_device_id& device_id) {
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_EXTENSIONS,
                       device_extensions_, true);
 
-    // QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_IL_VERSION,
-    //                   device_il_version_, true);
+#if CL_TARGET_OPENCL_VERSION >= 220
+    QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_IL_VERSION,
+                      device_il_version_, true);
+#endif
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_BUILT_IN_KERNELS,
                       built_in_kernels_, true);
 
@@ -591,19 +599,23 @@ bool Device::getDeviceThoroughInfos(const cl_device_id& device_id) {
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_MAX_WRITE_IMAGE_ARGS,
                       elements, false);
     max_write_image_args_ = *((cl_int*)elements.data());
+#if CL_TARGET_OPENCL_VERSION >= 200
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_MAX_READ_WRITE_IMAGE_ARGS,
                       elements, false);
     max_read_write_image_args_ = *((cl_int*)elements.data());
+#endif
 
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_MAX_CONSTANT_BUFFER_SIZE,
                       elements, false);
     constant_buffer_size_ = *((cl_ulong*)elements.data());
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_MAX_CONSTANT_ARGS,
                       elements, false);
+#if CL_TARGET_OPENCL_VERSION >= 200
     max_constant_args_ = *((cl_int*)elements.data());
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_MAX_GLOBAL_VARIABLE_SIZE,
                       elements, false);
     max_global_variable_size_ = *((size_t*)elements.data());
+#endif
 
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_MAX_CLOCK_FREQUENCY,
                       elements, false);
@@ -631,6 +643,7 @@ bool Device::getDeviceThoroughInfos(const cl_device_id& device_id) {
                       elements, false);
     linker_abailable_ = *((cl_bool*)elements.data());
 
+#if CL_TARGET_OPENCL_VERSION >= 200
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_QUEUE_ON_HOST_PROPERTIES,
                       elements, false);
     host_queue_properties_ = *((cl_command_queue_properties*)elements.data());
@@ -638,6 +651,7 @@ bool Device::getDeviceThoroughInfos(const cl_device_id& device_id) {
     QUERY_DEVICE_INFO(succeeded, device_id,
                       CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES, elements, false);
     device_queue_properties_ = *((cl_command_queue_properties*)elements.data());
+#endif
 
     return true;
 }

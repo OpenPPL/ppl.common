@@ -49,7 +49,7 @@ class Device {
     bool detectDevices();
     int getDeviceNum() const;
     void setDeviceIndex(int index);
-    bool detectValidPlatformDevice();
+    bool detectAValidPlatformDevice();
 
     cl_platform_id getPlatformId();
     cl_platform_id getPlatformId(int index);
@@ -93,13 +93,13 @@ class Device {
     int opencl_version_;
 
     std::vector<cl_platform_id> platform_ids_;
-    std::vector<cl_device_id> device_ids_;
     std::string platform_name_;
     std::string platform_vendor_;
     std::string platform_profile_;
     std::string platform_version_;
     std::string platform_extensions_;
 
+    std::vector<cl_device_id> device_ids_;
     std::string device_name_;
     std::string device_vendor_;
     std::string device_profile_;
@@ -108,7 +108,7 @@ class Device {
     std::string device_opencl_c_version_;
     std::string device_extensions_;
 
-    // std::string device_il_version_;
+    std::string device_il_version_;
     std::string built_in_kernels_;
 
     cl_uint compute_units_;
