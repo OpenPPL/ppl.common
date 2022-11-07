@@ -53,13 +53,13 @@ set(__PYBIND11_TAG__ v2.9.2)
 if(PPLCOMMON_DEP_PYBIND11_PKG)
     hpcc_declare_pkg_dep(pybind11
         ${PPLCOMMON_DEP_PYBIND11_PKG})
-else()
-    if(NOT PPLCOMMON_DEP_PYBIND11_GIT)
-        set(PPLCOMMON_DEP_PYBIND11_GIT "https://github.com/pybind/pybind11.git")
-    endif()
+elseif(PPLCOMMON_DEP_PYBIND11_GIT)
     hpcc_declare_git_dep(pybind11
         ${PPLCOMMON_DEP_PYBIND11_GIT}
         ${__PYBIND11_TAG__})
+else()
+    hpcc_declare_pkg_dep(pybind11
+        "https://github.com/pybind/pybind11/archive/refs/tags/${__PYBIND11_TAG__}.zip")
 endif()
 
 unset(__PYBIND11_TAG__)
@@ -74,13 +74,13 @@ set(__LUACPP_COMMIT__ d4e60a321a19a05a34bd15d3d508647f394007f3)
 if(PPLCOMMON_DEP_LUACPP_PKG)
     hpcc_declare_pkg_dep(luacpp
         ${PPLCOMMON_DEP_LUACPP_PKG})
-else()
-    if(NOT PPLCOMMON_DEP_LUACPP_GIT)
-        set(PPLCOMMON_DEP_LUACPP_GIT "https://github.com/ouonline/luacpp.git")
-    endif()
+elseif(PPLCOMMON_DEP_LUACPP_GIT)
     hpcc_declare_git_dep(luacpp
         ${PPLCOMMON_DEP_LUACPP_GIT}
         ${__LUACPP_COMMIT__})
+else()
+    hpcc_declare_pkg_dep(luacpp
+        "https://github.com/ouonline/luacpp/archive/${__LUACPP_COMMIT__}.zip")
 endif()
 
 unset(__LUACPP_COMMIT__)
@@ -95,13 +95,13 @@ set(__GOOGLETEST_TAG__ release-1.10.0)
 if(PPLCOMMON_DEP_GOOGLETEST_PKG)
     hpcc_declare_pkg_dep(googletest
         ${PPLCOMMON_DEP_GOOGLETEST_PKG})
-else()
-    if(NOT PPLCOMMON_DEP_GOOGLETEST_GIT)
-        set(PPLCOMMON_DEP_GOOGLETEST_GIT "https://github.com/google/googletest.git")
-    endif()
+elseif(PPLCOMMON_DEP_GOOGLETEST_GIT)
     hpcc_declare_git_dep(googletest
         ${PPLCOMMON_DEP_GOOGLETEST_GIT}
         ${__GOOGLETEST_TAG__})
+else()
+    hpcc_declare_pkg_dep(googletest
+        "https://github.com/google/googletest/archive/refs/tags/${__GOOGLETEST_TAG__}.zip")
 endif()
 
 unset(__GOOGLETEST_TAG__)
@@ -116,13 +116,13 @@ set(__BENCHMARK__TAG__ v1.5.6)
 if(PPLCOMMON_DEP_BENCHMARK_PKG)
     hpcc_declare_pkg_dep(benchmark
         ${PPLCOMMON_DEP_BENCHMARK_PKG})
-else()
-    if(NOT PPLCOMMON_DEP_BENCHMARK_GIT)
-        set(PPLCOMMON_DEP_BENCHMARK_GIT "https://github.com/google/benchmark.git")
-    endif()
+elseif(PPLCOMMON_DEP_BENCHMARK_GIT)
     hpcc_declare_git_dep(benchmark
         ${PPLCOMMON_DEP_BENCHMARK_GIT}
         ${__BENCHMARK__TAG__})
+else()
+    hpcc_declare_pkg_dep(benchmark
+        "https://github.com/google/benchmark/archive/refs/tags/${__BENCHMARK__TAG__}.zip")
 endif()
 
 unset(__BENCHMARK__TAG__)
