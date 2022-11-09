@@ -19,6 +19,7 @@
 #define _ST_HPC_PPL_COMMON_LOG_H_
 
 #include "ppl/common/retcode.h"
+#include "ppl/common/str_utils.h"
 #include <ctime>
 #include <string>
 #include <type_traits> // static_assert
@@ -61,7 +62,7 @@ public:
     template <typename T>
     LogMessage& operator<<(const T& value) {
         static_assert(std::is_floating_point<T>::value || std::is_integral<T>::value, "is not a number type.");
-        content_.append(std::to_string(value));
+        content_.append(ToString(value));
         return *this;
     }
 

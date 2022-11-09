@@ -17,8 +17,10 @@
 
 #include "ppl/common/sys.h"
 #include "ppl/common/arm/sysinfo.h"
+#include "ppl/common/str_utils.h"
 #include <mutex>
 #include <cstring>
+#include <cstdlib> // atoll
 #include <vector>
 #include <string>
 #include <fstream>
@@ -155,14 +157,17 @@ inline uint64_t SizeStrToBytes(const std::string& size_str) {
     if (size_str.empty()) {
         return 0;
     }
+
+    // it's ok to parse directly with invalid suffix chars
+    auto val = atoll(size_str.c_str());
     const char suffix = size_str[size_str.size() - 1];
     if (suffix == 'K' or suffix == 'k') {
-        return std::stoul(size_str.substr(0, size_str.size() - 1)) * 1024;
+        return val * 1024;
     }
     if (suffix == 'M' or suffix == 'm') {
-        return std::stoul(size_str.substr(0, size_str.size() - 1)) * 1024 * 1024;
+        return val * 1024 * 1024;
     }
-    return std::stoul(size_str);
+    return val;
 }
 
 static void GetCacheSizesFromKVFS(CpuInfo* info) {
@@ -172,7 +177,7 @@ static void GetCacheSizesFromKVFS(CpuInfo* info) {
     const std::string root_dir = "/sys/devices/system/cpu/cpu0/cache/";
     int32_t idx = 0;
     while (1) {
-        const std::string index_path = root_dir + "index" + std::to_string(idx) + "/";
+        const std::string index_path = root_dir + "index" + ToString(idx) + "/";
         idx++;
         std::string size;
         std::string level;
