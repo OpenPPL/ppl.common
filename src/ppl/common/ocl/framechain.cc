@@ -89,6 +89,19 @@ void FrameChain::setSource(const char* source_string) {
     source_string_ = (char*)source_string;
 }
 
+void FrameChain::setSpir(const void* spir_string, size_t spir_size) {
+    if (spir_string == nullptr) {
+        LOG(ERROR) << "Invalid address of the spir string.";
+    }
+
+    if (spir_size == 0) {
+        LOG(ERROR) << "Invalid size of the spir string.";
+    }
+
+    spir_string_ = (void*)spir_string;
+    spir_size_ = spir_size;
+}
+
 void FrameChain::setProjectName(const char* project_name) {
     if (project_name == nullptr) {
         LOG(ERROR) << "Invalid address of the project name.";

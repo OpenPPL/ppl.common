@@ -523,7 +523,7 @@ bool Device::getDeviceThoroughInfos(const cl_device_id& device_id) {
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_EXTENSIONS,
                       device_extensions_, true);
 
-#if CL_TARGET_OPENCL_VERSION >= 220
+#if CL_TARGET_OPENCL_VERSION >= 210
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_IL_VERSION,
                       device_il_version_, true);
 #endif

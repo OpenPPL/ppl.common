@@ -91,7 +91,7 @@ void OclGpuInfo::showGpuInformation(int platform_index, int device_index) {
     FORMAT_ITEM_INFO0("OpenCL C version supported by compiler",
                       device_opencl_c_version_);
     FORMAT_ITEM_INFO0("Device extensions", device_extensions_);
-#if CL_TARGET_OPENCL_VERSION >= 220
+#if CL_TARGET_OPENCL_VERSION >= 210
     FORMAT_ITEM_INFO0("Device il version", device_il_version_);
 #endif
     FORMAT_ITEM_INFO0("Device built in kernels", built_in_kernels_);

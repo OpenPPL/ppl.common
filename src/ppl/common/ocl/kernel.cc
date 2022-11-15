@@ -73,9 +73,6 @@ bool getKernelNames(const cl_program program,
         return false;
     }
 
-    // LOG(INFO) << "In getKernelNames, kernels name: " << param_value;
-    // LOG(INFO) << "In getKernelNames, kernels size: " << param_value.size();
-    // LOG(INFO) << "In getKernelNames, kernels size: " << returned_size;
     splitString(param_value, ";", kernel_names);
 
     return true;

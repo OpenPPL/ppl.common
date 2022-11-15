@@ -11,7 +11,7 @@ cmd="cmake .. \
       -DPPLCOMMON_USE_OPENCL=ON \
       -DPPLCOMMON_OPENCL_INCLUDE_DIRS='/opt/toolchains/android-toolchain-aarch64/include/OpenCL' \
       -DPPLCOMMON_OPENCL_LIBRARIES='/opt/toolchains/android-toolchain-aarch64/lib64/OpenCL/qualcomm/libOpenCL.so' \
-      -DCL_TARGET_OPENCL_VERSION=200"
+      -DCL_TARGET_OPENCL_VERSION=220"
 echo "cmd -> $cmd"
 eval $cmd
 

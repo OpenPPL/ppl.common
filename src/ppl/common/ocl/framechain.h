@@ -32,6 +32,7 @@ class FrameChain {
 
     void setProgram(const cl_program program);
     void setSource(const char* source_string);
+    void setSpir(const void* spir_string, size_t spir_size);
     void setProjectName(const char* project_name);
     void setCompileOptions(const char* options);
 
@@ -41,6 +42,8 @@ class FrameChain {
     cl_command_queue getQueue() const { return queue_; }
     cl_program getProgram() const { return program_; }
     char* getCodeString() const { return source_string_; }
+    void* getSpirString() const { return spir_string_; }
+    size_t getSpirSize() const { return spir_size_; }
     std::string getProjectName() const { return project_name_; }
     std::string getCompileOptions() const { return compile_options_; }
     bool isProfiling() const { return profiling_; }
@@ -59,6 +62,8 @@ class FrameChain {
     // unique to each function/program.
     cl_program program_;
     char* source_string_;
+    void* spir_string_;
+    size_t spir_size_;
     std::string project_name_;
     std::string compile_options_;
     bool profiling_;
