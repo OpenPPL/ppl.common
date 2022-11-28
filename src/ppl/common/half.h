@@ -15,8 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#ifndef _ST_HPC_PPL3_HALF_H_
-#define _ST_HPC_PPL3_HALF_H_
+#ifndef _ST_HPC_PPL_COMMON_HALF_H_
+#define _ST_HPC_PPL_COMMON_HALF_H_
 #include <stdint.h>
 #include <stddef.h>
 
