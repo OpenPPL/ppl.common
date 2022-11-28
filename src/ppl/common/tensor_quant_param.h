@@ -24,8 +24,9 @@
 namespace ppl { namespace common {
 
 struct TensorQuantParam {
+    bool symmetry;
     bool per_channel;
-    uint16_t bit_width;
+    uint32_t bit_width;
     std::vector<float> min;
     std::vector<float> max;
     std::vector<float> scale;
