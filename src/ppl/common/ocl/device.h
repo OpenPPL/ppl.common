@@ -169,6 +169,9 @@ class Device {
 
     cl_command_queue_properties host_queue_properties_;
     cl_command_queue_properties device_queue_properties_;
+#if CL_TARGET_OPENCL_VERSION >= 200
+    cl_device_svm_capabilities svm_capabilities_;
+#endif
 };
 
 void createSharedDevice();

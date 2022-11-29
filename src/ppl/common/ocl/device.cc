@@ -651,6 +651,10 @@ bool Device::getDeviceThoroughInfos(const cl_device_id& device_id) {
     QUERY_DEVICE_INFO(succeeded, device_id,
                       CL_DEVICE_QUEUE_ON_DEVICE_PROPERTIES, elements, false);
     device_queue_properties_ = *((cl_command_queue_properties*)elements.data());
+
+    QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_SVM_CAPABILITIES,
+                      elements, false);
+    svm_capabilities_ = *((cl_device_svm_capabilities*)elements.data());
 #endif
 
     return true;

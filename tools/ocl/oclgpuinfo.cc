@@ -262,6 +262,22 @@ void OclGpuInfo::showGpuInformation(int platform_index, int device_index) {
         std::cout << "CL_QUEUE_PROFILING_ENABLE ";
     }
     std::cout << std::endl;
+
+    meaning = std::string("Capabilities of shared virtual memory: ");
+    std::cout << "  " << std::setw(WIDTH) << meaning;
+    if (svm_capabilities_ & CL_DEVICE_SVM_COARSE_GRAIN_BUFFER) {
+        std::cout << "CL_DEVICE_SVM_COARSE_GRAIN_BUFFER ";
+    }
+    if (svm_capabilities_ & CL_DEVICE_SVM_FINE_GRAIN_BUFFER) {
+        std::cout << "CL_DEVICE_SVM_FINE_GRAIN_BUFFER ";
+    }
+    if (svm_capabilities_ & CL_DEVICE_SVM_FINE_GRAIN_SYSTEM) {
+        std::cout << "CL_DEVICE_SVM_FINE_GRAIN_SYSTEM ";
+    }
+    if (svm_capabilities_ & CL_DEVICE_SVM_ATOMICS) {
+        std::cout << "CL_DEVICE_SVM_ATOMICS ";
+    }
+    std::cout << std::endl;
 #endif
 }
 
