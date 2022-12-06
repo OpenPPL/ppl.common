@@ -42,6 +42,9 @@ public:
     FileMapping();
     ~FileMapping();
 
+    FileMapping(FileMapping&&);
+    void operator=(FileMapping&&);
+
     /**
        @param permission MUST be one of: READ_ONLY, WRITE_ONLY or READ_WRITE
        @param offset no alignment is required.
@@ -60,6 +63,10 @@ public:
     const char* GetErrorMessage() const {
         return error_message_;
     }
+
+private:
+    void DoMove(FileMapping&& fm);
+    void Destroy();
 
 private:
 #ifdef _MSC_VER

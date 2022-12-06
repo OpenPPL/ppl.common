@@ -28,6 +28,7 @@
 #include <cstring>
 #include <cstdlib>
 #include <cstdio> // for sprintf
+#include <utility> // std::move
 
 namespace ppl { namespace common {
 
@@ -43,7 +44,7 @@ FileMapping::FileMapping()
     , size_(0) {
 }
 
-FileMapping::~FileMapping() {
+void FileMapping::Destroy() {
     if (start_) {
 #ifdef _MSC_VER
         UnmapViewOfFile(base_);
@@ -54,6 +55,39 @@ FileMapping::~FileMapping() {
         close(fd_);
 #endif
     }
+}
+
+FileMapping::~FileMapping() {
+    Destroy();
+}
+
+void FileMapping::DoMove(FileMapping&& fm) {
+#ifdef _MSC_VER
+    h_file_ = fm.h_file_;
+    h_map_file_ = fm.h_map_file_;
+    fm.h_file_ = nullptr;
+    fm.h_map_file_ = nullptr;
+#else
+    fd_ = fm.fd_;
+    fm.fd_ = -1;
+#endif
+
+    base_ = fm.base_;
+    start_ = fm.start_;
+    size_ = fm.size_;
+
+    fm.base_ = nullptr;
+    fm.start_ = nullptr;
+    fm.size_ = 0;
+}
+
+FileMapping::FileMapping(FileMapping&& fm) {
+    DoMove(std::move(fm));
+}
+
+void FileMapping::operator=(FileMapping&& fm) {
+    Destroy();
+    DoMove(std::move(fm));
 }
 
 #ifdef _MSC_VER
