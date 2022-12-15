@@ -18,6 +18,7 @@
 #ifndef _ST_HPC_PPL_COMMON_TENSOR_SHAPE_H_
 #define _ST_HPC_PPL_COMMON_TENSOR_SHAPE_H_
 
+#include "ppl/common/common.h"
 #include "ppl/common/types.h"
 #include <vector>
 
@@ -25,7 +26,7 @@ namespace ppl { namespace common {
 
 static constexpr int64_t INVALID_DIM_VALUE = -1;
 
-class TensorShape final {
+class PPLCOMMON_PUBLIC TensorShape final {
 private:
     static const uint32_t kAxisC = 1;
 
