@@ -27,13 +27,6 @@ void RegisterLog(pybind11::module* m) {
     m->attr("LOG_LEVEL_ERROR") = (uint32_t)LOG_LEVEL_ERROR;
     m->attr("LOG_LEVEL_FATAL") = (uint32_t)LOG_LEVEL_FATAL;
     m->attr("LOG_LEVEL_MAX") = (uint32_t)LOG_LEVEL_MAX;
-
-    m->def("SetLoggingLevel", [](uint32_t level) -> void {
-        GetCurrentLogger()->SetLogLevel(level);
-    });
-    m->def("GetLoggingLevel", []() -> uint32_t {
-        return GetCurrentLogger()->GetLogLevel();
-    });
 }
 
 }}} // namespace ppl::common::python
