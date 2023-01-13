@@ -20,8 +20,6 @@
 #include <string.h>
 #include <string>
 
-// #include <iostream>  // debug
-
 #include "device.h"
 
 namespace ppl { namespace common { namespace ocl {
@@ -65,8 +63,9 @@ bool getKernelNames(const cl_program program,
 
     std::string param_value;
     param_value.resize(returned_size - 1);
-    error_code = clGetProgramInfo(program, CL_PROGRAM_KERNEL_NAMES, returned_size,
-                                 (void*)param_value.data(), nullptr);
+    error_code = clGetProgramInfo(program, CL_PROGRAM_KERNEL_NAMES,
+                                  returned_size, (void*)param_value.data(),
+                                  nullptr);
     if (error_code != CL_SUCCESS) {
         LOG(ERROR) << "Call clGetProgramInfo() failed with code: "
                    << error_code;
@@ -266,8 +265,6 @@ bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
             return false;
         }
     }
-    // clFinish(frame_chain->getQueue());
-    // clFlush(frame_chain->getQueue());
 
     return true;
 }
