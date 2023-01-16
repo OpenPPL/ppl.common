@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#if defined(PPLCOMMON_USE_X86) || defined(PPLCOMMON_USE_ARM)
+
 #include "ppl/common/half.h"
 #include <gtest/gtest.h>
 #include <stdio.h>
@@ -127,3 +129,5 @@ TEST(PPLCommon, half_class) {
         EXPECT_LE(k, FLOAT16_EPS) << f32 << " : " << f16.ToFloat32();
     }
 }
+
+#endif
