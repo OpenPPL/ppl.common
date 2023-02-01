@@ -29,9 +29,10 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-#define CHECK_ERROR(error_code, function)                                      \
+#define CHECK_ERROR(error_code, function, return_value)                        \
 if (error_code != CL_SUCCESS) {                                                \
   LOG(ERROR) << "Call " << #function << " failed with code: " << error_code;   \
+  return return_value;                                                         \
 }
 
 }}}
