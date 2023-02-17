@@ -28,7 +28,8 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-#define SET_PROGRAM_SOURCE(frame_chain) frame_chain->setSource(source_string);
+#define SET_PROGRAM_SOURCE(frame_chain, source)                                \
+        frame_chain->setSource(source ## _string);
 
 bool getKernelNames(const cl_program program,
                     std::vector<std::string>& kernel_names);
