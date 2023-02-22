@@ -22,6 +22,7 @@
 #include "framechain.h"
 #include "kernel.h"
 #include "kernelpool.h"
+#include "kernelbinariesmanager.h"
 
 #include "CL/cl.h"
 
