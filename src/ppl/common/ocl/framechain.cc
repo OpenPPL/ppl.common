@@ -110,6 +110,14 @@ void FrameChain::setProjectName(const char* project_name) {
     project_name_ = project_name;
 }
 
+void FrameChain::setFunctionName(const char* function_name) {
+    if (function_name == nullptr) {
+        LOG(ERROR) << "Invalid address of the function name.";
+    }
+
+    function_name_ = function_name;
+}
+
 void FrameChain::setCompileOptions(const char* options) {
     compile_options_ = options;
 }

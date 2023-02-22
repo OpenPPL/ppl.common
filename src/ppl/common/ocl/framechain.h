@@ -34,6 +34,7 @@ class FrameChain {
     void setSource(const char* source_string);
     void setSpir(const void* spir_string, size_t spir_size);
     void setProjectName(const char* project_name);
+    void setFunctionName(const char* function_string);
     void setCompileOptions(const char* options);
 
     cl_platform_id getPlatformId() const { return platform_id_; }
@@ -45,6 +46,7 @@ class FrameChain {
     void* getSpirString() const { return spir_string_; }
     size_t getSpirSize() const { return spir_size_; }
     std::string getProjectName() const { return project_name_; }
+    std::string getFunctionName() const { return function_name_; }
     std::string getCompileOptions() const { return compile_options_; }
     bool isProfiling() const { return profiling_; }
 
@@ -65,6 +67,7 @@ class FrameChain {
     void* spir_string_;
     size_t spir_size_;
     std::string project_name_;
+    std::string function_name_;
     std::string compile_options_;
     bool profiling_;
 };
