@@ -15,25 +15,15 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#ifndef _ST_HPC_PPL_COMMON_OCL_OCLCOMMON_H_
-#define _ST_HPC_PPL_COMMON_OCL_OCLCOMMON_H_
-
-#include "device.h"
-#include "framechain.h"
-#include "kernel.h"
-#include "kernelpool.h"
-#include "kernelbinariesmanager.h"
-
-#include "CL/cl.h"
-
-#include "ppl/common/log.h"
+#ifndef _ST_HPC_PPL_COMMON_OCL_TYPES_INTERFACE_H_
+#define _ST_HPC_PPL_COMMON_OCL_TYPES_INTERFACE_H_
 
 namespace ppl { namespace common { namespace ocl {
 
-#define CHECK_ERROR(error_code, function)                                      \
-if (error_code != CL_SUCCESS) {                                                \
-  LOG(ERROR) << "Call " << #function << " failed with code: " << error_code;   \
-}
+enum BinariesManagerStatus {
+    BINARIES_COMPILE  = 0,
+    BINARIES_RETRIEVE = 1,
+};
 
 }}}
 
