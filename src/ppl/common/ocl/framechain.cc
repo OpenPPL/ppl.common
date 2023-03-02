@@ -26,13 +26,15 @@ namespace ppl { namespace common { namespace ocl {
 
 FrameChain::FrameChain(bool profiling) : platform_id_(nullptr),
         device_id_(nullptr), context_(nullptr), queue_(nullptr),
-        program_(nullptr), source_string_(nullptr), profiling_(false) {
+        program_(nullptr), creating_program_type_(WITH_SOURCE),
+        source_string_(nullptr), profiling_(false) {
     createDefaultOclFrame(profiling);
 }
 
 FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
         device_id_(nullptr), context_(nullptr), program_(nullptr),
-        source_string_(nullptr), profiling_(false) {
+        creating_program_type_(WITH_SOURCE), source_string_(nullptr),
+        profiling_(false) {
     if (queue == nullptr) {
         LOG(ERROR) << "Invalid command queue.";
         return;
@@ -79,6 +81,11 @@ void FrameChain::setProgram(const cl_program program) {
     }
 
     program_ = program;
+}
+
+void FrameChain::setCreatingProgramType(const CreatingProgramTypes
+                                        creating_program_type) {
+    creating_program_type_ = creating_program_type;
 }
 
 void FrameChain::setSource(const char* source_string) {
@@ -152,7 +159,7 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
         queue_properties = 0;
     }
     queue_ = clCreateCommandQueue(context_, device_id_, queue_properties,
-                                    &error_code);
+                                  &error_code);
     if (error_code != CL_SUCCESS) {
         LOG(ERROR) << "Call clCreateCommandQueue failed with code: "
                     << error_code;

@@ -16,9 +16,10 @@
 // under the License.
 
 #include "kernelbinariesmanager.h"
+#include "runkernel.h"
 
-#include <string.h>
-#include <unistd.h>
+#include <cstdio>
+#include <cstring>
 
 #include "CL/cl.h"
 
@@ -27,7 +28,8 @@
 namespace ppl { namespace common { namespace ocl {
 
 KernelBinariesManager::KernelBinariesManager() : fp_(nullptr),
-        binaries_offset_(0), function_number_(0) {
+        kernel_offset_(0), kernel_count_(0), function_offset_(0),
+        function_count_(0), is_working_(false) {
 }
 
 KernelBinariesManager::~KernelBinariesManager() {
@@ -44,11 +46,38 @@ bool KernelBinariesManager::prepareManager(BinariesManagerStatus status) {
             return false;
         }
 
-        // fseek(fp_, sizeof(size_t) * 2, SEEK_SET);
-        binaries_offset_ += sizeof(size_t) * 2;
-        function_number_  = 0;
-        fwrite(&binaries_offset_, sizeof(size_t), 1, fp_);
-        fwrite(&function_number_, sizeof(size_t), 1, fp_);
+        kernel_offset_   = sizeof(uint) * 4;
+        function_offset_ = kernel_offset_;
+        size_t written_count;
+        written_count = fwrite(&kernel_offset_, sizeof(uint), 1, fp_);
+        if (written_count != 1) {
+            LOG(ERROR) << "Error in writing kernel info offset, written count: "
+                       << written_count << ", writing count: " << 1;
+            return false;
+        }
+
+        written_count = fwrite(&kernel_count_, sizeof(uint), 1, fp_);
+        if (written_count != 1) {
+            LOG(ERROR) << "Error in writing kernel count, written count: "
+                       << written_count << ", writing count: " << 1;
+            return false;
+        }
+
+        written_count = fwrite(&function_offset_, sizeof(uint), 1, fp_);
+        if (written_count != 1) {
+            LOG(ERROR) << "Error in writing function info offset, written "
+                       << "count: " << written_count << ", writing count: "
+                       << 1;
+            return false;
+        }
+
+        written_count = fwrite(&function_count_, sizeof(uint), 1, fp_);
+        if (written_count != 1) {
+            LOG(ERROR) << "Error in writing function count, written count: "
+                       << written_count << ", writing count: " << 1;
+            return false;
+        }
+        is_working_ = true;
 
         return true;
     }
@@ -59,20 +88,35 @@ bool KernelBinariesManager::prepareManager(BinariesManagerStatus status) {
             return false;
         }
 
-        size_t read_size;
-        read_size = fread(&binaries_offset_, sizeof(size_t), 1, fp_);
-        if (read_size != sizeof(size_t)) {
-            LOG(ERROR) << "Error in reading binaries offset, returned size: "
-                       << read_size << ", item size: " << sizeof(size_t);
+        size_t read_count;
+        read_count = fread(&kernel_offset_, sizeof(uint), 1, fp_);
+        if (read_count != 1) {
+            LOG(ERROR) << "Error in reading kernel info offset, read count: "
+                       << read_count << ", reading count: " << 1;
             return false;
         }
 
-        read_size = fread(&function_number_, sizeof(size_t), 1, fp_);
-        if (read_size != sizeof(size_t)) {
-            LOG(ERROR) << "Error in reading binaries number, returned size: "
-                       << read_size << ", item size: " << sizeof(size_t);
+        read_count = fread(&kernel_count_, sizeof(uint), 1, fp_);
+        if (read_count != 1) {
+            LOG(ERROR) << "Error in reading kernel count, read count: "
+                       << read_count << ", reading count: " << 1;
             return false;
         }
+
+        read_count = fread(&function_offset_, sizeof(uint), 1, fp_);
+        if (read_count != 1) {
+            LOG(ERROR) << "Error in reading function info offset, read count: "
+                       << read_count << ", reading count: " << 1;
+            return false;
+        }
+
+        read_count = fread(&function_count_, sizeof(uint), 1, fp_);
+        if (read_count != 1) {
+            LOG(ERROR) << "Error in reading function count, read count: "
+                       << read_count << ", reading count: " << 1;
+            return false;
+        }
+        is_working_ = true;
 
         return true;
     }
@@ -81,21 +125,21 @@ bool KernelBinariesManager::prepareManager(BinariesManagerStatus status) {
     }
 }
 
-bool KernelBinariesManager::buildFunctionFromSource(FrameChain* frame_chain,
-                                                    const char* source_str) {
+bool KernelBinariesManager::buildFunctionFromSource(FrameChain* frame_chain) {
     if (frame_chain == nullptr) {
         LOG(ERROR) << "The opencl frame chain is invalid.";
         return false;
     }
 
+    const char* source_str = frame_chain->getCodeString();
     size_t kernel_length = strlen(source_str);
-    if (kernel_length == 0) {
+    if (source_str == nullptr || kernel_length == 0) {
         LOG(ERROR) << "The function name is invalid.";
         return false;
     }
 
-    cl_program program;
     cl_int error_code;
+    cl_program program;
     cl_context context = frame_chain->getContext();
     program = clCreateProgramWithSource(context, 1, &source_str, &kernel_length,
                                         &error_code);
@@ -105,7 +149,6 @@ bool KernelBinariesManager::buildFunctionFromSource(FrameChain* frame_chain,
         return false;
     }
     frame_chain->setProgram(program);
-    clRetainProgram(program);  // ???
 
     cl_device_id device_id = frame_chain->getDeviceId();
     std::string build_options = frame_chain->getCompileOptions();
@@ -149,7 +192,7 @@ bool KernelBinariesManager::storeFunctionBinaries(FrameChain* frame_chain) {
     std::string project_name = frame_chain->getProjectName();
     std::string function_name = frame_chain->getFunctionName();
     std::lock_guard<std::mutex> lock_guard(locker_);
-    auto &function2kernelinfo = function2kernelbinaries_[project_name];
+    auto &function2kernelinfo = function2binariesinfo_[project_name];
     auto iter = function2kernelinfo.find(function_name);
     if (iter != function2kernelinfo.end()) {
         LOG(INFO) << function_name << " has already been build and stored.";
@@ -157,20 +200,19 @@ bool KernelBinariesManager::storeFunctionBinaries(FrameChain* frame_chain) {
     }
 
     cl_program program = frame_chain->getProgram();
-    size_t binary_size;
+    size_t binaries_size;
     size_t returned_size;
     error_code = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES,
-                                  sizeof(size_t), &binary_size, &returned_size);
+                                  sizeof(size_t), &binaries_size,
+                                  &returned_size);
     if (error_code != CL_SUCCESS) {
         LOG(ERROR) << "Call clGetProgramInfo() failed with code: "
                    << error_code;
         return false;
     }
-    // std::cout << "binary sizes: " << binary_size << std::endl;
-    // std::cout << "returned size: " << returned_size << std::endl;
 
     unsigned char** program_binaries = new unsigned char*[1];
-    program_binaries[0] = new unsigned char[binary_size];
+    program_binaries[0] = new unsigned char[binaries_size];
     error_code = clGetProgramInfo(program, CL_PROGRAM_BINARIES,
                                   sizeof(unsigned char**), program_binaries,
                                   &returned_size);
@@ -179,117 +221,231 @@ bool KernelBinariesManager::storeFunctionBinaries(FrameChain* frame_chain) {
                    << error_code;
         return false;
     }
-    if (returned_size != binary_size) {
-        LOG(ERROR) << "Extracting kernel, returned size: " << returned_size
-                   << ", binary size: " << binary_size;
+
+    size_t written_count = fwrite(program_binaries[0], 1, binaries_size, fp_);
+    if (written_count != binaries_size) {
+        fseek(fp_, 0 - written_count, SEEK_CUR);
+        LOG(ERROR) << "Error in writing file, written bytes: " << written_count
+                   << ", binary size: " << binaries_size;
         return false;
-        // std::cout << "The binary code is returned." << std::endl;
-        // std::cout << "returned size: " << returned_size << std::endl;
     }
 
-    returned_size = fwrite(program_binaries[0], 1, binary_size, fp_);
-    if (returned_size != binary_size) {
-        fseek(fp_, 0 - returned_size, SEEK_CUR);
-        LOG(ERROR) << "Error in writing file, returned size: " << returned_size
-                   << ", binary size: " << binary_size;
-        return false;
-        // std::cout << "The binary code is returned." << std::endl;
-        // std::cout << "returned size: " << returned_size << std::endl;
+    std::vector<std::string> kernel_names;
+    getKernelNames(program, kernel_names);
+    for (size_t i = 0; i < kernel_names.size(); i++) {
+        auto iter = kernel2function_.find(kernel_names[i]);
+        if (iter != kernel2function_.end()) {
+            LOG(ERROR) << kernel_names[i] << " has already been in "
+                       << BINARIES_FILE << ", please rename the kernel.";
+            return false;
+        }
+        kernel2function_[kernel_names[i]] = make_pair(project_name,
+                                                      function_name);
     }
 
     KernelBinaryInfo binaries_info;
-    binaries_info.address_offset = binaries_offset_;
-    binaries_info.size = binary_size;
+    binaries_info.address_offset = function_offset_;
+    binaries_info.binaries_size = binaries_size;
     function2kernelinfo[function_name] = binaries_info;
 
-    binaries_offset_ += binary_size;
-    function_number_++;
+    function_offset_ += binaries_size;
+    function_count_++;
 
     delete [] (program_binaries[0]);
     delete [] program_binaries;
-    clReleaseProgram(program);
 
     return true;
 }
 
-bool KernelBinariesManager::storeMaptoFile() {
-    KernelBinaryItem binary_item;
+bool KernelBinariesManager::storeMapstoFile() {
+    Kernel2FunctionItem kernel_storage;
+    Function2BinariesItem function_storage;
     std::string project_name;
     std::string function_name;
-    size_t written_size;
-    size_t item_size = sizeof(KernelBinaryItem);
+    std::string kernel_name;
+    size_t written_count;
+    size_t item_size0 = sizeof(Kernel2FunctionItem);
+    size_t item_size1 = sizeof(Function2BinariesItem);
 
+    kernel_offset_ = function_offset_;
     std::lock_guard<std::mutex> lock_guard(locker_);
-    for (const auto &project_items : function2kernelbinaries_) {
-        project_name = project_items.first;
-        if (project_name.size() + 1 < LENGTH) {
-            fseek(fp_, binaries_offset_, SEEK_SET);
-            LOG(ERROR) << "Project name is too long, please reset LENGTH.";
+    for (const auto &kernel_item : kernel2function_) {
+        kernel_name = kernel_item.first;
+        if (kernel_name.size() + 1 > KERNEL_LENGTH) {
+            fseek(fp_, kernel_offset_, SEEK_SET);
+            LOG(ERROR) << "kernel name is too long, please reset "
+                       << "KERNEL_LENGTH.";
             return false;
         }
-        strcpy(binary_item.project_name, project_name.c_str());
+        strcpy(kernel_storage.kernel_name, kernel_name.c_str());
+
+        project_name = kernel_item.second.first;
+        if (project_name.size() + 1 > PROJECT_LENGTH) {
+            fseek(fp_, kernel_offset_, SEEK_SET);
+            LOG(ERROR) << "project name is too long, please reset "
+                       << "PROJECT_LENGTH.";
+            return false;
+        }
+        strcpy(kernel_storage.project_name, project_name.c_str());
+
+        function_name = kernel_item.second.second;
+        if (function_name.size() + 1 > FUNCTION_LENGTH) {
+            fseek(fp_, kernel_offset_, SEEK_SET);
+            LOG(ERROR) << "project name is too long, please reset "
+                       << "FUNCTION_LENGTH.";
+            return false;
+        }
+        strcpy(kernel_storage.function_name, function_name.c_str());
+
+        written_count = fwrite(&kernel_storage, item_size0, 1, fp_);
+        if (written_count != 1) {
+            fseek(fp_, kernel_offset_, SEEK_SET);
+            LOG(ERROR) << "Error in writing kernel to function map item, "
+                       << "written count: " << written_count << ", item count: "
+                       << 1;
+            return false;
+        }
+        kernel_count_++;
+    }
+    function_offset_ += kernel_count_ * item_size0;
+
+    for (const auto &project_items : function2binariesinfo_) {
+        project_name = project_items.first;
+        if (project_name.size() + 1 > PROJECT_LENGTH) {
+            fseek(fp_, function_offset_, SEEK_SET);
+            LOG(ERROR) << "Project name is too long, please reset "
+                       << "PROJECT_LENGTH.";
+            return false;
+        }
+        strcpy(function_storage.project_name, project_name.c_str());
         for (const auto &function_item : project_items.second) {
             function_name = function_item.first;
-            if (function_name.size() + 1 < LENGTH) {
-                fseek(fp_, binaries_offset_, SEEK_SET);
-                LOG(ERROR) << "Function name is too long, please reset LENGTH.";
+            if (function_name.size() + 1 > FUNCTION_LENGTH) {
+                fseek(fp_, function_offset_, SEEK_SET);
+                LOG(ERROR) << "Function name is too long, please reset "
+                           << "FUNCTION_LENGTH.";
                 return false;
             }
-            strcpy(binary_item.function_name, function_name.c_str());
-            binary_item.address_offset = function_item.second.address_offset;
-            binary_item.size = function_item.second.size;
-            written_size = fwrite(&binary_item, item_size, 1, fp_);
-            if (written_size != item_size) {
-                fseek(fp_, binaries_offset_, SEEK_SET);
-                LOG(ERROR) << "Error in writing map item, returned size: "
-                           << written_size << ", item size: " << item_size;
+            strcpy(function_storage.function_name, function_name.c_str());
+            function_storage.address_offset =
+                function_item.second.address_offset;
+            function_storage.binaries_size = function_item.second.binaries_size;
+            written_count = fwrite(&function_storage, item_size1, 1, fp_);
+            if (written_count != 1) {
+                fseek(fp_, function_offset_, SEEK_SET);
+                LOG(ERROR) << "Error in writing function to binaries map "
+                           << "item, written count: " << written_count
+                           << ", item count: " << 1;
                 return false;
-                // std::cout << "The binary code is returned." << std::endl;
-                // std::cout << "returned size: " << written_size << std::endl;
             }
         }
     }
 
-    fseek(fp_, 0, SEEK_SET);
-    fwrite(&binaries_offset_, sizeof(size_t), 1, fp_);
-    fwrite(&function_number_, sizeof(size_t), 1, fp_);
-    fclose(fp_);
-
-    return true;
-}
-
-bool KernelBinariesManager::loadMapfromFile() {
-    int status = fseek(fp_, binaries_offset_, SEEK_SET);
+    int status = fseek(fp_, 0, SEEK_SET);
     if (status != 0) {
-        LOG(ERROR) << "Failed to locate map info in kernel binaries file.";
+        LOG(ERROR) << "Error in resetting the file pointer to the beginning.";
         return false;
     }
 
-    KernelBinaryItem binary_item;
+    written_count = fwrite(&kernel_offset_, sizeof(uint), 1, fp_);
+    if (written_count != 1) {
+        LOG(ERROR) << "Error in writing kernel to function map offset, "
+                   << "written count: " << written_count << ", writing count: "
+                   << 1;
+        return false;
+    }
+    written_count = fwrite(&kernel_count_, sizeof(uint), 1, fp_);
+    if (written_count != 1) {
+        LOG(ERROR) << "Error in writing kernel count, written count: "
+                   << written_count << ", writing count: " << 1;
+        return false;
+    }
+
+    written_count = fwrite(&function_offset_, sizeof(uint), 1, fp_);
+    if (written_count != 1) {
+        LOG(ERROR) << "Error in writing function to binaries map offset, "
+                   << "written count: " << written_count << ", writing count: "
+                   << 1;
+        return false;
+    }
+    written_count = fwrite(&function_count_, sizeof(uint), 1, fp_);
+    if (written_count != 1) {
+        LOG(ERROR) << "Error in writing function count, written count: "
+                   << written_count << ", writing count: " << 1;
+        return false;
+    }
+
+    return true;
+}
+
+void KernelBinariesManager::setStatus(bool is_working) {
+    is_working_ = is_working;
+}
+
+bool KernelBinariesManager::loadBinariesInfo() {
+    int status = fseek(fp_, kernel_offset_, SEEK_SET);
+    if (status != 0) {
+        LOG(ERROR) << "Failed to locate kernel to function map info in kernel "
+                   << "binaries file.";
+        return false;
+    }
+
+    Kernel2FunctionItem kernel_storage;
+    Function2BinariesItem function_storage;
     std::string project_name;
     std::string function_name;
+    std::string kernel_name;
     KernelBinaryInfo binaries_info;
-    size_t item_size = sizeof(KernelBinaryItem);
+    size_t item_size0 = sizeof(Kernel2FunctionItem);
+    size_t item_size1 = sizeof(Function2BinariesItem);
 
-    size_t read_size;
+    size_t read_count;
     std::lock_guard<std::mutex> lock_guard(locker_);
-    for (size_t i = 0; i < function_number_; i++) {
-        read_size = fread(&binary_item, item_size, 1, fp_);
-        if (read_size != item_size) {
-            LOG(ERROR) << "Error in reading map item " << i
-                       << ", returned size: " << read_size << ", item size: "
-                       << item_size;
+    for (uint i = 0; i < kernel_count_; i++) {
+        read_count = fread(&kernel_storage, item_size0, 1, fp_);
+        if (read_count != 1) {
+            LOG(ERROR) << "Error in reading kernel to function map item " << i
+                       << ", read count: " << read_count << ", item count: "
+                       << 1;
             return false;
         }
-        project_name  = binary_item.project_name;
-        function_name = binary_item.function_name;
-        binaries_info.address_offset = binary_item.address_offset;
-        binaries_info.size = binary_item.size;
+        kernel_name   = kernel_storage.kernel_name;
+        project_name  = kernel_storage.project_name;
+        function_name = kernel_storage.function_name;
 
-        auto &function2kernelinfo = function2kernelbinaries_[project_name];
+        auto iter = kernel2function_.find(kernel_name);
+        if (iter != kernel2function_.end()) {
+            // LOG(INFO) << kernel_name << " has already been in the map.";
+            continue;
+        }
+        kernel2function_[kernel_name] = make_pair(project_name, function_name);
+    }
+
+    uint file_offset = ftell(fp_);
+    if (file_offset != function_offset_) {
+        LOG(ERROR) << " Inconsistency in " << BINARIES_FILE
+                   << ", the current location: " << file_offset
+                   << ", desired location: " << function_offset_;
+        return false;
+    }
+
+    for (uint i = 0; i < function_count_; i++) {
+        read_count = fread(&function_storage, item_size1, 1, fp_);
+        if (read_count != 1) {
+            LOG(ERROR) << "Error in reading function to binaries info map item "
+                       << i << ", read count: " << read_count
+                       << ", item count: " << 1;
+            return false;
+        }
+        project_name  = function_storage.project_name;
+        function_name = function_storage.function_name;
+        binaries_info.address_offset = function_storage.address_offset;
+        binaries_info.binaries_size = function_storage.binaries_size;
+
+        auto &function2kernelinfo = function2binariesinfo_[project_name];
         auto iter = function2kernelinfo.find(function_name);
         if (iter != function2kernelinfo.end()) {
-            LOG(INFO) << function_name << " has already been in the map.";
+            // LOG(INFO) << function_name << " has already been in the map.";
             continue;
         }
         function2kernelinfo[function_name] = binaries_info;
@@ -300,7 +456,7 @@ bool KernelBinariesManager::loadMapfromFile() {
 
 bool KernelBinariesManager::retrieveKernel(const std::string &project_name,
         const std::string &kernel_name, size_t* binaries_length,
-        unsigned char* binaries_data) {
+        unsigned char** binaries_data) {
     if (project_name.size() == 0) {
         LOG(ERROR) << "The project name is invalid.";
         return false;
@@ -312,7 +468,7 @@ bool KernelBinariesManager::retrieveKernel(const std::string &project_name,
     }
 
     if (binaries_length == nullptr) {
-        LOG(ERROR) << "The binaries length is invalid.";
+        LOG(ERROR) << "The address of binaries length is invalid.";
         return false;
     }
 
@@ -321,102 +477,71 @@ bool KernelBinariesManager::retrieveKernel(const std::string &project_name,
         return false;
     }
 
-    auto iter0 = function2kernelbinaries_.find(project_name);
-    if (iter0 == function2kernelbinaries_.end()) {
+    auto iter0 = kernel2function_.find(kernel_name);
+    if (iter0 == kernel2function_.end()) {
+        LOG(ERROR) << "The kernel " << kernel_name << " can't be found in the "
+                   << "kernel binaries.";
         return false;
     }
 
-    auto &function2kernelinfo = function2kernelbinaries_[project_name];
-    auto iter1 = function2kernelinfo.cbegin();
-    while (iter1 != function2kernelinfo.cend()) {
-        std::string function_name = iter1->first;
-        if (kernel_name.find(function_name) != std::string::npos) {
-            binaries_offset_ = iter1->second.address_offset;
-            *binaries_length = iter1->second.size;
-
-            int status = fseek(fp_, binaries_offset_, SEEK_SET);
-            if (status != 0) {
-                LOG(ERROR) << "Failed to locate map info in kernel binaries file.";
-                return false;
-            }
-
-            size_t read_size;
-            read_size = fread(binaries_data, 1, binaries_offset_, fp_);
-            if (read_size != binaries_offset_) {
-                LOG(ERROR) << "Error in reading kernel binaries, returned size: "
-                        << read_size << ", item size: " << binaries_offset_;
-                return false;
-            }
-
-            return true;
-        }
+    std::string project_name1 = kernel2function_[kernel_name].first;
+    if (project_name != project_name1) {
+        LOG(ERROR) << "The projects are mismatching, querying project: "
+                   << project_name << ", found project: " << project_name1;
+        return false;
     }
+    std::string function_name = kernel2function_[kernel_name].second;
 
-    return false;
-}
-
-void KernelBinariesManager::destroyMap() {
-    function2kernelbinaries_.clear();
-
-    fclose(fp_);
-}
-
-static KernelBinariesManager binaries_manager;
-
-bool initializeKernelBinariesManager(BinariesManagerStatus status) {
-    bool succeeded = binaries_manager.prepareManager(status);
-
-    return succeeded;
-}
-
-bool processAFunction(FrameChain* frame_chain, const char* source_str) {
-    bool succeeded = binaries_manager.buildFunctionFromSource(frame_chain,
-                                                              source_str);
-    if (succeeded == false) {
+    auto iter1 = function2binariesinfo_.find(project_name);
+    if (iter1 == function2binariesinfo_.end()) {
+        LOG(ERROR) << "The project " << project_name << " can't be found in "
+                   << "the kernel binaries.";
         return false;
     }
 
-    succeeded = binaries_manager.storeFunctionBinaries(frame_chain);
-
-    return succeeded;
-}
-
-bool detectKernelBinariesFile() {
-    if (access(BINARIES_FILE, R_OK) == 0) {
-        return true;
+    auto &function2kernelinfo = function2binariesinfo_[project_name];
+    auto iter2 = function2kernelinfo.find(function_name);
+    if (iter2 == function2kernelinfo.end()) {
+        LOG(ERROR) << "The function " << function_name << " can't be found in "
+                   << "the kernel binaries.";
+        return false;
     }
 
-    return false;
-}
+    function_offset_ = iter2->second.address_offset;
+    *binaries_length = iter2->second.binaries_size;
 
-bool restoreKernelBianriesMap() {
-    bool succeeded = binaries_manager.loadMapfromFile();
-
-    return succeeded;
-}
-
-bool retrieveKernel(const std::string &project_name,
-                    const std::string &kernel_name, size_t* binaries_length,
-                    unsigned char* binaries_data) {
-    bool succeeded = binaries_manager.retrieveKernel(project_name, kernel_name,
-                        binaries_length, binaries_data);
-
-    return succeeded;
-}
-
-bool shutDownKernelBinariesManager(BinariesManagerStatus status) {
-    if (status == BINARIES_COMPILE) {
-        bool succeeded = binaries_manager.storeMaptoFile();
-
-        return succeeded;
+    int status = fseek(fp_, function_offset_, SEEK_SET);
+    if (status != 0) {
+        LOG(ERROR) << "Failed to locate function binaries in kernel binaries.";
+        return false;
     }
-    else if (status == BINARIES_RETRIEVE) {
-        binaries_manager.destroyMap();
 
-        return true;
+    (*binaries_data) = new unsigned char[*binaries_length];
+    size_t read_bytes;
+    read_bytes = fread((*binaries_data), 1, *binaries_length, fp_);
+    if (read_bytes != *binaries_length) {
+        LOG(ERROR) << "Error in reading kernel binaries, read bytes: "
+                   << read_bytes << ", binaries bytes: " << *binaries_length;
+        return false;
+    }
+
+    return true;
+}
+
+void KernelBinariesManager::releaseResource() {
+    kernel2function_.clear();
+    function2binariesinfo_.clear();
+
+    if (fp_ == nullptr) {
+        return;
+    }
+
+    int status = fclose(fp_);
+    if (status == 0) {
+        fp_ = nullptr;
     }
     else {
-        return false;
+        LOG(ERROR) << "Error in close the kernel binaries file.";
     }
 }
 

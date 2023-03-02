@@ -28,12 +28,11 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-#define SET_PROGRAM_SOURCE(frame_chain, source)                                \
-        frame_chain->setSource(source ## _string);
-
 bool getKernelNames(const cl_program program,
                     std::vector<std::string>& kernel_names);
-bool compileOclKernels(FrameChain* frame_chain);
+bool buildProgram(const cl_program& program, const cl_device_id& device_id,
+                  const std::string& build_options);
+bool compileOclKernels(FrameChain* frame_chain, const std::string& kernel_name);
 bool validateNDrange(cl_uint work_dims, size_t* global_work_size,
                      size_t* local_work_size);
 bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
@@ -78,7 +77,7 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr,
     std::string kernel_name = kernel_name_cstr;
     cl_kernel kernel = getKernelFromPool(context, project_name, kernel_name);
     if (kernel == nullptr) {
-        succeeded = compileOclKernels(frame_chain);
+        succeeded = compileOclKernels(frame_chain, kernel_name);
         if (!succeeded) {
             LOG(ERROR) << "Failed to compile " << kernel_name;
             return;

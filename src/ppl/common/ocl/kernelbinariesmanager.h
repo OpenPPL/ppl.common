@@ -20,33 +20,35 @@
 
 #include <string>
 #include <mutex>
-#include <cstdio>
 #include <map>
+#include <utility>
 
 #include "framechain.h"
+#include "types_interface.h"
 
 namespace ppl { namespace common { namespace ocl {
 
-#define LENGTH 32
+#define PROJECT_LENGTH 8
+#define FUNCTION_LENGTH 16
+#define KERNEL_LENGTH 32
 #define BINARIES_FILE "kernel_binaries.db"
-#define PROCESS_A_FUNCTION(frame_chain, kernel_name)                           \
-          processAFunction(frame_chain, kernel_name ## _string);
-
-enum BinariesManagerStatus {
-    BINARIES_COMPILE  = 0,
-    BINARIES_RETRIEVE = 1,
-};
 
 struct KernelBinaryInfo {
-  size_t address_offset;
-	size_t size;
+  uint address_offset;
+	uint binaries_size;
 };
 
-struct KernelBinaryItem {
-  char project_name[LENGTH];
-  char function_name[LENGTH];
-  size_t address_offset;
-	size_t size;
+struct Kernel2FunctionItem {
+  char kernel_name[KERNEL_LENGTH];
+  char project_name[PROJECT_LENGTH];
+  char function_name[FUNCTION_LENGTH];
+};
+
+struct Function2BinariesItem {
+  char project_name[PROJECT_LENGTH];
+  char function_name[FUNCTION_LENGTH];
+  uint address_offset;
+	uint binaries_size;
 };
 
 class KernelBinariesManager {
@@ -54,34 +56,33 @@ class KernelBinariesManager {
     KernelBinariesManager();
     ~KernelBinariesManager();
 
+    bool isWorking() const { return is_working_; }
+    void setStatus(bool is_working);
     bool prepareManager(BinariesManagerStatus status);
-    bool buildFunctionFromSource(FrameChain* frame_chain,
-                                 const char* source_str);
+    bool buildFunctionFromSource(FrameChain* frame_chain);
     bool storeFunctionBinaries(FrameChain* frame_chain);
-    bool storeMaptoFile();
+    bool storeMapstoFile();
 
-    bool loadMapfromFile();
+    bool loadBinariesInfo();
     bool retrieveKernel(const std::string &project_name,
                         const std::string &kernel_name, size_t* binaries_length,
-                        unsigned char* binaries_data);
-    void destroyMap();
+                        unsigned char** binaries_data);
+    void releaseResource();
 
   private:
-    std::mutex locker_;
     FILE* fp_;
-    size_t binaries_offset_;
-    size_t function_number_;
+    uint kernel_offset_;
+    uint kernel_count_;
+    uint function_offset_;
+    uint function_count_;
+    bool is_working_;
+    std::mutex locker_;
+    // (kernel name, (project name, function name))
+    std::map<std::string, std::pair<std::string, std::string>> kernel2function_;
+    // (project name, (function name, kernel binaries info))
     std::map<std::string,
-             std::map<std::string, KernelBinaryInfo>> function2kernelbinaries_;
+             std::map<std::string, KernelBinaryInfo>> function2binariesinfo_;
 };
-
-bool initializeKernelBinariesManager(BinariesManagerStatus status);
-bool processAFunction(FrameChain* frame_chain, const char* source_str);
-bool detectKernelBinariesFile();
-bool restoreKernelBianriesMap();
-bool retrieveKernel(const std::string &kernel_name, size_t* binaries_length,
-                    unsigned char* binaries_data);
-bool shutDownKernelBinariesManager(BinariesManagerStatus status);
 
 }}}
 

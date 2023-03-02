@@ -24,6 +24,16 @@
 
 namespace ppl { namespace common { namespace ocl {
 
+#define SET_PROGRAM_SOURCE(frame_chain, source)                                \
+        frame_chain->setSource(source ## _string);
+
+enum CreatingProgramTypes {
+    WITH_SOURCE = 0,
+    WITH_IL = 1,
+    WITH_BINARIES = 2,
+    WITH_BUILT_IN_KERNELS = 3,
+};
+
 class FrameChain {
   public:
     FrameChain(bool profiling);
@@ -31,6 +41,8 @@ class FrameChain {
     ~FrameChain();
 
     void setProgram(const cl_program program);
+    void setCreatingProgramType(const CreatingProgramTypes
+                                creating_program_type);
     void setSource(const char* source_string);
     void setSpir(const void* spir_string, size_t spir_size);
     void setProjectName(const char* project_name);
@@ -42,6 +54,9 @@ class FrameChain {
     cl_context getContext() const { return context_; }
     cl_command_queue getQueue() const { return queue_; }
     cl_program getProgram() const { return program_; }
+    CreatingProgramTypes getCreatingProgramType() const {
+      return creating_program_type_;
+    }
     char* getCodeString() const { return source_string_; }
     void* getSpirString() const { return spir_string_; }
     size_t getSpirSize() const { return spir_size_; }
@@ -63,6 +78,7 @@ class FrameChain {
 
     // unique to each function/program.
     cl_program program_;
+    CreatingProgramTypes creating_program_type_;
     char* source_string_;
     void* spir_string_;
     size_t spir_size_;

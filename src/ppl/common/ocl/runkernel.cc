@@ -15,12 +15,12 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "kernel.h"
+#include "runkernel.h"
+#include "device.h"
+#include "kernelbinaries_interface.h"
 
 #include <string.h>
 #include <string>
-
-#include "device.h"
 
 namespace ppl { namespace common { namespace ocl {
 
@@ -77,24 +77,9 @@ bool getKernelNames(const cl_program program,
     return true;
 }
 
-bool compileOclKernels(FrameChain* frame_chain) {
-    cl_context context = frame_chain->getContext();
-    const char* source_str = frame_chain->getCodeString();
-    const size_t kernel_length = strlen(source_str);
-
+bool buildProgram(const cl_program& program, const cl_device_id& device_id,
+                  const std::string& build_options) {
     cl_int error_code;
-    cl_program program;
-    program = clCreateProgramWithSource(context, 1, &source_str, &kernel_length,
-                                        &error_code);
-    if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: "
-                   << error_code;
-        return false;
-    }
-    frame_chain->setProgram(program);
-
-    cl_device_id device_id = frame_chain->getDeviceId();
-    std::string build_options = frame_chain->getCompileOptions();
     error_code = clBuildProgram(program, 1, &device_id, build_options.c_str(),
                                 nullptr, nullptr);
     if (error_code != CL_SUCCESS) {
@@ -119,6 +104,68 @@ bool compileOclKernels(FrameChain* frame_chain) {
         LOG(ERROR) << "Call clBuildProgram() failed with code: " << error_code;
         LOG(ERROR) << "clBuildProgram() log: " << log_buffer;
 
+        return false;
+    }
+
+    return true;
+}
+
+bool compileOclKernels(FrameChain* frame_chain,
+                       const std::string& kernel_name) {
+    cl_context context = frame_chain->getContext();
+    const char* source_str = frame_chain->getCodeString();
+    const size_t kernel_length = strlen(source_str);
+
+    cl_int error_code;
+    cl_program program;
+    CreatingProgramTypes creating_program_type =
+        frame_chain->getCreatingProgramType();
+    cl_device_id device_id = frame_chain->getDeviceId();
+    std::string build_options = frame_chain->getCompileOptions();
+
+    if (creating_program_type == WITH_BINARIES) {
+        std::string project_name = frame_chain->getProjectName();
+        size_t binaries_length;
+        unsigned char** binaries_data = new unsigned char*[1];
+        bool status = retrieveKernelBinaries(project_name, kernel_name,
+                                             &binaries_length, binaries_data);
+        if (status) {
+            cl_int bianry_status;
+            cl_device_id gpu_device = frame_chain->getDeviceId();
+            program = clCreateProgramWithBinary(context, 1, &gpu_device,
+                          &binaries_length,
+                          (const unsigned char**)binaries_data, &bianry_status,
+                          &error_code);
+            if (bianry_status == CL_SUCCESS && error_code == CL_SUCCESS) {
+                delete [] (binaries_data[0]);
+                delete [] binaries_data;
+                frame_chain->setProgram(program);
+
+                bool succeeded = buildProgram(program, device_id,
+                                              build_options);
+                if (!succeeded) {
+                    delete [] binaries_data;
+                    return false;
+                }
+
+                return true;
+            }
+        }
+
+        delete [] binaries_data;
+    }
+
+    program = clCreateProgramWithSource(context, 1, &source_str, &kernel_length,
+                                        &error_code);
+    if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: "
+                   << error_code;
+        return false;
+    }
+    frame_chain->setProgram(program);
+
+    bool succeeded = buildProgram(program, device_id, build_options);
+    if (!succeeded) {
         return false;
     }
 
