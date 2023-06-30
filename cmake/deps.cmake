@@ -66,6 +66,16 @@ unset(__PYBIND11_TAG__)
 
 # --------------------------------------------------------------------------- #
 
+set(__NCCL_TAG__ v2.18.3-1)
+
+hpcc_declare_git_dep(nccl
+    "https://github.com/NVIDIA/nccl.git"
+    ${__NCCL_TAG__})
+
+unset(__NCCL_TAG__)
+
+# --------------------------------------------------------------------------- #
+
 set(LUACPP_INSTALL OFF CACHE BOOL "")
 set(LUACPP_BUILD_TESTS OFF CACHE BOOL "")
 

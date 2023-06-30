@@ -60,6 +60,10 @@ if(PPLCOMMON_USE_OPENCL)
     include(cmake/ocl.cmake)
 endif()
 
+if(PPLCOMMON_USE_CUDA)
+    include(cmake/cuda.cmake)
+endif()
+
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_unittest\\.cc$")
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_benchmark\\.cc$")
 
