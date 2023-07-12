@@ -69,6 +69,11 @@ list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_benchmark\\.cc$")
 
 # --------------------------------------------------------------------------- #
 
+# for pplcommon_static and pplcommon-config.cmake
+if(NOT MSVC)
+    list(APPEND PPLCOMMON_LINK_LIBRARIES pthread)
+endif()
+
 add_library(pplcommon_static STATIC ${PPLCOMMON_SRC})
 target_link_libraries(pplcommon_static PUBLIC ${PPLCOMMON_LINK_LIBRARIES})
 target_include_directories(pplcommon_static PUBLIC ${PPLCOMMON_INCLUDES})
