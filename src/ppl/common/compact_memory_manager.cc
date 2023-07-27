@@ -76,10 +76,23 @@ void* CompactMemoryManager::Alloc(uint64_t bytes_needed) {
         allocated_bytes_ += bytes_allocated;
         blocks_.push_back(new_block);
 
+        // merge with the max-addr block if possible
+        auto max_addr_iter = addr2bytes_.rbegin();
+        if ((max_addr_iter != addr2bytes_.rend()) &&
+            ((char*)max_addr_iter->first + max_addr_iter->second == new_block)) {
+            auto new_addr = max_addr_iter->first;
+            auto new_size = max_addr_iter->second + bytes_allocated;
+
+            RemoveFromBytes2Addr(max_addr_iter->first, max_addr_iter->second, &bytes2addr_);
+            addr2bytes_.erase((++max_addr_iter).base());
+
+            AddFreeBlock((char*)new_addr + bytes_needed, new_size - bytes_needed, &bytes2addr_, &addr2bytes_);
+            return new_addr;
+        }
+
         if (bytes_needed < bytes_allocated) {
             AddFreeBlock((char*)new_block + bytes_needed, bytes_allocated - bytes_needed, &bytes2addr_, &addr2bytes_);
         }
-
         return new_block;
     }
 
