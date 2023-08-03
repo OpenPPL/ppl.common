@@ -73,6 +73,8 @@ FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
 }
 
 FrameChain::~FrameChain() {
+    if(this->context_)
+        clReleaseContext(this->context_);
 }
 
 void FrameChain::setProgram(const cl_program program) {

@@ -20,7 +20,7 @@
 
 #include <string>
 
-#include "CL/cl.h"
+#include "openclruntime.h"
 
 namespace ppl { namespace common { namespace ocl {
 

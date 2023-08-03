@@ -23,9 +23,6 @@
 #include "runkernel.h"
 #include "kernelpool.h"
 #include "kernelbinaries_interface.h"
-
-#include "CL/cl.h"
-
 #include "ppl/common/log.h"
 
 namespace ppl { namespace common { namespace ocl {
