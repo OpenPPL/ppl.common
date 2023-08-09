@@ -21,19 +21,23 @@ using namespace std;
 namespace ppl { namespace common {
 
 CompactMemoryManager::CompactMemoryManager(Allocator* ar, uint64_t block_bytes)
-    : block_bytes_(block_bytes), allocator_(ar), allocated_bytes_(0) {
+    : block_bytes_(block_bytes), allocator_(ar) {
     blocks_.reserve(64);
 }
 
 CompactMemoryManager::~CompactMemoryManager() {
-    for (auto x = blocks_.begin(); x != blocks_.end(); ++x) {
-        allocator_->Free(*x);
+    if (allocator_) {
+        for (auto x = blocks_.begin(); x != blocks_.end(); ++x) {
+            allocator_->Free(*x);
+        }
     }
 }
 
 void CompactMemoryManager::Clear() {
-    for (auto x = blocks_.begin(); x != blocks_.end(); ++x) {
-        allocator_->Free(*x);
+    if (allocator_) {
+        for (auto x = blocks_.begin(); x != blocks_.end(); ++x) {
+            allocator_->Free(*x);
+        }
     }
 
     allocated_bytes_ = 0;
@@ -63,37 +67,76 @@ static inline uint64_t Align(uint64_t x, uint64_t n) {
     return (x + n - 1) & (~(n - 1));
 }
 
+void* CompactMemoryManager::AllocByAllocator(uint64_t bytes_needed) {
+    // create a new block if not found
+    uint64_t bytes_allocated = Align(bytes_needed, block_bytes_);
+    auto new_block = allocator_->Alloc(bytes_allocated);
+    if (!new_block) {
+        return nullptr;
+    }
+    allocated_bytes_ += bytes_allocated;
+    blocks_.push_back(new_block);
+
+    // merge with the max-addr block if possible
+    auto max_addr_iter = addr2bytes_.rbegin();
+    if ((max_addr_iter != addr2bytes_.rend()) &&
+        ((char*)max_addr_iter->first + max_addr_iter->second == new_block)) {
+        auto new_addr = max_addr_iter->first;
+        auto new_size = max_addr_iter->second + bytes_allocated;
+
+        RemoveFromBytes2Addr(max_addr_iter->first, max_addr_iter->second, &bytes2addr_);
+        addr2bytes_.erase((++max_addr_iter).base());
+
+        AddFreeBlock((char*)new_addr + bytes_needed, new_size - bytes_needed, &bytes2addr_, &addr2bytes_);
+        return new_addr;
+    }
+
+    if (bytes_needed < bytes_allocated) {
+        AddFreeBlock((char*)new_block + bytes_needed, bytes_allocated - bytes_needed, &bytes2addr_, &addr2bytes_);
+    }
+    return new_block;
+}
+
+void* CompactMemoryManager::AllocByVMAllocator(uint64_t bytes_needed) {
+    auto end_addr = (char*)vmr_->GetReservedBaseAddr() + vmr_->GetAllocatedBytes();
+    void* ret_addr = end_addr;
+
+    // finds the largest free address to see whether we can allocate from the end of allocated area
+    auto max_addr_iter = addr2bytes_.rbegin();
+    bool is_consecutive = (max_addr_iter != addr2bytes_.rend() &&
+                           ((char*)max_addr_iter->first + max_addr_iter->second == end_addr));
+    if (is_consecutive) {
+        ret_addr = max_addr_iter->first;
+        bytes_needed -= max_addr_iter->second;
+    }
+
+    uint64_t bytes_allocated = vmr_->Extend(bytes_needed);
+    if (bytes_allocated == 0) {
+        return nullptr;
+    }
+    allocated_bytes_ += bytes_allocated;
+
+    // removes the previous largest addr block because it is merged with the newly allocated block
+    if (is_consecutive) {
+        RemoveFromBytes2Addr(max_addr_iter->first, max_addr_iter->second, &bytes2addr_);
+        addr2bytes_.erase((++max_addr_iter).base());
+    }
+
+    if (bytes_needed < bytes_allocated) {
+        AddFreeBlock(end_addr + bytes_needed, bytes_allocated - bytes_needed, &bytes2addr_, &addr2bytes_);
+    }
+
+    return ret_addr;
+}
+
 void* CompactMemoryManager::Alloc(uint64_t bytes_needed) {
     // find a best-fit bytes block in free blocks
     auto b2a_iter = bytes2addr_.lower_bound(bytes_needed);
     if (b2a_iter == bytes2addr_.end()) {
-        // create a new block if not found
-        uint64_t bytes_allocated = Align(bytes_needed, block_bytes_);
-        auto new_block = allocator_->Alloc(bytes_allocated);
-        if (!new_block) {
-            return nullptr;
+        if (allocator_) {
+            return AllocByAllocator(bytes_needed);
         }
-        allocated_bytes_ += bytes_allocated;
-        blocks_.push_back(new_block);
-
-        // merge with the max-addr block if possible
-        auto max_addr_iter = addr2bytes_.rbegin();
-        if ((max_addr_iter != addr2bytes_.rend()) &&
-            ((char*)max_addr_iter->first + max_addr_iter->second == new_block)) {
-            auto new_addr = max_addr_iter->first;
-            auto new_size = max_addr_iter->second + bytes_allocated;
-
-            RemoveFromBytes2Addr(max_addr_iter->first, max_addr_iter->second, &bytes2addr_);
-            addr2bytes_.erase((++max_addr_iter).base());
-
-            AddFreeBlock((char*)new_addr + bytes_needed, new_size - bytes_needed, &bytes2addr_, &addr2bytes_);
-            return new_addr;
-        }
-
-        if (bytes_needed < bytes_allocated) {
-            AddFreeBlock((char*)new_block + bytes_needed, bytes_allocated - bytes_needed, &bytes2addr_, &addr2bytes_);
-        }
-        return new_block;
+        return AllocByVMAllocator(bytes_needed);
     }
 
     // if best-fit bytes block(s) are found, use the first one and remove it from free list

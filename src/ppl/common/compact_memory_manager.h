@@ -28,8 +28,19 @@ namespace ppl { namespace common {
 
 class CompactMemoryManager final {
 public:
+    class VMAllocator {
+    public:
+        virtual ~VMAllocator() {}
+        virtual void* GetReservedBaseAddr() const = 0;
+        virtual uint64_t GetAllocatedBytes() const = 0;
+        /** returns bytes allocated starting from `GetReservedBaseAddr() + GetAllocatedBytes()`, or 0 if oom. */
+        virtual uint64_t Extend(uint64_t bytes_needed) = 0;
+    };
+
+public:
     /** @param block_bytes MUST be power of 2 */
     CompactMemoryManager(Allocator* ar, uint64_t block_bytes = 65536);
+    CompactMemoryManager(VMAllocator* mgr) : vmr_(mgr) {}
     ~CompactMemoryManager();
 
     void* Alloc(uint64_t bytes);
@@ -40,15 +51,20 @@ public:
     }
 
 private:
+    void* AllocByAllocator(uint64_t bytes_needed);
+    void* AllocByVMAllocator(uint64_t bytes_needed);
     void Clear();
 
 private:
-    const uint64_t block_bytes_;
-    Allocator* allocator_;
-    uint64_t allocated_bytes_;
+    const uint64_t block_bytes_ = 0;
+    Allocator* allocator_ = nullptr;
+    std::vector<void*> blocks_;
+
+    VMAllocator* vmr_ = nullptr;
+
+    uint64_t allocated_bytes_ = 0;
     std::map<void*, uint64_t> addr2bytes_;
     std::map<uint64_t, std::set<void*>> bytes2addr_;
-    std::vector<void*> blocks_;
 
 private:
     CompactMemoryManager(const CompactMemoryManager&) = delete;
