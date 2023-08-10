@@ -46,6 +46,7 @@ set(PPLCOMMON_INCLUDES)
 list(APPEND PPLCOMMON_INCLUDES ${CMAKE_CURRENT_SOURCE_DIR}/src)
 
 set(PPLCOMMON_LINK_LIBRARIES)
+set(PPLCOMMON_LINK_DIRECTORIES)
 set(PPLCOMMON_DEFINITIONS)
 
 if(PPLCOMMON_USE_X86_64)
@@ -76,6 +77,7 @@ endif()
 
 add_library(pplcommon_static STATIC ${PPLCOMMON_SRC})
 target_link_libraries(pplcommon_static PUBLIC ${PPLCOMMON_LINK_LIBRARIES})
+target_link_directories(pplcommon_static PUBLIC ${PPLCOMMON_LINK_DIRECTORIES})
 target_include_directories(pplcommon_static PUBLIC ${PPLCOMMON_INCLUDES})
 target_compile_definitions(pplcommon_static PUBLIC ${PPLCOMMON_DEFINITIONS})
 target_compile_features(pplcommon_static PUBLIC cxx_std_11)

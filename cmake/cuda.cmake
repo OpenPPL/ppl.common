@@ -1,5 +1,19 @@
 option(PPLCOMMON_ENABLE_NCCL "" OFF)
 
+include(${HPCC_DEPS_DIR}/hpcc/cmake/cuda-common.cmake)
+
+file(GLOB __SRC__ src/ppl/common/cuda/*.cc)
+list(APPEND PPLCOMMON_SRC ${__SRC__})
+unset(__SRC__)
+
+list(APPEND PPLCOMMON_LINK_LIBRARIES cuda cudart_static)
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+    list(APPEND PPLCOMMON_LINK_LIBRARIES dl rt) # required by cudart_static
+endif()
+
+list(APPEND PPLCOMMON_INCLUDES ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
+list(APPEND PPLCOMMON_LINK_DIRECTORIES ${CMAKE_CUDA_HOST_IMPLICIT_LINK_DIRECTORIES})
+
 if (PPLCOMMON_ENABLE_NCCL)
     hpcc_populate_dep(nccl)
 
