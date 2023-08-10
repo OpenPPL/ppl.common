@@ -18,12 +18,12 @@
 #ifndef _ST_HPC_PPL_COMMON_CUDA_CUDA_ENV_H_
 #define _ST_HPC_PPL_COMMON_CUDA_CUDA_ENV_H_
 
-#include <cuda.h>
+#include "ppl/common/retcode.h"
 
 namespace ppl { namespace common {
 
-CUresult InitCudaEnv(int device_id);
-CUresult DestroyCudaEnv(int device_id);
+RetCode InitCudaEnv(int device_id);
+RetCode DestroyCudaEnv(int device_id);
 
 }}
 

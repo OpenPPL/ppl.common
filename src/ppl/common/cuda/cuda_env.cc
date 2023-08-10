@@ -17,16 +17,17 @@
 
 #include "cuda_env.h"
 #include "ppl/common/log.h"
+#include <cuda.h>
 
 namespace ppl { namespace common {
 
-CUresult InitCudaEnv(int device_id) {
+RetCode InitCudaEnv(int device_id) {
     const char* errmsg = nullptr;
     auto cu_status = cuInit(0);
     if (cu_status != CUDA_SUCCESS) {
         cuGetErrorString(cu_status, &errmsg);
         LOG(ERROR) << "cuInit failed: " << errmsg;
-        return cu_status;
+        return RC_INTERNAL_ERROR;
     }
 
     CUcontext cu_context;
@@ -34,27 +35,28 @@ CUresult InitCudaEnv(int device_id) {
     if (cu_status != CUDA_SUCCESS) {
         cuGetErrorString(cu_status, &errmsg);
         LOG(ERROR) << "cuDevicePrimaryCtxRetain failed: " << errmsg;
-        return cu_status;
+        return RC_INTERNAL_ERROR;
     }
 
     cu_status = cuCtxSetCurrent(cu_context);
     if (cu_status != CUDA_SUCCESS) {
         cuGetErrorString(cu_status, &errmsg);
         LOG(ERROR) << "cuCtxSetCurrent failed: " << errmsg;
-        return cu_status;
+        return RC_INTERNAL_ERROR;
     }
 
-    return CUDA_SUCCESS;
+    return RC_SUCCESS;
 }
 
-CUresult DestroyCudaEnv(int device_id) {
-    auto rc = cuDevicePrimaryCtxRelease(device_id);
-    if (rc != CUDA_SUCCESS) {
+RetCode DestroyCudaEnv(int device_id) {
+    auto cu_status = cuDevicePrimaryCtxRelease(device_id);
+    if (cu_status != CUDA_SUCCESS) {
         const char* errmsg = nullptr;
-        cuGetErrorString(rc, &errmsg);
+        cuGetErrorString(cu_status, &errmsg);
         LOG(ERROR) << "cuDevicePrimaryCtxRelease failed: " << errmsg;
+        return RC_INTERNAL_ERROR;
     }
-    return rc;
+    return RC_SUCCESS;
 }
 
 }}
