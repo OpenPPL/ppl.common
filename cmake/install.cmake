@@ -8,6 +8,12 @@ file(GLOB PPLCOMMON_PARAM_HEADERS
 install(FILES ${PPLCOMMON_PARAM_HEADERS}
     DESTINATION include/ppl/common/params)
 
+if(MSVC)
+    file(GLOB __win_headers__ src/ppl/common/windows/*.h)
+    install(FILES ${__win_headers__} DESTINATION include/ppl/common/windows)
+    unset(__win_headers__)
+endif()
+
 install(TARGETS pplcommon_static DESTINATION lib)
 
 set(PPLCOMMON_CMAKE_CONFIG_FILE ${CMAKE_CURRENT_BINARY_DIR}/generated/pplcommon-config.cmake)

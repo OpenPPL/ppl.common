@@ -1,5 +1,9 @@
 hpcc_populate_dep(googletest)
 
+if(MSVC)
+    hpcc_use_msvc_static_runtime()
+endif()
+
 file(GLOB PPLCOMMON_UNITTEST_SRC src/ppl/common/*_unittest.cc)
 add_executable(pplcommon_unittest ${PPLCOMMON_UNITTEST_SRC})
 
