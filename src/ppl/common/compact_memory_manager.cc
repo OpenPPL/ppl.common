@@ -40,6 +40,7 @@ void CompactMemoryManager::Clear() {
         }
     }
 
+    buffered_bytes_ = 0;
     allocated_bytes_ = 0;
     addr2bytes_.clear();
     bytes2addr_.clear();
@@ -74,7 +75,7 @@ void* CompactMemoryManager::AllocByAllocator(uint64_t bytes_needed) {
     if (!new_block) {
         return nullptr;
     }
-    allocated_bytes_ += bytes_allocated;
+    buffered_bytes_ += bytes_allocated;
     blocks_.push_back(new_block);
 
     // merge with the max-addr block if possible
@@ -114,7 +115,7 @@ void* CompactMemoryManager::AllocByVMAllocator(uint64_t bytes_needed) {
     if (bytes_allocated == 0) {
         return nullptr;
     }
-    allocated_bytes_ += bytes_allocated;
+    buffered_bytes_ += bytes_allocated;
 
     // removes the previous largest addr block because it is merged with the newly allocated block
     if (is_consecutive) {
@@ -133,10 +134,16 @@ void* CompactMemoryManager::Alloc(uint64_t bytes_needed) {
     // find a best-fit bytes block in free blocks
     auto b2a_iter = bytes2addr_.lower_bound(bytes_needed);
     if (b2a_iter == bytes2addr_.end()) {
+        void* ret;
         if (allocator_) {
-            return AllocByAllocator(bytes_needed);
+            ret = AllocByAllocator(bytes_needed);
+        } else {
+            ret = AllocByVMAllocator(bytes_needed);
         }
-        return AllocByVMAllocator(bytes_needed);
+        if (ret) {
+            allocated_bytes_ += bytes_needed;
+        }
+        return ret;
     }
 
     // if best-fit bytes block(s) are found, use the first one and remove it from free list
@@ -157,6 +164,7 @@ void* CompactMemoryManager::Alloc(uint64_t bytes_needed) {
 
     addr2bytes_.erase(a2b_iter);
 
+    allocated_bytes_ += bytes_needed;
     return res_addr;
 }
 
@@ -188,6 +196,8 @@ void CompactMemoryManager::Free(void* addr, uint64_t bytes) {
     } else {
         AddFreeBlock(addr, bytes, &bytes2addr_, &addr2bytes_);
     }
+
+    allocated_bytes_ -= bytes;
 }
 
 }} // namespace ppl::common

@@ -46,6 +46,9 @@ public:
     void* Alloc(uint64_t bytes);
     void Free(void* addr, uint64_t bytes);
 
+    uint64_t GetBufferedBytes() const {
+        return buffered_bytes_;
+    }
     uint64_t GetAllocatedBytes() const {
         return allocated_bytes_;
     }
@@ -62,7 +65,9 @@ private:
 
     VMAllocator* vmr_ = nullptr;
 
+    uint64_t buffered_bytes_ = 0;
     uint64_t allocated_bytes_ = 0;
+
     std::map<void*, uint64_t> addr2bytes_;
     std::map<uint64_t, std::set<void*>> bytes2addr_;
 
