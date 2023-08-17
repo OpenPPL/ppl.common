@@ -15,28 +15,28 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "ppl/common/file_mapping.h"
+#include "ppl/common/mmap.h"
 #include "gtest/gtest.h"
 using namespace ppl::common;
 
-TEST(FileMappingTest, init) {
-    FileMapping fm;
-    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, FileMapping::READ));
-    EXPECT_NE(RC_SUCCESS, fm.Init("a", FileMapping::READ));
+TEST(MmapTest, init) {
+    Mmap fm;
+    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, Mmap::READ));
+    EXPECT_NE(RC_SUCCESS, fm.Init("a", Mmap::READ));
 }
 
-TEST(FileMappingTest, data_and_size) {
-    FileMapping fm;
-    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, FileMapping::READ));
+TEST(MmapTest, data_and_size) {
+    Mmap fm;
+    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, Mmap::READ));
     EXPECT_TRUE(fm.GetSize() > 0);
     EXPECT_NE(nullptr, fm.GetData());
 }
 
-TEST(FileMappingTest, offset_and_length) {
-    FileMapping fm;
+TEST(MmapTest, offset_and_length) {
+    Mmap fm;
     const uint64_t offset = 22;
     const uint64_t length = 14;
-    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, FileMapping::READ, offset, length));
+    EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, Mmap::READ, offset, length));
     EXPECT_EQ(14, fm.GetSize());
     EXPECT_NE(nullptr, fm.GetData());
 

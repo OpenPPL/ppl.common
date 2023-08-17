@@ -15,8 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#ifndef _ST_HPC_PPL_COMMON_FILE_MAPPING_H_
-#define _ST_HPC_PPL_COMMON_FILE_MAPPING_H_
+#ifndef _ST_HPC_PPL_COMMON_MMAP_H_
+#define _ST_HPC_PPL_COMMON_MMAP_H_
 
 #include "ppl/common/retcode.h"
 #include <limits> // UINT64_MAX
@@ -30,7 +30,7 @@
 
 namespace ppl { namespace common {
 
-class FileMapping final {
+class Mmap final {
 public:
     static constexpr uint32_t READ = 1;
     static constexpr uint32_t WRITE = 2;
@@ -39,11 +39,11 @@ private:
     static constexpr uint32_t MAX_MSG_BUF_SIZE = 1024;
 
 public:
-    FileMapping();
-    ~FileMapping();
+    Mmap();
+    ~Mmap();
 
-    FileMapping(FileMapping&&);
-    void operator=(FileMapping&&);
+    Mmap(Mmap&&);
+    void operator=(Mmap&&);
 
     /**
        @param permission MUST be one of: READ_ONLY, WRITE_ONLY or READ_WRITE
@@ -51,6 +51,8 @@ public:
     */
     ppl::common::RetCode Init(const char* filename, uint32_t permission, uint64_t offset = 0,
                               uint64_t length = UINT64_MAX);
+    /** @brief allocate a memory area of `size` */
+    ppl::common::RetCode Init(uint64_t size);
     char* GetData() {
         return static_cast<char*>(start_);
     }
@@ -65,7 +67,7 @@ public:
     }
 
 private:
-    void DoMove(FileMapping&& fm);
+    void DoMove(Mmap&& fm);
     void Destroy();
 
 private:
@@ -81,8 +83,8 @@ private:
     char error_message_[MAX_MSG_BUF_SIZE];
 
 private:
-    FileMapping(const FileMapping&) = delete;
-    FileMapping& operator=(const FileMapping&) = delete;
+    Mmap(const Mmap&) = delete;
+    Mmap& operator=(const Mmap&) = delete;
 };
 
 }} // namespace ppl::common

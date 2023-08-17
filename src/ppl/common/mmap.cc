@@ -15,7 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "ppl/common/file_mapping.h"
+#include "ppl/common/mmap.h"
 
 #ifndef _MSC_VER
 #include <sys/types.h>
@@ -32,36 +32,44 @@
 
 namespace ppl { namespace common {
 
-FileMapping::FileMapping()
+Mmap::Mmap()
 #ifdef _MSC_VER
     : h_file_(nullptr)
     , h_map_file_(nullptr)
 #else
-    : fd_(0)
+    : fd_(-1)
 #endif
     , base_(nullptr)
     , start_(nullptr)
     , size_(0) {
 }
 
-void FileMapping::Destroy() {
-    if (start_) {
+void Mmap::Destroy() {
+    if (base_) {
 #ifdef _MSC_VER
-        UnmapViewOfFile(base_);
-        CloseHandle(h_map_file_);
-        CloseHandle(h_file_);
+        if (h_map_file_) {
+            UnmapViewOfFile(base_);
+            CloseHandle(h_map_file_);
+            CloseHandle(h_file_);
+        } else {
+            free(base_);
+        }
 #else
-        munmap(base_, size_);
-        close(fd_);
+        if (fd_ >= 0) {
+            munmap(base_, size_);
+            close(fd_);
+        } else {
+            free(base_);
+        }
 #endif
     }
 }
 
-FileMapping::~FileMapping() {
+Mmap::~Mmap() {
     Destroy();
 }
 
-void FileMapping::DoMove(FileMapping&& fm) {
+void Mmap::DoMove(Mmap&& fm) {
 #ifdef _MSC_VER
     h_file_ = fm.h_file_;
     h_map_file_ = fm.h_map_file_;
@@ -81,22 +89,32 @@ void FileMapping::DoMove(FileMapping&& fm) {
     fm.size_ = 0;
 }
 
-FileMapping::FileMapping(FileMapping&& fm) {
+Mmap::Mmap(Mmap&& fm) {
     DoMove(std::move(fm));
 }
 
-void FileMapping::operator=(FileMapping&& fm) {
+void Mmap::operator=(Mmap&& fm) {
     Destroy();
     DoMove(std::move(fm));
 }
 
+RetCode Mmap::Init(uint64_t size) {
+    base_ = malloc(size);
+    if (!base_) {
+        return RC_OUT_OF_MEMORY;
+    }
+    start_ = base_;
+    size_ = size;
+    return RC_SUCCESS;
+}
+
 #ifdef _MSC_VER
-RetCode FileMapping::Init(const char* filename, uint32_t permission, uint64_t offset, uint64_t length) {
+RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, uint64_t length) {
     DWORD flags = 0;
-    if (permission & FileMapping::READ) {
+    if (permission & Mmap::READ) {
         flags |= GENERIC_READ;
     }
-    if (permission & FileMapping::WRITE) {
+    if (permission & Mmap::WRITE) {
         flags |= GENERIC_WRITE;
     }
     h_file_ = CreateFile(filename, flags, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -123,9 +141,9 @@ RetCode FileMapping::Init(const char* filename, uint32_t permission, uint64_t of
     }
 
     flags = 0;
-    if (permission & FileMapping::WRITE) {
+    if (permission & Mmap::WRITE) {
         flags = PAGE_READWRITE;
-    } else if (permission & FileMapping::READ) {
+    } else if (permission & Mmap::READ) {
         flags = PAGE_READONLY;
     }
     /*
@@ -150,10 +168,10 @@ RetCode FileMapping::Init(const char* filename, uint32_t permission, uint64_t of
     DWORD file_offset_high = (mapping_start_offset >> 32), file_offset_low = (mapping_start_offset & 0xffffffff);
 
     flags = 0;
-    if (permission & FileMapping::READ) {
+    if (permission & Mmap::READ) {
         flags |= FILE_MAP_READ;
     }
-    if (permission & FileMapping::WRITE) {
+    if (permission & Mmap::WRITE) {
         flags |= FILE_MAP_WRITE;
     }
     base_ = MapViewOfFile(h_map_file_, flags, file_offset_high, file_offset_low, length);
@@ -176,17 +194,17 @@ errout:
     return RC_INVALID_VALUE;
 }
 #else
-RetCode FileMapping::Init(const char* filename, uint32_t permission, uint64_t offset, uint64_t length) {
+RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, uint64_t length) {
     auto page_size = sysconf(_SC_PAGE_SIZE);
     auto mapping_start_offset = (offset / page_size) * page_size;
     struct stat file_stat_info;
 
     int flags = O_CLOEXEC;
-    if ((permission & FileMapping::READ) && (permission & FileMapping::WRITE)) {
+    if ((permission & Mmap::READ) && (permission & Mmap::WRITE)) {
         flags |= O_RDWR;
-    } else if (permission & FileMapping::WRITE) {
+    } else if (permission & Mmap::WRITE) {
         flags |= O_WRONLY;
-    } else if (permission & FileMapping::READ) {
+    } else if (permission & Mmap::READ) {
         flags |= O_RDONLY;
     }
     int fd = open(filename, flags);
@@ -213,10 +231,10 @@ RetCode FileMapping::Init(const char* filename, uint32_t permission, uint64_t of
     }
 
     flags = 0;
-    if (permission & FileMapping::READ) {
+    if (permission & Mmap::READ) {
         flags |= PROT_READ;
     }
-    if (permission & FileMapping::WRITE) {
+    if (permission & Mmap::WRITE) {
         flags |= PROT_WRITE;
     }
     base_ = mmap(NULL, length, flags, MAP_PRIVATE, fd, mapping_start_offset);
