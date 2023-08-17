@@ -33,7 +33,7 @@ public:
         virtual ~VMAllocator() {}
         virtual void* GetReservedBaseAddr() const = 0;
         virtual uint64_t GetUsedBytes() const = 0;
-        /** returns bytes allocated starting from `GetReservedBaseAddr() + GetAllocatedBytes()`, or 0 if oom. */
+        /** returns bytes allocated from the end position, or 0 if oom. */
         virtual uint64_t Extend(uint64_t bytes_needed) = 0;
     };
 
@@ -56,7 +56,6 @@ public:
 private:
     void* AllocByAllocator(uint64_t bytes_needed);
     void* AllocByVMAllocator(uint64_t bytes_needed);
-    void Clear();
 
 private:
     const uint64_t block_bytes_ = 0;

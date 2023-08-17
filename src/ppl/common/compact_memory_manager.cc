@@ -33,20 +33,6 @@ CompactMemoryManager::~CompactMemoryManager() {
     }
 }
 
-void CompactMemoryManager::Clear() {
-    if (allocator_) {
-        for (auto x = blocks_.begin(); x != blocks_.end(); ++x) {
-            allocator_->Free(*x);
-        }
-    }
-
-    buffered_bytes_ = 0;
-    allocated_bytes_ = 0;
-    addr2bytes_.clear();
-    bytes2addr_.clear();
-    blocks_.clear();
-}
-
 static void RemoveFromBytes2Addr(void* addr, uint64_t bytes, map<uint64_t, set<void*>>* bytes2addr) {
     auto b2a_iter = bytes2addr->find(bytes);
     if (b2a_iter != bytes2addr->end()) {
