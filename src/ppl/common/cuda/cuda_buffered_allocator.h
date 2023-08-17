@@ -21,6 +21,7 @@
 #include "ppl/common/retcode.h"
 #include "ppl/common/compact_memory_manager.h"
 #include <cuda.h>
+#include <limits>
 #include <vector>
 
 namespace ppl { namespace common {
@@ -32,7 +33,7 @@ public:
         Destroy();
     }
 
-    ppl::common::RetCode Init(int devid);
+    ppl::common::RetCode Init(int devid, uint64_t max_mem_bytes = UINT64_MAX);
     void Destroy();
 
     void* GetReservedBaseAddr() const override {

@@ -59,7 +59,7 @@ void CudaBufferedAllocator::Destroy() {
     addr_ = 0;
 }
 
-RetCode CudaBufferedAllocator::Init(int devid) {
+RetCode CudaBufferedAllocator::Init(int devid, uint64_t max_mem_bytes) {
     const char* errmsg = nullptr;
 
     auto rc = cuMemGetInfo(nullptr, &total_bytes_);
@@ -67,6 +67,10 @@ RetCode CudaBufferedAllocator::Init(int devid) {
         cuGetErrorString(rc, &errmsg);
         LOG(ERROR) << "cuMemGetInfo failed: " << errmsg;
         return RC_OTHER_ERROR;
+    }
+
+    if (total_bytes_ > max_mem_bytes) {
+        total_bytes_ = max_mem_bytes;
     }
 
     prop_.type = CU_MEM_ALLOCATION_TYPE_PINNED;
@@ -103,8 +107,9 @@ uint64_t CudaBufferedAllocator::Extend(uint64_t bytes_needed) {
     }
 
     auto bytes_allocated = Align(bytes_needed - remain_bytes_, granularity_);
-    if (bytes_allocated >= total_bytes_) {
-        LOG(ERROR) << "bytes_allocated[" << bytes_allocated << "] is larger than max [" << total_bytes_ << "]";
+    if (bytes_allocated + GetUsedBytes() > total_bytes_) {
+        LOG(ERROR) << "bytes_allocated [" << bytes_allocated << "] is larger than available ["
+                   << total_bytes_ - GetUsedBytes() << "]";
         return 0;
     }
 
@@ -113,7 +118,7 @@ uint64_t CudaBufferedAllocator::Extend(uint64_t bytes_needed) {
     auto rc = cuMemCreate(&alloc_handle, bytes_allocated, &prop_, 0);
     if (rc != CUDA_SUCCESS) {
         cuGetErrorString(rc, &errmsg);
-        LOG(ERROR) << "cuMemCreate [" << bytes_allocated << "] bytes_allocated failed: " << errmsg;
+        LOG(ERROR) << "cuMemCreate [" << bytes_allocated << "] bytes failed: " << errmsg;
         return 0;
     }
 
