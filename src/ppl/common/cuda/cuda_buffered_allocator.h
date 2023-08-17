@@ -38,8 +38,8 @@ public:
     void* GetReservedBaseAddr() const override {
         return (void*)addr_;
     }
-    uint64_t GetAllocatedBytes() const override {
-        return bytes_allocated_;
+    uint64_t GetUsedBytes() const override {
+        return buffered_bytes_ - remain_bytes_;
     }
     uint64_t GetReservedAddrLen() const {
         return addr_len_;
@@ -52,8 +52,9 @@ private:
     CUmemAccessDesc access_desc_ = {};
     CUdeviceptr addr_ = 0;
     size_t addr_len_ = 0;
-    size_t bytes_allocated_ = 0;
+    size_t buffered_bytes_ = 0;
     size_t total_bytes_ = 0;
+    size_t remain_bytes_ = 0;
     uint64_t granularity_ = 0;
     std::vector<CUmemGenericAllocationHandle> handle_list_;
 

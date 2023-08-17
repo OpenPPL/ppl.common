@@ -34,7 +34,7 @@ void CudaBufferedAllocator::Destroy() {
     const char* errmsg = nullptr;
 
     if (!handle_list_.empty()) {
-        rc = cuMemUnmap(addr_, bytes_allocated_);
+        rc = cuMemUnmap(addr_, buffered_bytes_);
         if (rc != CUDA_SUCCESS) {
             cuGetErrorString(rc, &errmsg);
             LOG(ERROR) << "cuMemUnmap failed: " << errmsg;
@@ -96,37 +96,44 @@ RetCode CudaBufferedAllocator::Init(int devid) {
     return RC_SUCCESS;
 }
 
-uint64_t CudaBufferedAllocator::Extend(uint64_t bytes) {
-    bytes = Align(bytes, granularity_);
-    if (bytes >= total_bytes_) {
-        LOG(ERROR) << "bytes[" << bytes << "] is larger than max [" << total_bytes_ << "]";
+uint64_t CudaBufferedAllocator::Extend(uint64_t bytes_needed) {
+    if (remain_bytes_ >= bytes_needed) {
+        remain_bytes_ -= bytes_needed;
+        return bytes_needed;
+    }
+
+    auto bytes_allocated = Align(bytes_needed - remain_bytes_, granularity_);
+    if (bytes_allocated >= total_bytes_) {
+        LOG(ERROR) << "bytes_allocated[" << bytes_allocated << "] is larger than max [" << total_bytes_ << "]";
         return 0;
     }
 
     const char* errmsg = nullptr;
     CUmemGenericAllocationHandle alloc_handle;
-    auto rc = cuMemCreate(&alloc_handle, bytes, &prop_, 0);
+    auto rc = cuMemCreate(&alloc_handle, bytes_allocated, &prop_, 0);
     if (rc != CUDA_SUCCESS) {
         cuGetErrorString(rc, &errmsg);
-        LOG(ERROR) << "cuMemCreate [" << bytes << "] bytes failed: " << errmsg;
+        LOG(ERROR) << "cuMemCreate [" << bytes_allocated << "] bytes_allocated failed: " << errmsg;
         return 0;
     }
 
-    auto start_addr = addr_ + bytes_allocated_;
+    auto start_addr = addr_ + buffered_bytes_;
 
-    rc = cuMemMap(start_addr, bytes, 0, alloc_handle, 0);
+    rc = cuMemMap(start_addr, bytes_allocated, 0, alloc_handle, 0);
     if (rc != CUDA_SUCCESS) {
         cuGetErrorString(rc, &errmsg);
-        LOG(ERROR) << "cuMemMap [" << bytes << "] to addr [" << start_addr << "] failed: " << errmsg;
+        LOG(ERROR) << "cuMemMap [" << bytes_allocated << "] to addr [" << start_addr << "] failed: " << errmsg;
         return 0;
     }
 
-    cuMemSetAccess(start_addr, bytes, &access_desc_, 1);
+    cuMemSetAccess(start_addr, bytes_allocated, &access_desc_, 1);
 
     handle_list_.push_back(alloc_handle);
-    bytes_allocated_ += bytes;
+    buffered_bytes_ += bytes_allocated;
 
-    return bytes;
+    remain_bytes_ = remain_bytes_ + bytes_allocated - bytes_needed;
+
+    return bytes_needed;
 }
 
 }}

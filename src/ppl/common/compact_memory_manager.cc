@@ -99,7 +99,7 @@ void* CompactMemoryManager::AllocByAllocator(uint64_t bytes_needed) {
 }
 
 void* CompactMemoryManager::AllocByVMAllocator(uint64_t bytes_needed) {
-    auto end_addr = (char*)vmr_->GetReservedBaseAddr() + vmr_->GetAllocatedBytes();
+    auto end_addr = (char*)vmr_->GetReservedBaseAddr() + vmr_->GetUsedBytes();
     void* ret_addr = end_addr;
 
     // finds the largest free address to see whether we can allocate from the end of allocated area
