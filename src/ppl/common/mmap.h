@@ -22,7 +22,7 @@
 #include <limits> // UINT64_MAX
 
 #ifdef _MSC_VER
-#define NO_MINMAX
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #define NOGDI
 #include <windows.h>
@@ -34,9 +34,6 @@ class Mmap final {
 public:
     static constexpr uint32_t READ = 1;
     static constexpr uint32_t WRITE = 2;
-
-private:
-    static constexpr uint32_t MAX_MSG_BUF_SIZE = 1024;
 
 public:
     Mmap();
@@ -62,9 +59,6 @@ public:
     uint64_t GetSize() const {
         return size_;
     }
-    const char* GetErrorMessage() const {
-        return error_message_;
-    }
 
 private:
     void DoMove(Mmap&& fm);
@@ -77,10 +71,15 @@ private:
 #else
     int fd_;
 #endif
-    void* base_;
-    void* start_;
+
     uint64_t size_;
-    char error_message_[MAX_MSG_BUF_SIZE];
+    void* start_;
+
+    /**
+       in file-mapping mode this field points the base addr of mapping.
+       in mem mode it is used to store data whose size <= INLINE_DATA_SIZE.
+    */
+    void* base_;
 
 private:
     Mmap(const Mmap&) = delete;

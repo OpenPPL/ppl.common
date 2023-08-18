@@ -19,9 +19,19 @@
 #define _ST_HPC_PPL_COMMON_COMMON_H_
 
 #ifdef _MSC_VER
+
 #define PPLCOMMON_PUBLIC __declspec(dllexport)
+
+#define PPLCOMMON_PACKED_STRUCT(___Decl___) \
+    __pragma(pack(push, 1)) ___Decl___ __pragma(pack(pop))
+
 #else
+
 #define PPLCOMMON_PUBLIC __attribute__((visibility("default")))
+
+#define PPLCOMMON_PACKED_STRUCT(___Decl___) \
+    ___Decl___ __attribute__((__packed__))
+
 #endif
 
 #endif

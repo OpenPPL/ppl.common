@@ -15,8 +15,6 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "ppl/common/mmap.h"
-
 #ifndef _MSC_VER
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -27,10 +25,16 @@
 #endif //! non windows
 #include <cstring>
 #include <cstdlib>
-#include <cstdio> // for sprintf
+#include <cstdio> // sprintf
 #include <utility> // std::move
 
+#include "ppl/common/mmap.h"
+#include "ppl/common/log.h"
+
 namespace ppl { namespace common {
+
+static constexpr uint32_t MAX_MSG_BUF_SIZE = 1024;
+static constexpr uint32_t INLINE_DATA_SIZE = sizeof(void*);
 
 Mmap::Mmap()
 #ifdef _MSC_VER
@@ -39,29 +43,27 @@ Mmap::Mmap()
 #else
     : fd_(-1)
 #endif
-    , base_(nullptr)
+    , size_(0)
     , start_(nullptr)
-    , size_(0) {
-}
+    , base_(nullptr) {}
 
 void Mmap::Destroy() {
-    if (base_) {
+    if (start_) {
 #ifdef _MSC_VER
         if (h_map_file_) {
             UnmapViewOfFile(base_);
             CloseHandle(h_map_file_);
             CloseHandle(h_file_);
-        } else {
-            free(base_);
         }
 #else
         if (fd_ >= 0) {
             munmap(base_, size_);
             close(fd_);
-        } else {
-            free(base_);
         }
 #endif
+        else if (size_ > INLINE_DATA_SIZE) {
+            free(start_);
+        }
     }
 }
 
@@ -72,21 +74,26 @@ Mmap::~Mmap() {
 void Mmap::DoMove(Mmap&& fm) {
 #ifdef _MSC_VER
     h_file_ = fm.h_file_;
-    h_map_file_ = fm.h_map_file_;
     fm.h_file_ = nullptr;
+    h_map_file_ = fm.h_map_file_;
     fm.h_map_file_ = nullptr;
 #else
     fd_ = fm.fd_;
     fm.fd_ = -1;
 #endif
 
-    base_ = fm.base_;
-    start_ = fm.start_;
     size_ = fm.size_;
-
-    fm.base_ = nullptr;
-    fm.start_ = nullptr;
     fm.size_ = 0;
+
+    if (fm.start_ == &fm.base_) {
+        start_ = &base_;
+    } else {
+        start_ = fm.start_;
+    }
+    fm.start_ = nullptr;
+
+    base_ = fm.base_;
+    fm.base_ = nullptr;
 }
 
 Mmap::Mmap(Mmap&& fm) {
@@ -99,11 +106,15 @@ void Mmap::operator=(Mmap&& fm) {
 }
 
 RetCode Mmap::Init(uint64_t size) {
-    base_ = malloc(size);
-    if (!base_) {
-        return RC_OUT_OF_MEMORY;
+    if (size <= INLINE_DATA_SIZE) {
+        start_ = &base_;
+    } else {
+        start_ = malloc(size);
+        if (!start_) {
+            return RC_OUT_OF_MEMORY;
+        }
     }
-    start_ = base_;
+
     size_ = size;
     return RC_SUCCESS;
 }
@@ -119,19 +130,21 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
     }
     h_file_ = CreateFile(filename, flags, FILE_SHARE_READ, nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (h_file_ == INVALID_HANDLE_VALUE) {
+        char message[MAX_MSG_BUF_SIZE];
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
-                      error_message_, MAX_MSG_BUF_SIZE, nullptr);
+                      message, MAX_MSG_BUF_SIZE, nullptr);
+        LOG(ERROR) << "open file [" << filename << "] failed: " << message;
         return RC_INVALID_VALUE;
     }
 
     DWORD file_size = GetFileSize(h_file_, nullptr);
     if (file_size == 0) {
-        strcpy(error_message_, "model file size is 0.");
+        LOG(ERROR) << "model file size is 0.";
         goto errout;
     }
 
     if (offset >= file_size) {
-        sprintf(error_message_, "offset[%llu] >= file size[%lu]\n", offset, file_size);
+        LOG(ERROR) << "offset[" << offset << "] >= file size[" << file_size << "]";
         return RC_INVALID_VALUE;
     }
 
@@ -156,8 +169,10 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
     */
     h_map_file_ = CreateFileMapping(h_file_, nullptr, flags, 0, 0, nullptr);
     if (!h_map_file_) {
+        char message[MAX_MSG_BUF_SIZE];
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
-                      error_message_, MAX_MSG_BUF_SIZE, nullptr);
+                      message, MAX_MSG_BUF_SIZE, nullptr);
+        LOG(ERROR) << "CreateFileMapping failed: " << message;
         goto errout;
     }
 
@@ -176,8 +191,10 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
     }
     base_ = MapViewOfFile(h_map_file_, flags, file_offset_high, file_offset_low, length);
     if (!base_) {
+        char message[MAX_MSG_BUF_SIZE];
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
-                      error_message_, MAX_MSG_BUF_SIZE, nullptr);
+                      message, MAX_MSG_BUF_SIZE, nullptr);
+        LOG(ERROR) << "MapViewOfFile failed: " << message;
         goto errout2;
     }
 
@@ -220,7 +237,7 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
     {
         uint64_t file_size = file_stat_info.st_size;
         if (offset >= file_size) {
-            sprintf(error_message_, "offset[%lu] >= file size[%lu]\n", offset, file_size);
+            LOG(ERROR) << "offset[" << offset << "] >= file size[" << file_size << "].";
             return RC_INVALID_VALUE;
         }
 
@@ -248,7 +265,7 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
 errout2:
     close(fd);
 errout1:
-    strcpy(error_message_, strerror(errno));
+    LOG(ERROR) << "mmap failed: " << strerror(errno);
     return RC_INVALID_VALUE;
 }
 #endif

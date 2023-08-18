@@ -15,8 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#include "ppl/common/mmap.h"
 #include "gtest/gtest.h"
+#include "ppl/common/mmap.h"
 using namespace ppl::common;
 
 TEST(MmapTest, init) {
@@ -44,4 +44,13 @@ TEST(MmapTest, offset_and_length) {
     EXPECT_EQ('c', data[0]);
     EXPECT_EQ('h', data[1]);
     EXPECT_EQ('e', data[2]);
+}
+
+TEST(MmapTest, mem_mode) {
+    Mmap mm;
+    uint32_t value = 12345;
+    EXPECT_EQ(RC_SUCCESS, mm.Init(sizeof(value)));
+    *(uint32_t*)mm.GetData() = value;
+    EXPECT_EQ(value, *(uint32_t*)mm.GetData());
+    EXPECT_EQ(sizeof(value), mm.GetSize());
 }
