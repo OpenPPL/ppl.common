@@ -34,21 +34,21 @@
 namespace ppl { namespace common {
 
 static constexpr uint32_t MAX_MSG_BUF_SIZE = 1024;
-static constexpr uint32_t INLINE_DATA_SIZE = sizeof(void*);
 
 Mmap::Mmap()
+    : size_(0)
+    , start_(nullptr)
+    , base_(nullptr)
 #ifdef _MSC_VER
-    : h_file_(nullptr)
+    , h_file_(nullptr)
     , h_map_file_(nullptr)
 #else
-    : fd_(-1)
+    , fd_(-1)
 #endif
-    , size_(0)
-    , start_(nullptr)
-    , base_(nullptr) {}
+{}
 
 void Mmap::Destroy() {
-    if (start_) {
+    if (start_ && start_ != &base_) {
 #ifdef _MSC_VER
         if (h_map_file_) {
             UnmapViewOfFile(base_);
@@ -61,7 +61,7 @@ void Mmap::Destroy() {
             close(fd_);
         }
 #endif
-        else if (size_ > INLINE_DATA_SIZE) {
+        else {
             free(start_);
         }
     }
@@ -72,16 +72,6 @@ Mmap::~Mmap() {
 }
 
 void Mmap::DoMove(Mmap&& fm) {
-#ifdef _MSC_VER
-    h_file_ = fm.h_file_;
-    fm.h_file_ = nullptr;
-    h_map_file_ = fm.h_map_file_;
-    fm.h_map_file_ = nullptr;
-#else
-    fd_ = fm.fd_;
-    fm.fd_ = -1;
-#endif
-
     size_ = fm.size_;
     fm.size_ = 0;
 
@@ -94,6 +84,16 @@ void Mmap::DoMove(Mmap&& fm) {
 
     base_ = fm.base_;
     fm.base_ = nullptr;
+
+#ifdef _MSC_VER
+    h_file_ = fm.h_file_;
+    fm.h_file_ = nullptr;
+    h_map_file_ = fm.h_map_file_;
+    fm.h_map_file_ = nullptr;
+#else
+    fd_ = fm.fd_;
+    fm.fd_ = -1;
+#endif
 }
 
 Mmap::Mmap(Mmap&& fm) {

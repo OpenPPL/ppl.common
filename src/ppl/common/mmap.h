@@ -65,21 +65,31 @@ private:
     void Destroy();
 
 private:
+    uint64_t size_;
+    void* start_;
+
+    // ----- //
+
+    /**
+       in file-mapping mode the following fields serve as what they are.
+       in mem mode they are used to store data whose size <= INLINE_DATA_SIZE.
+    */
+
+    void* base_;
 #ifdef _MSC_VER
     HANDLE h_file_;
     HANDLE h_map_file_;
 #else
-    int fd_;
+    int64_t fd_;
 #endif
 
-    uint64_t size_;
-    void* start_;
+    // ----- //
 
-    /**
-       in file-mapping mode this field points the base addr of mapping.
-       in mem mode it is used to store data whose size <= INLINE_DATA_SIZE.
-    */
-    void* base_;
+#ifdef _MSC_VER
+    static constexpr uint32_t INLINE_DATA_SIZE = sizeof(base_) + sizeof(h_file_) + sizeof(h_map_file_);
+#else
+    static constexpr uint32_t INLINE_DATA_SIZE = sizeof(base_) + sizeof(fd_);
+#endif
 
 private:
     Mmap(const Mmap&) = delete;
