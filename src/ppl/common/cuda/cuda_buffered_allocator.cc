@@ -101,15 +101,10 @@ RetCode CudaBufferedAllocator::Init(int devid, uint64_t max_mem_bytes) {
 }
 
 uint64_t CudaBufferedAllocator::Extend(uint64_t bytes_needed) {
-    if (remain_bytes_ >= bytes_needed) {
-        remain_bytes_ -= bytes_needed;
-        return bytes_needed;
-    }
-
-    auto bytes_allocated = Align(bytes_needed - remain_bytes_, granularity_);
-    if (bytes_allocated + GetUsedBytes() > total_bytes_) {
+    auto bytes_allocated = Align(bytes_needed, granularity_);
+    if (bytes_allocated + buffered_bytes_ > total_bytes_) {
         LOG(ERROR) << "bytes_allocated [" << bytes_allocated << "] is larger than available ["
-                   << total_bytes_ - GetUsedBytes() << "]";
+                   << total_bytes_ - buffered_bytes_ << "]";
         return 0;
     }
 
@@ -135,8 +130,6 @@ uint64_t CudaBufferedAllocator::Extend(uint64_t bytes_needed) {
 
     handle_list_.push_back(alloc_handle);
     buffered_bytes_ += bytes_allocated;
-
-    remain_bytes_ = remain_bytes_ + bytes_allocated - bytes_needed;
 
     return bytes_needed;
 }
