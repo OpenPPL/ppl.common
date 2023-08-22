@@ -85,12 +85,6 @@ private:
 
     // ----- //
 
-#ifdef _MSC_VER
-    static constexpr uint32_t INLINE_DATA_SIZE = sizeof(base_) + sizeof(h_file_) + sizeof(h_map_file_);
-#else
-    static constexpr uint32_t INLINE_DATA_SIZE = sizeof(base_) + sizeof(fd_);
-#endif
-
 private:
     Mmap(const Mmap&) = delete;
     Mmap& operator=(const Mmap&) = delete;

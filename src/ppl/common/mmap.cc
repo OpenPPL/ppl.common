@@ -35,6 +35,12 @@ namespace ppl { namespace common {
 
 static constexpr uint32_t MAX_MSG_BUF_SIZE = 1024;
 
+#ifdef _MSC_VER
+static constexpr uint32_t INLINE_DATA_SIZE = sizeof(void*) + sizeof(HANDLE) + sizeof(HANDLE);
+#else
+static constexpr uint32_t INLINE_DATA_SIZE = sizeof(void*) + sizeof(int64_t);
+#endif
+
 Mmap::Mmap()
     : size_(0)
     , start_(nullptr)

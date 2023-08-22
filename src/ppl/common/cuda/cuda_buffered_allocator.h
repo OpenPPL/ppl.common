@@ -19,14 +19,14 @@
 #define _ST_HPC_PPL_COMMON_CUDA_BUFFERED_ALLOCATOR_H_
 
 #include "ppl/common/retcode.h"
-#include "ppl/common/compact_memory_manager.h"
+#include "ppl/common/compact_addr_manager.h"
 #include <cuda.h>
 #include <limits>
 #include <vector>
 
 namespace ppl { namespace common {
 
-class CudaBufferedAllocator final : public ppl::common::CompactMemoryManager::VMAllocator {
+class CudaBufferedAllocator final : public ppl::common::CompactAddrManager::VMAllocator {
 public:
     CudaBufferedAllocator() {}
     ~CudaBufferedAllocator() {
@@ -36,14 +36,11 @@ public:
     ppl::common::RetCode Init(int devid, uint64_t max_mem_bytes = UINT64_MAX);
     void Destroy();
 
-    void* GetReservedBaseAddr() const override {
-        return (void*)addr_;
+    uintptr_t GetReservedBase() const override {
+        return addr_;
     }
-    uint64_t GetUsedBytes() const override {
-        return buffered_bytes_ - remain_bytes_;
-    }
-    uint64_t GetReservedAddrLen() const {
-        return addr_len_;
+    uint64_t GetAllocatedSize() const override {
+        return buffered_bytes_;
     }
 
     uint64_t Extend(uint64_t bytes_needed) override;
@@ -55,7 +52,6 @@ private:
     size_t addr_len_ = 0;
     size_t buffered_bytes_ = 0;
     size_t total_bytes_ = 0;
-    size_t remain_bytes_ = 0;
     uint64_t granularity_ = 0;
     std::vector<CUmemGenericAllocationHandle> handle_list_;
 
