@@ -101,35 +101,35 @@ RetCode CudaBufferedAllocator::Init(int devid, uint64_t max_mem_bytes) {
 }
 
 uint64_t CudaBufferedAllocator::Extend(uint64_t bytes_needed) {
-    auto bytes_allocated = Align(bytes_needed, granularity_);
-    if (bytes_allocated + buffered_bytes_ > total_bytes_) {
-        LOG(ERROR) << "bytes_allocated [" << bytes_allocated << "] is larger than available ["
+    bytes_needed = Align(bytes_needed, granularity_);
+    if (bytes_needed + buffered_bytes_ > total_bytes_) {
+        LOG(ERROR) << "bytes_needed [" << bytes_needed << "] is larger than available ["
                    << total_bytes_ - buffered_bytes_ << "]";
         return 0;
     }
 
     const char* errmsg = nullptr;
     CUmemGenericAllocationHandle alloc_handle;
-    auto rc = cuMemCreate(&alloc_handle, bytes_allocated, &prop_, 0);
+    auto rc = cuMemCreate(&alloc_handle, bytes_needed, &prop_, 0);
     if (rc != CUDA_SUCCESS) {
         cuGetErrorString(rc, &errmsg);
-        LOG(ERROR) << "cuMemCreate [" << bytes_allocated << "] bytes failed: " << errmsg;
+        LOG(ERROR) << "cuMemCreate [" << bytes_needed << "] bytes failed: " << errmsg;
         return 0;
     }
 
     auto start_addr = addr_ + buffered_bytes_;
 
-    rc = cuMemMap(start_addr, bytes_allocated, 0, alloc_handle, 0);
+    rc = cuMemMap(start_addr, bytes_needed, 0, alloc_handle, 0);
     if (rc != CUDA_SUCCESS) {
         cuGetErrorString(rc, &errmsg);
-        LOG(ERROR) << "cuMemMap [" << bytes_allocated << "] to addr [" << start_addr << "] failed: " << errmsg;
+        LOG(ERROR) << "cuMemMap [" << bytes_needed << "] to addr [" << start_addr << "] failed: " << errmsg;
         return 0;
     }
 
-    cuMemSetAccess(start_addr, bytes_allocated, &access_desc_, 1);
+    cuMemSetAccess(start_addr, bytes_needed, &access_desc_, 1);
 
     handle_list_.push_back(alloc_handle);
-    buffered_bytes_ += bytes_allocated;
+    buffered_bytes_ += bytes_needed;
 
     return bytes_needed;
 }
