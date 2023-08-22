@@ -28,9 +28,14 @@ public:
         if (!ptr) {
             return make_pair(UINTPTR_MAX, 0);
         }
+        allocated_size_ += size;
         return make_pair((uintptr_t)ptr, size);
     }
+    uint64_t GetAllocatedSize() const override {
+        return allocated_size_;
+    }
 private:
+    uint64_t allocated_size_ = 0;
     const uint64_t alignment_;
 };
 
