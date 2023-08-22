@@ -85,12 +85,6 @@ private:
 
     // ----- //
 
-#ifdef _MSC_VER
-    static constexpr uint32_t INLINE_DATA_SIZE = sizeof(void*) + sizeof(HANDLE) + sizeof(HANDLE);
-#else
-    static constexpr uint32_t INLINE_DATA_SIZE = sizeof(void*) + sizeof(int64_t);
-#endif
-
 private:
     Mmap(const Mmap&) = delete;
     Mmap& operator=(const Mmap&) = delete;
