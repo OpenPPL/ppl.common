@@ -66,7 +66,7 @@ unset(__PYBIND11_TAG__)
 
 # --------------------------------------------------------------------------- #
 
-set(__NCCL_TAG__ v2.18.3-1)
+set(__NCCL_TAG__ v2.16.5-1)
 
 hpcc_declare_git_dep(nccl
     "https://github.com/NVIDIA/nccl.git"
