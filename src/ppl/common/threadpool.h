@@ -20,18 +20,25 @@ public:
 
 class JoinableThreadTask : public ThreadTask {
 public:
-    JoinableThreadTask();
-    virtual ~JoinableThreadTask();
     std::shared_ptr<ThreadTask> Run() override final;
     void Join();
 
 protected:
+    JoinableThreadTask();
+    virtual ~JoinableThreadTask();
+
     virtual bool IsFinished() const = 0;
     virtual std::shared_ptr<ThreadTask> Process() = 0;
 
 private:
     pthread_mutex_t mutex_;
     pthread_cond_t cond_;
+
+private:
+    JoinableThreadTask(const JoinableThreadTask&) = delete;
+    JoinableThreadTask(JoinableThreadTask&&) = delete;
+    void operator=(const JoinableThreadTask&) = delete;
+    void operator=(JoinableThreadTask&&) = delete;
 };
 
 class ThreadPool final {
@@ -46,9 +53,6 @@ public:
 public:
     ThreadPool();
     ~ThreadPool();
-
-    ThreadPool(ThreadPool&&) = default;
-    ThreadPool& operator=(ThreadPool&&) = default;
 
     ppl::common::RetCode Init(uint32_t thread_num = 0);
     uint32_t GetThreadNum() const { return threads_.size(); }
@@ -69,7 +73,9 @@ private:
 
 private:
     ThreadPool(const ThreadPool&) = delete;
+    ThreadPool(ThreadPool&&) = delete;
     void operator=(const ThreadPool&) = delete;
+    void operator=(ThreadPool&&) = delete;
 };
 
 }}
