@@ -25,8 +25,8 @@ public:
     void Push(const T& item) {
         pthread_mutex_lock(&mutex_);
         items_.push_back(item);
-        pthread_mutex_unlock(&mutex_);
         pthread_cond_signal(&cond_);
+        pthread_mutex_unlock(&mutex_);
     }
     T Pop() {
         pthread_mutex_lock(&mutex_);

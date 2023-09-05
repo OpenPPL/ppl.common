@@ -26,8 +26,8 @@ shared_ptr<ThreadTask> JoinableThreadTask::Run() {
     if (!IsFinished()) {
         pthread_mutex_lock(&mutex_);
         next_task = Process();
-        pthread_mutex_unlock(&mutex_);
         pthread_cond_signal(&cond_);
+        pthread_mutex_unlock(&mutex_);
     }
     return next_task;
 }
