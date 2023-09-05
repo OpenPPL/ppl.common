@@ -47,6 +47,9 @@ public:
     ThreadPool();
     ~ThreadPool();
 
+    ThreadPool(ThreadPool&&) = default;
+    ThreadPool& operator=(ThreadPool&&) = default;
+
     ppl::common::RetCode Init(uint32_t thread_num = 0);
     uint32_t GetThreadNum() const { return threads_.size(); }
     ppl::common::RetCode AddTask(const std::shared_ptr<ThreadTask>&);
@@ -63,6 +66,10 @@ private:
     std::vector<ThreadInfo> threads_;
     MessageQueue<std::shared_ptr<ThreadTask>> queue_;
     uint32_t cpu_core_num_;
+
+private:
+    ThreadPool(const ThreadPool&) = delete;
+    void operator=(const ThreadPool&) = delete;
 };
 
 }}
