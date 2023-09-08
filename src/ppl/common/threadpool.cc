@@ -1,4 +1,5 @@
 #include "ppl/common/threadpool.h"
+#include <cstdlib>
 using namespace std;
 
 #ifndef _MSC_VER
@@ -48,7 +49,7 @@ struct ThreadArg final {
     pthread_mutex_t* mutex_for_init;
     pthread_cond_t* cond_for_init;
     ThreadPool::ThreadInfo* info;
-    MessageQueue<shared_ptr<ThreadTask>>* queue;
+    ThreadTaskQueue* queue;
 };
 
 void* ThreadPool::ThreadWorker(void* thread_arg) {
@@ -83,12 +84,13 @@ void* ThreadPool::ThreadWorker(void* thread_arg) {
     return nullptr;
 }
 
-RetCode ThreadPool::AddTask(const shared_ptr<ThreadTask>& task) {
-    if (task) {
-        queue_.Push(task);
-        return RC_SUCCESS;
+RetCode ThreadPool::AddTask(const shared_ptr<ThreadTask>& task, uint32_t queue_idx) {
+    if (!task) {
+        return RC_INVALID_VALUE;
     }
-    return RC_INVALID_VALUE;
+
+    queues_[queue_idx].Push(task);
+    return RC_SUCCESS;
 }
 
 #ifdef _MSC_VER
@@ -160,13 +162,31 @@ ThreadPool::ThreadPool() {
 #endif
 }
 
-RetCode ThreadPool::Init(uint32_t thread_num) {
+RetCode ThreadPool::Init(uint32_t thread_num, bool share_task_queue) {
     if (thread_num == 0) {
         if (cpu_core_num_ > 1) {
             thread_num = cpu_core_num_ - 1;
         } else {
             thread_num = 1;
         }
+    }
+
+    if (share_task_queue) {
+        queues_ = (ThreadTaskQueue*)malloc(sizeof(ThreadTaskQueue));
+        if (!queues_) {
+            return RC_OUT_OF_MEMORY;
+        }
+        new (queues_) ThreadTaskQueue();
+        queue_num_ = 1;
+    } else {
+        queues_ = (ThreadTaskQueue*)malloc(thread_num * sizeof(ThreadTaskQueue));
+        if (!queues_) {
+            return RC_OUT_OF_MEMORY;
+        }
+        for (uint32_t i = 0; i < thread_num; ++i) {
+            new (queues_ + i) ThreadTaskQueue();
+        }
+        queue_num_ = thread_num;
     }
 
     threads_.resize(thread_num);
@@ -185,7 +205,11 @@ RetCode ThreadPool::Init(uint32_t thread_num) {
         args[i].mutex_for_init = &mutex_for_init;
         args[i].cond_for_init = &cond_for_init;
         args[i].info = &threads_[i];
-        args[i].queue = &queue_;
+        if (share_task_queue) {
+            args[i].queue = queues_;
+        } else {
+            args[i].queue = queues_ + i;
+        }
     }
     for (uint32_t i = 0; i < thread_num; ++i) {
         pthread_t pid;
@@ -205,15 +229,35 @@ RetCode ThreadPool::Init(uint32_t thread_num) {
     return RC_SUCCESS;
 }
 
-ThreadPool::~ThreadPool() {
-    shared_ptr<ThreadTask> dummy_task;
-    for (uint32_t i = 0; i < threads_.size(); ++i) {
-        // push null task to kill a thread
-        queue_.Push(dummy_task);
+void ThreadPool::Destroy() {
+    if (threads_.empty()) {
+        return;
     }
+
+    // push null task to kill a thread
+    shared_ptr<ThreadTask> dummy_task;
+    if (queue_num_ == threads_.size()) {
+        for (uint32_t i = 0; i < threads_.size(); ++i) {
+            queues_[i].Push(dummy_task);
+        }
+    } else {
+        for (uint32_t i = 0; i < threads_.size(); ++i) {
+            queues_[0].Push(dummy_task);
+        }
+    }
+
     for (uint32_t i = 0; i < threads_.size(); ++i) {
         pthread_join(threads_[i].pid, nullptr);
     }
+    threads_.clear();
+
+    if (queues_) {
+        for (uint32_t i = 0; i < queue_num_; ++i) {
+            queues_[i].~ThreadTaskQueue();
+        }
+        free(queues_);
+    }
+    queues_ = nullptr;
 }
 
 }}

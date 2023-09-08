@@ -12,7 +12,7 @@
 namespace ppl { namespace common {
 
 template <typename T>
-class MessageQueue {
+class MessageQueue final {
 public:
     MessageQueue() {
         pthread_mutex_init(&mutex_, nullptr);
@@ -43,6 +43,12 @@ private:
     pthread_mutex_t mutex_;
     pthread_cond_t cond_;
     std::list<T> items_;
+
+private:
+    MessageQueue(const MessageQueue&) = delete;
+    void operator=(const MessageQueue&) = delete;
+    MessageQueue(MessageQueue&&) = delete;
+    void operator=(MessageQueue&&) = delete;
 };
 
 }}

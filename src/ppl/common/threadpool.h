@@ -41,6 +41,8 @@ private:
     void operator=(JoinableThreadTask&&) = delete;
 };
 
+typedef MessageQueue<std::shared_ptr<ThreadTask>> ThreadTaskQueue;
+
 class ThreadPool final {
 public:
     struct ThreadInfo {
@@ -52,11 +54,19 @@ public:
 
 public:
     ThreadPool();
-    ~ThreadPool();
+    ~ThreadPool() {
+        Destroy();
+    }
 
-    ppl::common::RetCode Init(uint32_t thread_num = 0);
+    /**
+       only queue 0 is available if `share_task_queue` is true,
+       othrewise each thread has its own task queue.
+    */
+    ppl::common::RetCode Init(uint32_t thread_num = 0, bool share_task_queue = true);
+    void Destroy();
+
     uint32_t GetThreadNum() const { return threads_.size(); }
-    ppl::common::RetCode AddTask(const std::shared_ptr<ThreadTask>&);
+    ppl::common::RetCode AddTask(const std::shared_ptr<ThreadTask>&, uint32_t queue_idx = 0);
 
     /**
        0 <= thread_id < ThreadNum()
@@ -68,7 +78,8 @@ private:
     static void* ThreadWorker(void*);
 
     std::vector<ThreadInfo> threads_;
-    MessageQueue<std::shared_ptr<ThreadTask>> queue_;
+    ThreadTaskQueue* queues_ = nullptr;
+    uint32_t queue_num_ = 0;
     uint32_t cpu_core_num_;
 
 private:
