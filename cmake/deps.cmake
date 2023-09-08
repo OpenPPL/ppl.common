@@ -76,27 +76,6 @@ unset(__NCCL_TAG__)
 
 # --------------------------------------------------------------------------- #
 
-set(LUACPP_INSTALL OFF CACHE BOOL "")
-set(LUACPP_BUILD_TESTS OFF CACHE BOOL "")
-
-set(__LUACPP_COMMIT__ d4e60a321a19a05a34bd15d3d508647f394007f3)
-
-if(PPLCOMMON_DEP_LUACPP_PKG)
-    hpcc_declare_pkg_dep(luacpp
-        ${PPLCOMMON_DEP_LUACPP_PKG})
-elseif(PPLCOMMON_DEP_LUACPP_GIT)
-    hpcc_declare_git_dep(luacpp
-        ${PPLCOMMON_DEP_LUACPP_GIT}
-        ${__LUACPP_COMMIT__})
-else()
-    hpcc_declare_pkg_dep(luacpp
-        "https://github.com/ouonline/luacpp/archive/${__LUACPP_COMMIT__}.zip")
-endif()
-
-unset(__LUACPP_COMMIT__)
-
-# --------------------------------------------------------------------------- #
-
 set(BUILD_GMOCK OFF CACHE BOOL "")
 Set(INSTALL_GTEST OFF CACHE BOOL "")
 
