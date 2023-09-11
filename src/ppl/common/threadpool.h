@@ -95,7 +95,7 @@ private:
     struct ThreadInfo final {
         pthread_t pid;
         uint32_t thread_idx;
-        StaticThreadPool *pool;
+        StaticThreadPool* pool;
     };
 
 public:
@@ -104,9 +104,9 @@ public:
         pthread_cond_init(&cond_, nullptr);
     }
     ~StaticThreadPool() {
+        Destroy();
         pthread_cond_destroy(&cond_);
         pthread_mutex_destroy(&lock_);
-        Destroy();
     }
 
     ppl::common::RetCode Init(uint32_t thread_num = 0);
