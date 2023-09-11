@@ -260,4 +260,79 @@ void ThreadPool::Destroy() {
     queues_ = nullptr;
 }
 
+/* ------------------------------------------------------------------------- */
+
+void StaticThreadPool::Destroy() {
+    for (auto t = threads_.begin(); t != threads_.end(); ++t) {
+        t->func = nullptr;
+        pthread_cond_signal(&t->cond);
+    }
+    for (auto t = threads_.begin(); t != threads_.end(); ++t) {
+        pthread_join(t->pid, nullptr);
+    }
+    threads_.clear();
+}
+
+RetCode StaticThreadPool::Init(uint32_t thread_num) {
+    if (thread_num == 0) {
+#ifdef _MSC_VER
+        SYSTEM_INFO info;
+        GetSystemInfo(&info);
+        auto cpu_core_num = info.dwNumberOfProcessors;
+#else
+        auto cpu_core_num = sysconf(_SC_NPROCESSORS_ONLN);
+#endif
+        if (cpu_core_num > 1) {
+            thread_num = cpu_core_num - 1;
+        } else {
+            thread_num = 1;
+        }
+    }
+
+    threads_.resize(thread_num);
+    for (uint32_t i = 0; i < thread_num; ++i) {
+        if (pthread_create(&threads_[i].pid, nullptr, ThreadWorker, &threads_[i]) != 0) {
+            for (uint32_t j = 0; j < i; ++j) {
+                pthread_cond_signal(&threads_[j].cond);
+            }
+            for (uint32_t j = 0; j < i; ++j) {
+                pthread_join(threads_[j].pid, nullptr);
+            }
+            threads_.clear();
+            return RC_OTHER_ERROR;
+        }
+
+        threads_[i].nr_threads = thread_num;
+        threads_[i].thread_idx = i;
+    }
+
+    return RC_SUCCESS;
+}
+
+void* StaticThreadPool::ThreadWorker(void* arg) {
+    auto info = (ThreadInfo*)arg;
+
+    while (true) {
+        pthread_mutex_lock(&info->lock);
+        pthread_cond_wait(&info->cond, &info->lock);
+        if (!info->func) {
+            pthread_mutex_unlock(&info->lock);
+            break;
+        }
+        info->func(info->nr_threads, info->thread_idx);
+        pthread_mutex_unlock(&info->lock);
+    }
+
+    return nullptr;
+}
+
+void StaticThreadPool::RunAsync(const function<void(uint32_t nr_threads, uint32_t thread_idx)>& f) {
+    if (f) {
+        for (auto t = threads_.begin(); t != threads_.end(); ++t) {
+            t->func = f;
+            pthread_cond_signal(&t->cond);
+        }
+    }
+}
+
 }}

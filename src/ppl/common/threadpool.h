@@ -5,6 +5,7 @@
 #include "ppl/common/message_queue.h"
 #include <vector>
 #include <memory>
+#include <functional>
 
 namespace ppl { namespace common {
 
@@ -45,7 +46,7 @@ typedef MessageQueue<std::shared_ptr<ThreadTask>> ThreadTaskQueue;
 
 class ThreadPool final {
 public:
-    struct ThreadInfo {
+    struct ThreadInfo final {
         pthread_t pid; // pthread_self()
 #ifndef _MSC_VER
         pid_t tid; // gettid()
@@ -87,6 +88,44 @@ private:
     ThreadPool(ThreadPool&&) = delete;
     void operator=(const ThreadPool&) = delete;
     void operator=(ThreadPool&&) = delete;
+};
+
+class StaticThreadPool final {
+private:
+    struct ThreadInfo final {
+        ThreadInfo() {
+            pthread_mutex_init(&lock, nullptr);
+            pthread_cond_init(&cond, nullptr);
+        }
+        ~ThreadInfo() {
+            pthread_cond_destroy(&cond);
+            pthread_mutex_destroy(&lock);
+        }
+
+        pthread_t pid;
+        pthread_mutex_t lock;
+        pthread_cond_t cond;
+        uint32_t nr_threads;
+        uint32_t thread_idx;
+        std::function<void(uint32_t nr_threads, uint32_t thread_idx)> func;
+    };
+
+public:
+    ~StaticThreadPool() {
+        Destroy();
+    }
+
+    ppl::common::RetCode Init(uint32_t thread_num = 0);
+    void Destroy();
+
+    /** callers MUST make sure that the last call is finished before starting another new call */
+    void RunAsync(const std::function<void(uint32_t nr_threads, uint32_t thread_idx)>& f);
+
+private:
+    static void* ThreadWorker(void*);
+
+private:
+    std::vector<ThreadInfo> threads_;
 };
 
 }}
