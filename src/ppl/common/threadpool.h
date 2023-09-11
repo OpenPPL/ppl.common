@@ -122,7 +122,9 @@ public:
     }
 
     ppl::common::RetCode Init(uint32_t thread_num = 0);
-    int32_t GetNumThreads() const { return (int32_t)threads_.size(); }
+    uint32_t GetNumThreads() const {
+        return threads_.size();
+    }
     void Destroy();
 
     /** callers MUST make sure that the last call is finished before starting another new call */
