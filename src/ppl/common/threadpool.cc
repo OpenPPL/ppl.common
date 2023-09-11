@@ -281,7 +281,7 @@ void ThreadPool::Destroy() {
 
 void StaticThreadPool::Destroy() {
     func_ = nullptr;
-    pthread_cond_broadcast(&cond_);
+    barrier_.Wait();
     for (auto t = threads_.begin(); t != threads_.end(); ++t) {
         pthread_join(t->pid, nullptr);
     }
@@ -304,17 +304,15 @@ RetCode StaticThreadPool::Init(uint32_t thread_num) {
         }
     }
 
+    barrier_.Reset(thread_num + 1);
     threads_.resize(thread_num);
     for (uint32_t i = 0; i < thread_num; ++i) {
         threads_[i].thread_idx = i;
         threads_[i].pool = this;
 
         if (pthread_create(&threads_[i].pid, nullptr, ThreadWorker, &threads_[i]) != 0) {
-            pthread_cond_broadcast(&cond_);
-            for (uint32_t j = 0; j < i; ++j) {
-                pthread_join(threads_[j].pid, nullptr);
-            }
-            threads_.clear();
+            barrier_.Reset(i + 1);
+            threads_.resize(i);
             return RC_OTHER_ERROR;
         }
     }
@@ -327,14 +325,11 @@ void* StaticThreadPool::ThreadWorker(void* arg) {
     auto pool = info->pool;
 
     while (true) {
-        pthread_mutex_lock(&pool->lock_);
-        pthread_cond_wait(&pool->cond_, &pool->lock_);
+        pool->barrier_.Wait();
         if (!pool->func_) {
-            pthread_mutex_unlock(&pool->lock_);
             break;
         }
         pool->func_(pool->threads_.size(), info->thread_idx);
-        pthread_mutex_unlock(&pool->lock_);
     }
 
     return nullptr;
@@ -343,7 +338,7 @@ void* StaticThreadPool::ThreadWorker(void* arg) {
 void StaticThreadPool::RunAsync(const function<void(uint32_t nr_threads, uint32_t thread_idx)>& f) {
     if (f) {
         func_ = f;
-        pthread_cond_broadcast(&cond_);
+        barrier_.Wait();
     }
 }
 

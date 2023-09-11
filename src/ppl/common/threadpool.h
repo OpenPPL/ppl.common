@@ -20,6 +20,7 @@
 
 #include "ppl/common/retcode.h"
 #include "ppl/common/message_queue.h"
+#include "ppl/common/barrier.h"
 #include <vector>
 #include <memory>
 #include <functional>
@@ -116,17 +117,14 @@ private:
     };
 
 public:
-    StaticThreadPool() {
-        pthread_mutex_init(&lock_, nullptr);
-        pthread_cond_init(&cond_, nullptr);
-    }
     ~StaticThreadPool() {
         Destroy();
-        pthread_cond_destroy(&cond_);
-        pthread_mutex_destroy(&lock_);
     }
 
     ppl::common::RetCode Init(uint32_t thread_num = 0);
+    uint32_t GetNumThreads() const {
+        return threads_.size();
+    }
     void Destroy();
 
     /** callers MUST make sure that the last call is finished before starting another new call */
@@ -138,8 +136,7 @@ private:
 private:
     std::vector<ThreadInfo> threads_;
     std::function<void(uint32_t nr_threads, uint32_t thread_idx)> func_;
-    pthread_cond_t cond_;
-    pthread_mutex_t lock_;
+    Barrier barrier_;
 };
 
 }}
