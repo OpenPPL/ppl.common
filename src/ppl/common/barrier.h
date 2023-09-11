@@ -39,10 +39,9 @@ public:
         pthread_mutex_destroy(&lock_);
     }
 
-    RetCode Reset(uint32_t max_count) {
+    void Reset(uint32_t max_count) {
         max_count_ = max_count;
         counter_ = 0;
-        return RC_SUCCESS;
     }
     
     void Wait() {
