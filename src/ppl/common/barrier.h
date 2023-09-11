@@ -15,14 +15,16 @@
 // specific language governing permissions and limitations
 // under the License.
 
-#ifndef _ST_HPC_PPL_COMMON_THREADPOOL_H_
-#define _ST_HPC_PPL_COMMON_THREADPOOL_H_
+#ifndef _ST_HPC_PPL_COMMON_BARRIER_H_
+#define _ST_HPC_PPL_COMMON_BARRIER_H_
 
 #ifdef _MSC_VER
 #include "ppl/common/windows/pthread.h"
 #else
 #include <pthread.h>
 #endif
+
+#include "ppl/common/retcode.h"
 
 namespace ppl { namespace common {
 
@@ -37,9 +39,10 @@ public:
         pthread_mutex_destroy(&lock_);
     }
 
-    Retcode Init(uint32_t max_count) {
+    RetCode Reset(uint32_t max_count) {
         max_count_ = max_count;
         counter_ = 0;
+        return RC_SUCCESS;
     }
     
     void Wait() {
