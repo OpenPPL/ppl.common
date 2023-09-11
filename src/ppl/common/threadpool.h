@@ -93,25 +93,19 @@ private:
 class StaticThreadPool final {
 private:
     struct ThreadInfo final {
-        ThreadInfo() {
-            pthread_mutex_init(&lock, nullptr);
-            pthread_cond_init(&cond, nullptr);
-        }
-        ~ThreadInfo() {
-            pthread_cond_destroy(&cond);
-            pthread_mutex_destroy(&lock);
-        }
-
         pthread_t pid;
-        pthread_mutex_t lock;
-        pthread_cond_t cond;
-        uint32_t nr_threads;
         uint32_t thread_idx;
-        std::function<void(uint32_t nr_threads, uint32_t thread_idx)> func;
+        StaticThreadPool *pool;
     };
 
 public:
+    StaticThreadPool() {
+        pthread_mutex_init(&lock_, nullptr);
+        pthread_cond_init(&cond_, nullptr);
+    }
     ~StaticThreadPool() {
+        pthread_cond_destroy(&cond_);
+        pthread_mutex_destroy(&lock_);
         Destroy();
     }
 
@@ -126,6 +120,9 @@ private:
 
 private:
     std::vector<ThreadInfo> threads_;
+    std::function<void(uint32_t nr_threads, uint32_t thread_idx)> func_;
+    pthread_cond_t cond_;
+    pthread_mutex_t lock_;
 };
 
 }}
