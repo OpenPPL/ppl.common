@@ -30,7 +30,7 @@ namespace ppl { namespace common {
 
 class Barrier final {
 public:
-    Barrier() {
+    Barrier(uint32_t max_count = 0) : counter_(0), max_count_(max_count) {
         pthread_mutex_init(&lock_, nullptr);
         pthread_cond_init(&cond_, nullptr);
     }
@@ -41,9 +41,8 @@ public:
 
     void Reset(uint32_t max_count) {
         max_count_ = max_count;
-        counter_ = 0;
     }
-    
+
     void Wait() {
         pthread_mutex_lock(&lock_);
         ++counter_;
