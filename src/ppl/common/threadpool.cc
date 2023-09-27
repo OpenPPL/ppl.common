@@ -16,7 +16,6 @@
 // under the License.
 
 #include "ppl/common/threadpool.h"
-#include "ppl/common/log.h"
 #include <cstdlib>
 using namespace std;
 
