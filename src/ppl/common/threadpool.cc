@@ -330,16 +330,24 @@ void* StaticThreadPool::ThreadWorker(void* arg) {
             break;
         }
         pool->func_(pool->threads_.size(), info->thread_idx);
+        pool->barrier_.Wait();
     }
 
     return nullptr;
 }
 
+void StaticThreadPool::Run(const function<void(uint32_t nr_threads, uint32_t thread_idx)>& f) {
+    RunAsync(f);
+    Wait();
+}
+
 void StaticThreadPool::RunAsync(const function<void(uint32_t nr_threads, uint32_t thread_idx)>& f) {
-    if (f) {
-        func_ = f;
-        barrier_.Wait();
-    }
+    func_ = f;
+    Wait(); // notify start
+}
+
+void StaticThreadPool::Wait() {
+    barrier_.Wait(); // wait for end
 }
 
 }}

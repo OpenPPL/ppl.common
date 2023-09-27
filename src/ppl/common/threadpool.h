@@ -127,8 +127,12 @@ public:
     }
     void Destroy();
 
+    void Run(const std::function<void(uint32_t nr_threads, uint32_t thread_idx)>& f);
+
     /** callers MUST make sure that the last call is finished before starting another new call */
     void RunAsync(const std::function<void(uint32_t nr_threads, uint32_t thread_idx)>& f);
+
+    void Wait();
 
 private:
     static void* ThreadWorker(void*);
