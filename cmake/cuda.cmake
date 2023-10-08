@@ -28,7 +28,11 @@ if (PPLCOMMON_ENABLE_NCCL)
 
     set(NCCL_INCLUDE_DIRS ${nccl_BINARY_DIR}/include)
     set(NCCL_LIBRARIES ${nccl_BINARY_DIR}/lib/libnccl_static.a)
-    execute_process(COMMAND make NVCC_GENCODE=${__NVCC_GENCODE__} BUILDDIR=${nccl_BINARY_DIR} -j16 -C ${HPCC_DEPS_DIR}/nccl src.build)
+
+    include(ProcessorCount)
+    ProcessorCount(__NPROC__)
+    execute_process(COMMAND make NVCC_GENCODE=${__NVCC_GENCODE__} BUILDDIR=${nccl_BINARY_DIR} -j${__NPROC__} -C ${HPCC_DEPS_DIR}/nccl src.build)
+    unset(__NPROC__)
 
     unset(__NVCC_GENCODE__)
 
