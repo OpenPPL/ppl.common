@@ -107,8 +107,10 @@ Mmap::Mmap(Mmap&& fm) {
 }
 
 void Mmap::operator=(Mmap&& fm) {
-    Destroy();
-    DoMove(std::move(fm));
+    if (&fm != this) {
+        Destroy();
+        DoMove(std::move(fm));
+    }
 }
 
 RetCode Mmap::Init(uint64_t size) {
@@ -122,6 +124,7 @@ RetCode Mmap::Init(uint64_t size) {
     }
 
     size_ = size;
+    permission_ = READ | WRITE;
     return RC_SUCCESS;
 }
 
@@ -206,6 +209,7 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
 
     start_ = (char*)base_ + (offset - mapping_start_offset);
     size_ = length;
+    permission_ = permission;
     return RC_SUCCESS;
 
 errout2:
@@ -265,6 +269,7 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
         fd_ = fd;
         start_ = (char*)base_ + (offset - mapping_start_offset);
         size_ = length;
+        permission_ = permission;
         return RC_SUCCESS;
     }
 

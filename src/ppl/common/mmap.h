@@ -60,11 +60,16 @@ public:
         return size_;
     }
 
+    uint32_t GetPermission() const {
+        return permission_;
+    }
+
 private:
     void DoMove(Mmap&& fm);
     void Destroy();
 
 private:
+    uint32_t permission_ = 0;
     uint64_t size_;
     void* start_;
 
