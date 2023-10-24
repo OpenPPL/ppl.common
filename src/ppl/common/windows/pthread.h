@@ -21,6 +21,7 @@
 // XXX NOTE: partial pthread support for windows. search param name "unsupported".
 
 #define NOGDI
+#include <cstddef>
 #include <windows.h>
 
 #ifdef __cplusplus

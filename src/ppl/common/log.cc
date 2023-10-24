@@ -18,9 +18,9 @@
 #include "ppl/common/log.h"
 #include "ppl/common/stripfilename.h"
 #include <memory>
-using namespace std;
 
 #if defined(_WIN32) || defined(_WIN64)
+    #include <cstddef>
     #include <windows.h>
     #if _MSC_VER < 1900
         #define snprintf _snprintf
@@ -28,6 +28,8 @@ using namespace std;
 #else
     #include <sys/time.h>
 #endif
+
+using namespace std;
 
 namespace ppl { namespace common {
 

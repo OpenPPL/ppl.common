@@ -38,7 +38,7 @@ file(GLOB PPLCOMMON_SRC
     src/ppl/common/*.cc)
 
 if(MSVC)
-    file(GLOB __win_src__ src/ppl/common/windows/*.c)
+    file(GLOB __win_src__ src/ppl/common/windows/*.cc)
     list(APPEND PPLCOMMON_SRC ${__win_src__})
     unset(__win_src__)
 endif()
