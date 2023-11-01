@@ -103,7 +103,9 @@ void Mmap::DoMove(Mmap&& fm) {
 }
 
 Mmap::Mmap(Mmap&& fm) {
-    DoMove(std::move(fm));
+    if (&fm != this) {
+        DoMove(std::move(fm));
+    }
 }
 
 void Mmap::operator=(Mmap&& fm) {
@@ -114,6 +116,11 @@ void Mmap::operator=(Mmap&& fm) {
 }
 
 RetCode Mmap::Init(uint64_t size) {
+    if (start_) {
+        LOG(ERROR) << "duplicated init.";
+        return RC_UNSUPPORTED;
+    }
+
     if (size <= INLINE_DATA_SIZE) {
         start_ = &base_;
     } else {
@@ -130,6 +137,11 @@ RetCode Mmap::Init(uint64_t size) {
 
 #ifdef _MSC_VER
 RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, uint64_t length) {
+    if (start_) {
+        LOG(ERROR) << "duplicated init.";
+        return RC_UNSUPPORTED;
+    }
+
     DWORD flags = 0;
     if (permission & Mmap::READ) {
         flags |= GENERIC_READ;
@@ -222,6 +234,11 @@ errout:
 }
 #else
 RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, uint64_t length) {
+    if (start_) {
+        LOG(ERROR) << "duplicated init.";
+        return RC_UNSUPPORTED;
+    }
+
     auto page_size = sysconf(_SC_PAGE_SIZE);
     auto mapping_start_offset = (offset / page_size) * page_size;
     struct stat file_stat_info;
