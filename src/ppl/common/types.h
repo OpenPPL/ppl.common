@@ -42,6 +42,7 @@ enum {
     DATATYPE_COMPLEX64 = 15,
     DATATYPE_COMPLEX128 = 16,
     DATATYPE_INT4X8 = 17,
+    DATATYPE_INT4X4 = 18,
     DATATYPE_MAX,
 };
 typedef uint32_t datatype_t;
@@ -50,6 +51,7 @@ static inline const char* GetDataTypeStr(datatype_t dt) {
     static const char* data_type_str[] = {
         "UNKNOWN", "UINT8", "UINT16", "UINT32", "UINT64", "FLOAT16", "FLOAT32",   "FLOAT64",    "BFLOAT16",
         "INT4B",   "INT8",  "INT16",  "INT32",  "INT64",  "BOOL",    "COMPLEX64", "COMPLEX128", "INT4X8",
+        "INT4X4",
     };
     if (dt >= DATATYPE_MAX) {
         return data_type_str[0];
@@ -77,6 +79,7 @@ static inline uint32_t GetSizeOfDataType(datatype_t dt) {
         8, // COMPLEX64
         16, // COMPLEX128
         4, // INT4X8
+        2, // INT4X4
     };
     return data_type_size[dt];
 }
