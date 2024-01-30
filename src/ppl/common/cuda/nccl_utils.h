@@ -81,7 +81,7 @@ RetCode GetNcclDataType(ncclDataType_t *nccl_data_type)
 #endif
 
 template<typename T>
-RetCode NcclAllReduceSum(const T* send_buf, T* recv_buf, const int data_size, const NcclParam *nccl_param, cudaStream_t stream)
+RetCode NcclAllReduceSum(const T* send_buf, T* recv_buf, const size_t data_size, const NcclParam *nccl_param, cudaStream_t stream)
 {
 #ifdef PPLCOMMON_ENABLE_NCCL
     ncclDataType_t nccl_data_type;
@@ -97,7 +97,7 @@ RetCode NcclAllReduceSum(const T* send_buf, T* recv_buf, const int data_size, co
 }
 
 template<typename T>
-RetCode NcclAllGather(const T* send_buf, T* recv_buf, const int data_size, const NcclParam *nccl_param, cudaStream_t stream)
+RetCode NcclAllGather(const T* send_buf, T* recv_buf, const size_t data_size, const NcclParam *nccl_param, cudaStream_t stream)
 {
 #ifdef PPLCOMMON_ENABLE_NCCL
     ncclDataType_t nccl_data_type;
