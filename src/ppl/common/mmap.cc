@@ -78,6 +78,7 @@ Mmap::~Mmap() {
 }
 
 void Mmap::DoMove(Mmap&& fm) {
+    permission_ = fm.permission_;
     size_ = fm.size_;
     fm.size_ = 0;
 
