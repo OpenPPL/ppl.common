@@ -35,9 +35,9 @@ TEST(MmapTest, data_and_size) {
 TEST(MmapTest, offset_and_length) {
     Mmap fm;
     const uint64_t offset = 22;
-    const uint64_t length = 14;
+    const uint64_t length = 3;
     EXPECT_EQ(RC_SUCCESS, fm.Init(__FILE__, Mmap::READ, offset, length));
-    EXPECT_EQ(14, fm.GetSize());
+    EXPECT_EQ(length, fm.GetSize());
     EXPECT_NE(nullptr, fm.GetData());
 
     auto data = fm.GetData();

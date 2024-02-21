@@ -63,7 +63,7 @@ void Mmap::Destroy() {
         }
 #else
         if (fd_ >= 0) {
-            munmap(base_, size_);
+            munmap(base_, size_ + ((char*)start_ - (char*)base_));
             close(fd_);
         }
 #endif
@@ -240,9 +240,9 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
         return RC_UNSUPPORTED;
     }
 
-    auto page_size = sysconf(_SC_PAGE_SIZE);
-    auto mapping_start_offset = (offset / page_size) * page_size;
-    struct stat file_stat_info;
+    const uint64_t page_size = sysconf(_SC_PAGE_SIZE);
+    const uint64_t mapping_start_offset = (offset / page_size) * page_size;
+    uint64_t mapping_length;
 
     int flags = O_CLOEXEC;
     if ((permission & Mmap::READ) && (permission & Mmap::WRITE)) {
@@ -254,19 +254,26 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
     }
     int fd = open(filename, flags);
     if (fd < 0) {
+        LOG(ERROR) << "open file [" << filename << "] faled: " << strerror(errno);
         goto errout1;
     }
 
-    memset(&file_stat_info, 0, sizeof(file_stat_info));
-    if (fstat(fd, &file_stat_info) < 0 || file_stat_info.st_size < 0) {
-        goto errout2;
-    }
-
     {
+        struct stat file_stat_info;
+        memset(&file_stat_info, 0, sizeof(file_stat_info));
+        if (fstat(fd, &file_stat_info) < 0) {
+            LOG(ERROR) << "get stat of file [" << filename << "] failed: " << strerror(errno);
+            goto errout2;
+        }
+        if (file_stat_info.st_size < 0) {
+            LOG(ERROR) << "file [" << filename << "] size < 0";
+            goto errout2;
+        }
+
         uint64_t file_size = file_stat_info.st_size;
         if (offset >= file_size) {
             LOG(ERROR) << "offset[" << offset << "] >= file size[" << file_size << "].";
-            return RC_INVALID_VALUE;
+            goto errout2;
         }
 
         auto max_length = file_size - offset;
@@ -282,7 +289,9 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
     if (permission & Mmap::WRITE) {
         flags |= PROT_WRITE;
     }
-    base_ = mmap(NULL, length, flags, MAP_PRIVATE, fd, mapping_start_offset);
+
+    mapping_length = length + (offset - mapping_start_offset);
+    base_ = mmap(NULL, mapping_length, flags, MAP_PRIVATE, fd, mapping_start_offset);
     if (base_ != MAP_FAILED) {
         fd_ = fd;
         start_ = (char*)base_ + (offset - mapping_start_offset);
@@ -294,7 +303,8 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
 errout2:
     close(fd);
 errout1:
-    LOG(ERROR) << "mmap failed: " << strerror(errno);
+    LOG(ERROR) << "mmap from [" << mapping_start_offset << "] with size [" << mapping_length << "] failed: "
+               << strerror(errno);
     return RC_INVALID_VALUE;
 }
 #endif
