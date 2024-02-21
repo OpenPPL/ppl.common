@@ -211,7 +211,9 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
     if (permission & Mmap::WRITE) {
         flags |= FILE_MAP_WRITE;
     }
-    base_ = MapViewOfFile(h_map_file_, flags, file_offset_high, file_offset_low, length);
+
+    base_ = MapViewOfFile(h_map_file_, flags, file_offset_high, file_offset_low,
+                          length + (offset - mapping_start_offset));
     if (!base_) {
         char message[MAX_MSG_BUF_SIZE];
         FormatMessage(FORMAT_MESSAGE_IGNORE_INSERTS | FORMAT_MESSAGE_FROM_SYSTEM, nullptr, GetLastError(), 0,
