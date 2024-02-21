@@ -58,11 +58,10 @@ TEST(CompactAddrManagerTest, reset) {
     EXPECT_NE(UINTPTR_MAX, ret1);
     EXPECT_EQ(alloc_size, ar.GetAllocatedSize());
 
-    alloc_size = alloc_size * 2;
-    auto ret2 = mgr.Alloc(alloc_size);
+    auto ret2 = mgr.Alloc(alloc_size * 2);
     EXPECT_NE(UINTPTR_MAX, ret2);
     EXPECT_EQ(alloc_size * 3, ar.GetAllocatedSize());
 
     mgr.Free(ret1, alloc_size);
-    mgr.Free(ret2, alloc_size);
+    mgr.Free(ret2, alloc_size * 2);
 }
