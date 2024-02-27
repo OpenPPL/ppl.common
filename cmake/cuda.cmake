@@ -15,34 +15,39 @@ list(APPEND PPLCOMMON_INCLUDES ${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES})
 list(APPEND PPLCOMMON_LINK_DIRECTORIES ${CMAKE_CUDA_HOST_IMPLICIT_LINK_DIRECTORIES})
 
 if (PPLCOMMON_ENABLE_NCCL)
-    hpcc_populate_dep(nccl)
+    if(PPLCOMMON_ENABLE_SYSTEM_NCCL)
+        find_path(NCCL_INCLUDE_DIRS NAMES nccl.h)
+        find_library(NCCL_LIBRARIES NAMES nccl_static)
+    else()
+        hpcc_populate_dep(nccl)
 
-    if(NOT PPLCOMMON_CUDA_ARCHITECTURES)
-        set(PPLCOMMON_CUDA_ARCHITECTURES "80;86;87")
+        if(NOT PPLCOMMON_CUDA_ARCHITECTURES)
+            set(PPLCOMMON_CUDA_ARCHITECTURES "80;86;87")
+        endif()
+
+        set(__NVCC_GENCODE__ )
+        foreach(arch ${PPLCOMMON_CUDA_ARCHITECTURES})
+            set(__NVCC_GENCODE__ "${__NVCC_GENCODE__} -gencode arch=compute_${arch},code=sm_${arch}")
+        endforeach()
+
+        set(NCCL_INCLUDE_DIRS ${nccl_BINARY_DIR}/include)
+        set(NCCL_LIBRARIES ${nccl_BINARY_DIR}/lib/libnccl_static.a)
+
+        include(ProcessorCount)
+        ProcessorCount(__NPROC__)
+        execute_process(COMMAND make NVCC_GENCODE=${__NVCC_GENCODE__} BUILDDIR=${nccl_BINARY_DIR} -j${__NPROC__} -C ${HPCC_DEPS_DIR}/nccl src.build)
+        unset(__NPROC__)
+
+        unset(__NVCC_GENCODE__)
     endif()
-
-    set(__NVCC_GENCODE__ )
-    foreach(arch ${PPLCOMMON_CUDA_ARCHITECTURES})
-        set(__NVCC_GENCODE__ "${__NVCC_GENCODE__} -gencode arch=compute_${arch},code=sm_${arch}")
-    endforeach()
-
-    set(NCCL_INCLUDE_DIRS ${nccl_BINARY_DIR}/include)
-    set(NCCL_LIBRARIES ${nccl_BINARY_DIR}/lib/libnccl_static.a)
-
-    include(ProcessorCount)
-    ProcessorCount(__NPROC__)
-    execute_process(COMMAND make NVCC_GENCODE=${__NVCC_GENCODE__} BUILDDIR=${nccl_BINARY_DIR} -j${__NPROC__} -C ${HPCC_DEPS_DIR}/nccl src.build)
-    unset(__NPROC__)
-
-    unset(__NVCC_GENCODE__)
 
     list(APPEND PPLCOMMON_INCLUDES ${NCCL_INCLUDE_DIRS})
     list(APPEND PPLCOMMON_LINK_LIBRARIES ${NCCL_LIBRARIES})
     list(APPEND PPLCOMMON_DEFINITIONS PPLCOMMON_ENABLE_NCCL)
 
     if(PPLCOMMON_INSTALL)
-        file(GLOB __NCCL_HEADERS__ ${NCCL_INCLUDE_DIRS}/*.h)
-        install(FILES ${__NCCL_HEADERS__} DESTINATION include)
+        install(FILES ${NCCL_INCLUDE_DIRS}/nccl.h ${NCCL_INCLUDE_DIRS}/nccl_net.h DESTINATION include)
+        install(FILES ${NCCL_LIBRARIES} DESTINATION lib)
         unset(__NCCL_HEADERS__)
     endif()
 endif()

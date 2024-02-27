@@ -17,6 +17,8 @@ option(PPLCOMMON_USE_ARMV7 "" OFF)
 option(PPLCOMMON_USE_CUDA "" OFF)
 option(PPLCOMMON_USE_OPENCL "" OFF)
 
+option(PPLCOMMON_ENABLE_SYSTEM_NCCL "use system static nccl library" OFF)
+
 # deprecated options
 if(HPCC_USE_X86_64)
     message(FATAL_ERROR "`HPCC_USE_X86_64` is deprecated. use `PPLCOMMON_USE_X86_64` instead.")
