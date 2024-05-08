@@ -23,7 +23,7 @@
 #include <utility>
 #include <string>
 
-#include "CL/cl.h"
+#include "openclruntime.h"
 
 namespace ppl { namespace common { namespace ocl {
 
@@ -60,6 +60,8 @@ cl_kernel getKernelFromPool(const cl_context &context,
 bool removeKernelFromPool(const cl_context &context,
                           const std::string &project_name,
                           const std::string &kernel_name);
+
+bool removeAllKernelsFromPool();
 
 }}}
 

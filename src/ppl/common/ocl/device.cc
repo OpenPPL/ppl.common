@@ -689,4 +689,18 @@ Device* getSharedDevice() {
     return shared_device;
 }
 
+size_t GetMaxImageWidth(){
+    createSharedDevice();
+    return shared_device->getMaxImageWidth();
+}
+
+size_t GetMaxImageHeight(){
+    createSharedDevice();
+    return shared_device->getMaxImageHeight();
+}
+
+size_t GetMaxImageDepth(){
+    createSharedDevice();
+    return shared_device->getMaxImageDepth();
+}
 }}}

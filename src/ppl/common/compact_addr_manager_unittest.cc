@@ -15,6 +15,7 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#include "sys.h"
 #include "ppl/common/compact_addr_manager.h"
 #include "gtest/gtest.h"
 using namespace std;
@@ -24,7 +25,7 @@ class TestAllocator final : public CompactAddrManager::Allocator {
 public:
     TestAllocator(uint64_t alignment) : alignment_(alignment) {}
     pair<uintptr_t, uint64_t> Alloc(uint64_t size) {
-        auto ptr = aligned_alloc(size, alignment_);
+        auto ptr = AlignedAlloc(size, alignment_);
         if (!ptr) {
             return make_pair(UINTPTR_MAX, 0);
         }

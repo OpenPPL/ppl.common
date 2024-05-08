@@ -76,6 +76,13 @@ unset(__NCCL_TAG__)
 
 # --------------------------------------------------------------------------- #
 
+hpcc_declare_git_dep(opencl_headers
+                     "https://github.com/KhronosGroup/OpenCL-Headers.git"
+                     main)
+
+# --------------------------------------------------------------------------- #
+
+
 set(BUILD_GMOCK OFF CACHE BOOL "")
 Set(INSTALL_GTEST OFF CACHE BOOL "")
 
