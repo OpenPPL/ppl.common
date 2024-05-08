@@ -21,7 +21,7 @@
 #include <vector>
 #include <string>
 
-#include "CL/cl.h"
+#include "openclruntime.h"
 
 namespace ppl { namespace common { namespace ocl {
 
@@ -74,7 +74,9 @@ class Device {
         return max_group_items_per_dim_;
     }
     cl_ulong getGlobalMemSize() const { return global_mem_size_; }
-
+    size_t getMaxImageWidth(){ return this->image3d_max_width_;}
+    size_t getMaxImageHeight(){ return this->image3d_max_height_;}
+    size_t getMaxImageDepth(){ return this->image3d_max_depth_;}
   private:
     bool queryPlatformInfo(const cl_platform_id& platform_id,
                            cl_platform_info param_name,
@@ -177,6 +179,10 @@ class Device {
 void createSharedDevice();
 void createSharedDevice(int platform_index, int device_index);
 Device* getSharedDevice();
+
+size_t GetMaxImageWidth();
+size_t GetMaxImageHeight();
+size_t GetMaxImageDepth();
 
 }}}
 

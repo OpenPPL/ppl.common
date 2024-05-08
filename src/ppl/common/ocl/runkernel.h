@@ -74,8 +74,9 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr,
     bool succeeded;
     cl_context context = frame_chain->getContext();
     std::string project_name = frame_chain->getProjectName();
-    std::string kernel_name = kernel_name_cstr;
-    cl_kernel kernel = getKernelFromPool(context, project_name, kernel_name);
+    std::string kernel_name = kernel_name_cstr ;
+
+    cl_kernel kernel = getKernelFromPool(context, project_name, kernel_name + frame_chain->getCompileOptions());
     if (kernel == nullptr) {
         succeeded = compileOclKernels(frame_chain, kernel_name);
         if (!succeeded) {
@@ -100,12 +101,13 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr,
             }
 
             succeeded = insertKernelToPool(context, project_name,
-                                           kernel_names[i], temp_kernel);
+                                           kernel_names[i] + frame_chain->getCompileOptions(), temp_kernel);
             if (!succeeded) {
                 LOG(ERROR) << "Failed to insert kernel " << kernel_names[i]
                            << " to kernel pool.";
             }
         }
+        clReleaseProgram(program);
     }
     if (kernel == nullptr) {
         LOG(ERROR) << "No valid kernel to run.";

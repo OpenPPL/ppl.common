@@ -24,7 +24,10 @@ namespace ppl { namespace common { namespace ocl {
 KernelPool::KernelPool() {}
 
 KernelPool::~KernelPool() {
-    removeAllKernels();
+    // This function should be used before deleting cl_context and command queue.
+    if(!context2kernels_.empty()){
+        removeAllKernels();
+    }
 }
 
 bool KernelPool::insertKernel(const cl_context &context,
@@ -51,46 +54,14 @@ bool KernelPool::insertKernel(const cl_context &context,
         return false;
     }
 
-    cl_int error_code;
     std::lock_guard<std::mutex> lock_guard(locker_);
     auto key = std::make_pair(context, project_name);
-    auto iter0 = context2kernels_.find(key);
-    if (iter0 == context2kernels_.end()) {
-        error_code = clRetainContext(context);
-        if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clRetainContext() failed with code: "
-                       << error_code;
-            error_code = clReleaseContext(context);
-            if (error_code != CL_SUCCESS) {
-                LOG(ERROR) << "Call clReleaseContext() failed with code: "
-                           << error_code;
-            }
-            return false;
-        }
-    }
-
     auto &name2kernel = context2kernels_[key];
     auto iter1 = name2kernel.find(kernel_name);
     if (iter1 != name2kernel.end()) {
         return true;
     }
-
     name2kernel[kernel_name] = kernel;
-    error_code = clRetainKernel(kernel);
-    if (error_code != CL_SUCCESS) {
-        name2kernel.erase(kernel_name);
-        if (context2kernels_[key].size() == 0) {
-            context2kernels_.erase(key);
-            error_code = clReleaseContext(context);
-            if (error_code != CL_SUCCESS) {
-                LOG(ERROR) << "Call clReleaseContext() failed with code: "
-                           << error_code;
-            }
-        }
-        LOG(ERROR) << "Call clRetainKernel() failed with code: "
-                   << error_code;
-        return false;
-    }
 
     return true;
 }
@@ -173,12 +144,6 @@ bool KernelPool::removeKernel(const cl_context &context,
     if (name2kernel.size() == 0) {
         context2kernels_.erase(key);
     }
-    error_code = clReleaseContext(context);
-    if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clReleaseContext() failed with code: "
-                    << error_code;
-        return false;
-    }
 
     return true;
 }
@@ -203,17 +168,9 @@ bool KernelPool::removeAllKernels() {
             iter1 = name2kernel.erase(iter1);
         }
 
-        auto &key = iter0->first;
-        auto context = key.first;
-        error_code = clReleaseContext(context);
-        if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clReleaseContext() failed with code: "
-                       << error_code;
-            return false;
-        }
         iter0 = context2kernels_.erase(iter0);
     }
-
+    context2kernels_.clear();
     return succeeded;
 }
 
@@ -236,6 +193,10 @@ bool removeKernelFromPool(const cl_context &context,
                           const std::string &project_name,
                           const std::string &kernel_name) {
     return kernel_pool.removeKernel(context, project_name, kernel_name);
+}
+
+bool removeAllKernelsFromPool() {
+    return kernel_pool.removeAllKernels();
 }
 
 }}}

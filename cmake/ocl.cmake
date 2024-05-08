@@ -1,27 +1,28 @@
-if(NOT PPLCOMMON_OPENCL_INCLUDE_DIRS)
-    message(FATAL_ERROR "`PPLCOMMON_OPENCL_INCLUDE_DIRS` is not specified.")
-endif()
-if(NOT PPLCOMMON_OPENCL_LIBRARIES)
-    message(FATAL_ERROR "`PPLCOMMON_OPENCL_LIBRARIES` is not specified.")
-endif()
 if(NOT CL_TARGET_OPENCL_VERSION)
     message(FATAL_ERROR "`CL_TARGET_OPENCL_VERSION` is not specified.")
 endif()
+
+hpcc_populate_dep(opencl_headers)
 
 file(GLOB_RECURSE __PPLCOMMON_OCL_SRC__ src/ppl/common/ocl/*.cc)
 list(APPEND PPLCOMMON_SRC ${__PPLCOMMON_OCL_SRC__})
 unset(__PPLCOMMON_OCL_SRC__)
 
-list(APPEND PPLCOMMON_INCLUDES ${PPLCOMMON_OPENCL_INCLUDE_DIRS})
-list(APPEND PPLCOMMON_LINK_LIBRARIES ${PPLCOMMON_OPENCL_LIBRARIES})
+list(APPEND PPLCOMMON_INCLUDES ${HPCC_DEPS_DIR}/opencl_headers)
+list(APPEND PPLCOMMON_LINK_LIBRARIES dl)
 
 list(APPEND PPLCOMMON_DEFINITIONS
-    PPLCOMMON_USE_OCL
+    PPLCOMMON_USE_OPENCL
     CL_TARGET_OPENCL_VERSION=${CL_TARGET_OPENCL_VERSION})
 
-if(NOT TARGET oclgpuinfo)
-    add_executable(oclgpuinfo tools/ocl/oclgpuinfo.cc)
-    target_link_libraries(oclgpuinfo PRIVATE pplcommon_static)
+if(PPLCOMMON_BUILD_OPENCL_TOOLS)
+    if(NOT PPLCOMMON_OPENCL_LIBRARIES)
+        message(FATAL_ERROR "`PPLCOMMON_OPENCL_LIBRARIES` is not specified.")
+    endif()
+    if(NOT TARGET oclgpuinfo)
+        add_executable(oclgpuinfo tools/ocl/oclgpuinfo.cc)
+        target_link_libraries(oclgpuinfo PRIVATE pplcommon_static ${PPLCOMMON_OPENCL_LIBRARIES})
+    endif()
 endif()
 
 # ----- installation ----- #

@@ -294,7 +294,7 @@ bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
         time = end - start;
         LOG(INFO) << "Execution time of " << kernel_name << ": " << time
                   << " ns.";
-
+        frame_chain->setKernelTime(time);
         error_code = clReleaseEvent(event);
         if (error_code != CL_SUCCESS) {
             LOG(ERROR) << "Call clReleaseEvent() failed with code: "

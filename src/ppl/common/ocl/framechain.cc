@@ -73,6 +73,12 @@ FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
 }
 
 FrameChain::~FrameChain() {
+    if(this->queue_){
+        clReleaseCommandQueue(this->queue_);
+    }
+    if(this->context_){
+        clReleaseContext(this->context_);
+    }
 }
 
 void FrameChain::setProgram(const cl_program program) {
@@ -196,11 +202,6 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
 bool FrameChain::queryProfiling() {
     if (queue_ == nullptr) {
         LOG(ERROR) << "The command queue is uninitialized.";
-        return false;
-    }
-
-    if (device_id_ == nullptr) {
-        LOG(ERROR) << "The device id is uninitialized.";
         return false;
     }
 

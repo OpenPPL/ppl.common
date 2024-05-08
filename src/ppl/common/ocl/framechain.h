@@ -20,7 +20,7 @@
 
 #include <string>
 
-#include "CL/cl.h"
+#include "openclruntime.h"
 
 namespace ppl { namespace common { namespace ocl {
 
@@ -48,6 +48,7 @@ class FrameChain {
     void setProjectName(const char* project_name);
     void setFunctionName(const char* function_string);
     void setCompileOptions(const char* options);
+    void setKernelTime(uint64_t kernel_time) { kernel_time_ = kernel_time; }
 
     cl_platform_id getPlatformId() const { return platform_id_; }
     cl_device_id getDeviceId() const { return device_id_; }
@@ -64,6 +65,7 @@ class FrameChain {
     std::string getFunctionName() const { return function_name_; }
     std::string getCompileOptions() const { return compile_options_; }
     bool isProfiling() const { return profiling_; }
+    uint64_t getKernelTime() { return kernel_time_; }
 
   protected:
     bool createDefaultOclFrame(bool profiling);
@@ -86,6 +88,7 @@ class FrameChain {
     std::string function_name_;
     std::string compile_options_;
     bool profiling_;
+    uint64_t kernel_time_;
 };
 
 void createSharedFrameChain(bool profiling);
