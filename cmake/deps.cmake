@@ -13,7 +13,9 @@ endif()
 
 # --------------------------------------------------------------------------- #
 
-set(__HPCC_COMMIT__ e674b696eb0d982a4d5a5ea358bf2199efffe687)
+if(NOT PPLCOMMON_DEP_HPCC_VERSION)
+    set(PPLCOMMON_DEP_HPCC_VERSION master)
+endif()
 
 if(PPLCOMMON_DEP_HPCC_PKG)
     FetchContent_Declare(hpcc
@@ -27,13 +29,11 @@ else()
     endif()
     FetchContent_Declare(hpcc
         GIT_REPOSITORY ${PPLCOMMON_DEP_HPCC_GIT}
-        GIT_TAG ${__HPCC_COMMIT__}
+        GIT_TAG ${PPLCOMMON_DEP_HPCC_VERSION}
         SOURCE_DIR ${HPCC_DEPS_DIR}/hpcc
         BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/hpcc-build
         SUBBUILD_DIR ${HPCC_DEPS_DIR}/hpcc-subbuild)
 endif()
-
-unset(__HPCC_COMMIT__)
 
 FetchContent_GetProperties(hpcc)
 if(NOT hpcc_POPULATED)
@@ -66,19 +66,40 @@ unset(__PYBIND11_TAG__)
 
 # --------------------------------------------------------------------------- #
 
-set(__NCCL_TAG__ v2.16.5-1)
+if(NOT PPLCOMMON_DEP_NCCL_VERSION)
+    set(PPLCOMMON_DEP_NCCL_VERSION v2.16.5-1)
+endif()
 
-hpcc_declare_git_dep(nccl
-    "https://github.com/NVIDIA/nccl.git"
-    ${__NCCL_TAG__})
-
-unset(__NCCL_TAG__)
+if(PPLCOMMON_DEP_NCCL_PKG)
+    hpcc_declare_pkg_dep(nccl
+        ${PPLCOMMON_DEP_NCCL_PKG})
+else()
+    if(NOT PPLCOMMON_DEP_NCCL_GIT)
+        set(PPLCOMMON_DEP_NCCL_GIT "https://github.com/NVIDIA/nccl.git")
+    endif()
+    hpcc_declare_git_dep_depth1(nccl
+        ${PPLCOMMON_DEP_NCCL_GIT}
+        ${PPLCOMMON_DEP_NCCL_VERSION})
+endif()
 
 # --------------------------------------------------------------------------- #
 
-hpcc_declare_git_dep(opencl_headers
-                     "https://github.com/KhronosGroup/OpenCL-Headers.git"
-                     main)
+if(NOT PPLCOMMON_DEP_OPENCL_HEADERS_VERSION)
+    set(PPLCOMMON_DEP_OPENCL_HEADERS_VERSION v2024.05.08)
+endif()
+
+if(PPLCOMMON_DEP_OPENCL_HEADERS_PKG)
+    hpcc_declare_pkg_dep(opencl_headers
+        ${PPLCOMMON_DEP_OPENCL_HEADERS_PKG})
+else()
+    if(NOT PPLCOMMON_DEP_OPENCL_HEADERS_GIT)
+        set(PPLCOMMON_DEP_OPENCL_HEADERS_GIT "https://github.com/KhronosGroup/OpenCL-Headers.git")
+    endif()
+    hpcc_declare_git_dep(opencl_headers
+        ${PPLCOMMON_DEP_OPENCL_HEADERS_GIT}
+        ${PPLCOMMON_DEP_OPENCL_HEADERS_VERSION})
+endif()
+
 
 # --------------------------------------------------------------------------- #
 
