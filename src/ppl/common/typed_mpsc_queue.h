@@ -56,7 +56,7 @@ public:
         return ppl::common::RC_SUCCESS;
     }
 
-    T Pop() {
+    bool Pop(T* res) {
         bool is_empty = true;
         MPSCQueue::Node* node;
         do {
@@ -64,16 +64,16 @@ public:
         } while (!node && !is_empty);
 
         if (is_empty) {
-            return T();
+            return false;
         }
 
         size_.fetch_sub(1, std::memory_order_relaxed);
 
         auto item = static_cast<Item*>(node);
-        T res(std::move(item->value));
+        *res = std::move(item->value);
         delete item;
 
-        return res;
+        return true;
     }
 
     // approximate size
