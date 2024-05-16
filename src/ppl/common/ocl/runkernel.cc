@@ -246,6 +246,7 @@ bool validateNDrange(cl_uint work_dims, size_t* global_work_size,
     error_code = clGetEventProfilingInfo(event, status, sizeof(cl_ulong),      \
                                          &value, nullptr);                     \
     if (error_code != CL_SUCCESS) {                                            \
+        if (!tuning)                                                           \
         LOG(ERROR) << "Call clGetEventProfilingInfo() failed with code: "      \
                    << error_code;                                              \
     }
@@ -254,24 +255,27 @@ bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
                       const cl_kernel& kernel, cl_uint work_dims,
                       const size_t* global_work_size,
                       const size_t* local_work_size) {
-    bool profiling = frame_chain->isProfiling();
+    bool profiling = frame_chain->isProfiling() || frame_chain->getTuningQueueStatus();
+    bool tuning = frame_chain->getTuningQueueStatus();
+    auto queue = tuning ? frame_chain->getTuningQueue() : frame_chain->getQueue(); 
+    frame_chain->setKernelTime(UINT64_MAX);
 
     cl_int error_code;
     if (profiling) {
         cl_event event;
-        error_code = clEnqueueNDRangeKernel(frame_chain->getQueue(), kernel,
+        error_code = clEnqueueNDRangeKernel(queue, kernel,
                          work_dims, nullptr, global_work_size, local_work_size,
                          0, nullptr, &event);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: "
-                       << error_code;
+            if (!tuning) LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: "
+                                   << error_code;
             return false;
         }
 
         error_code = clWaitForEvents(1, &event);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clWaitForEvents() failed with code: "
-                       << error_code;
+            if (!tuning) LOG(ERROR) << "Call clWaitForEvents() failed with code: "
+                                   << error_code;
             return false;
         }
 
@@ -292,23 +296,23 @@ bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
         PROFILE_INFO(CL_PROFILING_COMMAND_COMPLETE, complete);
 #endif
         time = end - start;
-        LOG(INFO) << "Execution time of " << kernel_name << ": " << time
-                  << " ns.";
+        if (!tuning) LOG(INFO) << "Execution time of " << kernel_name << ": " << time
+                              << " ns.";
         frame_chain->setKernelTime(time);
         error_code = clReleaseEvent(event);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clReleaseEvent() failed with code: "
-                       << error_code;
+            if (!tuning) LOG(ERROR) << "Call clReleaseEvent() failed with code: "
+                                   << error_code;
             return false;
         }
     }
     else {
-        error_code = clEnqueueNDRangeKernel(frame_chain->getQueue(), kernel,
+        error_code = clEnqueueNDRangeKernel(queue, kernel,
                          work_dims, nullptr, global_work_size, local_work_size,
                          0, nullptr, nullptr);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: "
-                       << error_code;
+            if (!tuning) LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: "
+                                   << error_code;
             return false;
         }
     }
