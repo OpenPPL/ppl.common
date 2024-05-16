@@ -76,11 +76,14 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr,
     std::string project_name = frame_chain->getProjectName();
     std::string kernel_name = kernel_name_cstr ;
 
+    bool tuning = frame_chain->getTuningQueueStatus();
+    frame_chain->setKernelTime(UINT64_MAX);
+    
     cl_kernel kernel = getKernelFromPool(context, project_name, kernel_name + frame_chain->getCompileOptions());
     if (kernel == nullptr) {
         succeeded = compileOclKernels(frame_chain, kernel_name);
         if (!succeeded) {
-            LOG(ERROR) << "Failed to compile " << kernel_name;
+            if(!tuning) LOG(ERROR) << "Failed to compile " << kernel_name;
             return;
         }
         cl_program program = frame_chain->getProgram();
@@ -92,8 +95,8 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr,
             temp_kernel = clCreateKernel(program, kernel_names[i].c_str(),
                                          &error_code);
             if (error_code != CL_SUCCESS) {
-                LOG(ERROR) << "Call clCreateKernel() failed with code: "
-                           << error_code;
+                if(!tuning) LOG(ERROR) << "Call clCreateKernel() failed with code: "
+                                        << error_code;
                 return;
             }
             if (kernel_names[i] == kernel_name) {
@@ -103,14 +106,14 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr,
             succeeded = insertKernelToPool(context, project_name,
                                            kernel_names[i] + frame_chain->getCompileOptions(), temp_kernel);
             if (!succeeded) {
-                LOG(ERROR) << "Failed to insert kernel " << kernel_names[i]
-                           << " to kernel pool.";
+                if (!tuning) LOG(ERROR) << "Failed to insert kernel " << kernel_names[i]
+                                         << " to kernel pool.";
             }
         }
         clReleaseProgram(program);
     }
     if (kernel == nullptr) {
-        LOG(ERROR) << "No valid kernel to run.";
+        if (!tuning) LOG(ERROR) << "No valid kernel to run.";
         return;
     }
 
@@ -121,14 +124,14 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr,
 
     succeeded = validateNDrange(work_dims, global_work_size, local_work_size);
     if (!succeeded) {
-        LOG(ERROR) << "Invalid NDrange of kernel " << kernel_name_cstr;
+        if (!tuning) LOG(ERROR) << "Invalid NDrange of kernel " << kernel_name_cstr;
         return;
     }
 
     succeeded = enqueueOclKernel(frame_chain, kernel_name_cstr, kernel,
                                  work_dims, global_work_size, local_work_size);
     if (!succeeded) {
-        LOG(ERROR) << "Failed to enqueue kernel " << kernel_name_cstr;
+        if (!tuning) LOG(ERROR) << "Failed to enqueue kernel " << kernel_name_cstr;
         return;
     }
 }

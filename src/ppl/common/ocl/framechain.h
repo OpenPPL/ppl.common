@@ -49,6 +49,7 @@ class FrameChain {
     void setFunctionName(const char* function_string);
     void setCompileOptions(const char* options);
     void setKernelTime(uint64_t kernel_time) { kernel_time_ = kernel_time; }
+    void setTuningQueueStatus(bool on) { tuning_queue_on_ = on; }
 
     cl_platform_id getPlatformId() const { return platform_id_; }
     cl_device_id getDeviceId() const { return device_id_; }
@@ -64,8 +65,11 @@ class FrameChain {
     std::string getProjectName() const { return project_name_; }
     std::string getFunctionName() const { return function_name_; }
     std::string getCompileOptions() const { return compile_options_; }
+    std::string getDeviceDesc() const { return device_desc_; }
     bool isProfiling() const { return profiling_; }
-    uint64_t getKernelTime() { return kernel_time_; }
+    uint64_t getKernelTime() const { return kernel_time_; }
+    bool getTuningQueueStatus() const { return tuning_queue_on_; }
+    cl_command_queue getTuningQueue();
 
   protected:
     bool createDefaultOclFrame(bool profiling);
@@ -77,6 +81,7 @@ class FrameChain {
     cl_device_id device_id_;
     cl_context context_;
     cl_command_queue queue_;
+    cl_command_queue tuning_queue_;
 
     // unique to each function/program.
     cl_program program_;
@@ -87,8 +92,10 @@ class FrameChain {
     std::string project_name_;
     std::string function_name_;
     std::string compile_options_;
+    std::string device_desc_;
     bool profiling_;
     uint64_t kernel_time_;
+    bool tuning_queue_on_;
 };
 
 void createSharedFrameChain(bool profiling);
