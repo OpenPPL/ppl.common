@@ -19,22 +19,100 @@
 #include "device.h"
 
 #include <vector>
+#include <string.h>
 
 #include "ppl/common/log.h"
 
 namespace ppl { namespace common { namespace ocl {
 
+// qualcomm 5xx when param_value is null need param_value_size >= sizeof(param_name);
+#define OCLINFOAPI_IMP(api, obj, info)                                                                                      \
+    do {                                                                                                                    \
+        cl_int rc = 0;                                                                                                      \
+        size_t s = 0;                                                                                                       \
+                                                                                                                            \
+        rc = api(obj, info, 1024, nullptr, &s);                                                                             \
+        if (CL_SUCCESS != rc) {                                                                                             \
+            LOG(ERROR) << "Call " << #api << " failed with code: " << rc;                                                   \
+            return std::vector<uint8_t>();                                                                                  \
+        }                                                                                                                   \
+        std::vector<uint8_t> value(s);                                                                                      \
+        rc = api(obj, info, s, (void *)value.data(), nullptr);                                                              \
+        if (CL_SUCCESS != rc) {                                                                                             \
+            LOG(ERROR) << "Call " << #api << " failed with code: " << rc;                                                   \
+            return std::vector<uint8_t>();                                                                                  \
+        }                                                                                                                   \
+        return value;                                                                                                       \
+    } while (0)
+
+#define INFO(api, object_type, arg)                                                                                         \
+    api(object_type arg, cl_##arg##_info info) {                                                                            \
+        OCLINFOAPI_IMP(cl##api, arg, info);                                                                                 \
+        return std::vector<uint8_t>();                                                                                      \
+    }
+
+std::vector<uint8_t> INFO(GetPlatformInfo, cl_platform_id, platform)
+std::vector<uint8_t> INFO(GetDeviceInfo, cl_device_id, device)
+std::vector<uint8_t> INFO(GetContextInfo, cl_context, context)
+std::vector<uint8_t> INFO(GetCommandQueueInfo, cl_command_queue, command_queue)
+std::vector<uint8_t> INFO(GetKernelInfo, cl_kernel, kernel)
+std::vector<uint8_t> INFO(GetProgramInfo, cl_program, program)
+std::vector<uint8_t> INFO(GetImageInfo, cl_mem, image)
+std::vector<uint8_t> INFO(GetMemObjectInfo, cl_mem, mem)
+std::vector<uint8_t> INFO(GetEventProfilingInfo, cl_event, profiling)
+#undef INFO
+#undef OCLINFOAPI_IMP
+
+std::string GetDeviceDesc(cl_device_id device)
+{
+    std::string dev_desc;
+
+    std::vector<uint8_t> vendor = GetDeviceInfo(device, CL_DEVICE_VENDOR);
+    std::string dev_vendor((char*)vendor.data());
+    char d[64] = "";
+    if(dev_vendor == "ARM") {
+        std::vector<uint8_t> tmp = GetDeviceInfo(device, CL_DEVICE_NAME);
+        d[0] = tmp[5];
+        d[1] = tmp[6];
+        d[2] = tmp[7];
+        d[3] = '\0';
+    } else if(dev_vendor == "QUALCOMM") {
+        std::vector<uint8_t> tmp = GetDeviceInfo(device, CL_DEVICE_VERSION);
+        std::string version_(tmp.begin(),tmp.end());
+        int nPos = version_.find("Adreno");
+        version_ = version_.substr(nPos);
+        d[0] = '0';
+        int j = 0;
+        for(int i = 0;i<version_.length();i++){
+            if((version_[i]>='0'&&version_[i]<='9') ||
+               (version_[i]>='a'&&version_[i]<='z') ||
+               (version_[i]>='A'&&version_[i]<='Z'))
+            {
+                d[j++] = version_[i];
+            }
+        }
+        d[j] = '\0';
+    } else {
+        LOG(WARNING) << "unopt device: " << dev_vendor;
+    }
+
+    dev_desc += std::string(d);
+
+    return (dev_vendor + std::string("_") + dev_desc);
+}
+
 FrameChain::FrameChain(bool profiling) : platform_id_(nullptr),
         device_id_(nullptr), context_(nullptr), queue_(nullptr),
         program_(nullptr), creating_program_type_(WITH_SOURCE),
-        source_string_(nullptr), profiling_(false) {
+        source_string_(nullptr), profiling_(false), 
+        tuning_queue_on_(false), tuning_queue_(nullptr) {
     createDefaultOclFrame(profiling);
 }
 
 FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
         device_id_(nullptr), context_(nullptr), program_(nullptr),
         creating_program_type_(WITH_SOURCE), source_string_(nullptr),
-        profiling_(false) {
+        profiling_(false), tuning_queue_on_(false), tuning_queue_(nullptr) {
     if (queue == nullptr) {
         LOG(ERROR) << "Invalid command queue.";
         return;
@@ -70,11 +148,16 @@ FrameChain::FrameChain(const cl_command_queue& queue) : platform_id_(nullptr),
                    << error_code;
         return;
     }
+
+    device_desc_ = GetDeviceDesc(device_id_);
 }
 
 FrameChain::~FrameChain() {
     if(this->queue_){
         clReleaseCommandQueue(this->queue_);
+    }
+    if(this->tuning_queue_){
+        clReleaseCommandQueue(this->tuning_queue_);
     }
     if(this->context_){
         clReleaseContext(this->context_);
@@ -154,6 +237,8 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
         LOG(ERROR) << "Call clCreateContext failed with code: " << error_code;
         return false;
     }
+    
+    device_desc_ = GetDeviceDesc(device_id_);
 
     profiling_ = profiling;
 #if CL_TARGET_OPENCL_VERSION < 200
@@ -237,6 +322,35 @@ bool FrameChain::queryProfiling() {
     }
 
     return true;
+}
+
+cl_command_queue FrameChain::getTuningQueue()
+{
+    cl_int error_code;
+    if (!tuning_queue_) {
+#if CL_TARGET_OPENCL_VERSION < 200
+        cl_command_queue_properties queue_properties = CL_QUEUE_PROFILING_ENABLE;
+        tuning_queue_ = clCreateCommandQueue(context_, device_id_, queue_properties, &error_code);
+        if (error_code != CL_SUCCESS) {
+            LOG(ERROR) << "Call clCreateCommandQueue failed with code: " << error_code;
+            return nullptr;
+        }
+#else
+        std::vector<cl_queue_properties> queue_properties;
+        queue_properties.resize(3);
+        queue_properties[0] = CL_QUEUE_PROPERTIES;
+        queue_properties[1] = (cl_queue_properties)CL_QUEUE_PROFILING_ENABLE;
+
+        queue_properties[2] = 0;
+        tuning_queue_ = clCreateCommandQueueWithProperties(context_, device_id_, queue_properties.data(), &error_code);
+        if (error_code != CL_SUCCESS) {
+            LOG(ERROR) << "Call clCreateCommandQueueWithProperties failed " << "with code: " << error_code;
+            return nullptr;
+        }
+#endif
+    }
+
+    return tuning_queue_;
 }
 
 static FrameChain* shared_frame_chain;
