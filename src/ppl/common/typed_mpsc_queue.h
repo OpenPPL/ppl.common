@@ -44,7 +44,8 @@ public:
         }
     }
 
-    ppl::common::RetCode Push(T&& value) {
+    template <typename ValueType>
+    ppl::common::RetCode Push(ValueType&& value) {
         auto item = new (std::nothrow) Item(std::forward<T>(value));
         if (!item) {
             return ppl::common::RC_OUT_OF_MEMORY;
@@ -56,7 +57,8 @@ public:
         return ppl::common::RC_SUCCESS;
     }
 
-    bool Pop(T* res) {
+    template <typename ValueType>
+    bool Pop(ValueType* res) {
         bool is_empty = true;
         MPSCQueue::Node* node;
         do {
