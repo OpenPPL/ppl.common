@@ -29,8 +29,7 @@ namespace ppl { namespace common { namespace ocl {
 #define SHIFT0 5
 #define SHIFT1 2
 
-void splitString(const std::string& str, const std::string& delimiter,
-                 std::vector<std::string >& segments) {
+void splitString(const std::string& str, const std::string& delimiter, std::vector<std::string>& segments) {
     size_t last = 0;
     size_t index = str.find_first_of(delimiter, last);
     while (index != std::string::npos) {
@@ -44,15 +43,12 @@ void splitString(const std::string& str, const std::string& delimiter,
     }
 }
 
-bool getKernelNames(const cl_program program,
-                    std::vector<std::string>& kernel_names) {
+bool getKernelNames(const cl_program program, std::vector<std::string>& kernel_names) {
     cl_int error_code;
     size_t returned_size;
-    error_code = clGetProgramInfo(program, CL_PROGRAM_KERNEL_NAMES, 0, nullptr,
-                                  &returned_size);
+    error_code = clGetProgramInfo(program, CL_PROGRAM_KERNEL_NAMES, 0, nullptr, &returned_size);
     if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clGetProgramInfo() failed with code: "
-                   << error_code;
+        LOG(ERROR) << "Call clGetProgramInfo() failed with code: " << error_code;
         return false;
     }
 
@@ -63,12 +59,9 @@ bool getKernelNames(const cl_program program,
 
     std::string param_value;
     param_value.resize(returned_size - 1);
-    error_code = clGetProgramInfo(program, CL_PROGRAM_KERNEL_NAMES,
-                                  returned_size, (void*)param_value.data(),
-                                  nullptr);
+    error_code = clGetProgramInfo(program, CL_PROGRAM_KERNEL_NAMES, returned_size, (void*)param_value.data(), nullptr);
     if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clGetProgramInfo() failed with code: "
-                   << error_code;
+        LOG(ERROR) << "Call clGetProgramInfo() failed with code: " << error_code;
         return false;
     }
 
@@ -77,28 +70,22 @@ bool getKernelNames(const cl_program program,
     return true;
 }
 
-bool buildProgram(const cl_program& program, const cl_device_id& device_id,
-                  const std::string& build_options) {
+bool buildProgram(const cl_program& program, const cl_device_id& device_id, const std::string& build_options) {
     cl_int error_code;
-    error_code = clBuildProgram(program, 1, &device_id, build_options.c_str(),
-                                nullptr, nullptr);
+    error_code = clBuildProgram(program, 1, &device_id, build_options.c_str(), nullptr, nullptr);
     if (error_code != CL_SUCCESS) {
         size_t log_length;
-        cl_int code = clGetProgramBuildInfo(program, device_id,
-                          CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_length);
+        cl_int code = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, 0, nullptr, &log_length);
         if (code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clGetProgramBuildInfo() failed with code: "
-                       << code;
+            LOG(ERROR) << "Call clGetProgramBuildInfo() failed with code: " << code;
             return false;
         }
 
         std::string log_buffer((int)log_length, '0');
-        code = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG,
-                                     log_length, (char*)log_buffer.data(),
+        code = clGetProgramBuildInfo(program, device_id, CL_PROGRAM_BUILD_LOG, log_length, (char*)log_buffer.data(),
                                      nullptr);
         if (code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clGetProgramBuildInfo() failed with code: "
-                       << code;
+            LOG(ERROR) << "Call clGetProgramBuildInfo() failed with code: " << code;
             return false;
         }
         LOG(ERROR) << "Call clBuildProgram() failed with code: " << error_code;
@@ -110,16 +97,14 @@ bool buildProgram(const cl_program& program, const cl_device_id& device_id,
     return true;
 }
 
-bool compileOclKernels(FrameChain* frame_chain,
-                       const std::string& kernel_name) {
+bool compileOclKernels(FrameChain* frame_chain, const std::string& kernel_name) {
     cl_context context = frame_chain->getContext();
     const char* source_str = frame_chain->getCodeString();
     const size_t kernel_length = strlen(source_str);
 
     cl_int error_code;
     cl_program program;
-    CreatingProgramTypes creating_program_type =
-        frame_chain->getCreatingProgramType();
+    CreatingProgramTypes creating_program_type = frame_chain->getCreatingProgramType();
     cl_device_id device_id = frame_chain->getDeviceId();
     std::string build_options = frame_chain->getCompileOptions();
 
@@ -127,24 +112,20 @@ bool compileOclKernels(FrameChain* frame_chain,
         std::string project_name = frame_chain->getProjectName();
         size_t binaries_length;
         unsigned char** binaries_data = new unsigned char*[1];
-        bool status = retrieveKernelBinaries(project_name, kernel_name,
-                                             &binaries_length, binaries_data);
+        bool status = retrieveKernelBinaries(project_name, kernel_name, &binaries_length, binaries_data);
         if (status) {
             cl_int bianry_status;
             cl_device_id gpu_device = frame_chain->getDeviceId();
-            program = clCreateProgramWithBinary(context, 1, &gpu_device,
-                          &binaries_length,
-                          (const unsigned char**)binaries_data, &bianry_status,
-                          &error_code);
+            program = clCreateProgramWithBinary(context, 1, &gpu_device, &binaries_length,
+                                                (const unsigned char**)binaries_data, &bianry_status, &error_code);
             if (bianry_status == CL_SUCCESS && error_code == CL_SUCCESS) {
-                delete [] (binaries_data[0]);
-                delete [] binaries_data;
+                delete[](binaries_data[0]);
+                delete[] binaries_data;
                 frame_chain->setProgram(program);
 
-                bool succeeded = buildProgram(program, device_id,
-                                              build_options);
+                bool succeeded = buildProgram(program, device_id, build_options);
                 if (!succeeded) {
-                    delete [] binaries_data;
+                    delete[] binaries_data;
                     return false;
                 }
 
@@ -152,14 +133,12 @@ bool compileOclKernels(FrameChain* frame_chain,
             }
         }
 
-        delete [] binaries_data;
+        delete[] binaries_data;
     }
 
-    program = clCreateProgramWithSource(context, 1, &source_str, &kernel_length,
-                                        &error_code);
+    program = clCreateProgramWithSource(context, 1, &source_str, &kernel_length, &error_code);
     if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: "
-                   << error_code;
+        LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: " << error_code;
         return false;
     }
     frame_chain->setProgram(program);
@@ -172,13 +151,11 @@ bool compileOclKernels(FrameChain* frame_chain,
     return true;
 }
 
-bool validateNDrange(cl_uint work_dims, size_t* global_work_size,
-                     size_t* local_work_size) {
+bool validateNDrange(cl_uint work_dims, size_t* global_work_size, size_t* local_work_size) {
     Device* device = getSharedDevice();
     size_t max_work_dim = device->getMaxWorkDims();
     size_t max_items_in_group = device->getMaxWorkItemsInGroup();
-    std::vector<size_t> max_group_items_per_dim =
-        device->getMaxItemsPerGroupDim();
+    std::vector<size_t> max_group_items_per_dim = device->getMaxItemsPerGroupDim();
     int opencl_version = device->getOpenCLVersion();
 
     if (work_dims < 1 || work_dims > max_work_dim) {
@@ -194,19 +171,16 @@ bool validateNDrange(cl_uint work_dims, size_t* global_work_size,
     cl_uint i = 0;
     for (; i < work_dims; i++) {
         if (global_work_size[i] == 0) {
-            LOG(ERROR) << "Invalid number of global work item at dimension "
-                       << i << ".";
+            LOG(ERROR) << "Invalid number of global work item at dimension " << i << ".";
             return false;
         }
     }
 
     if (local_work_size == nullptr) {
         if (opencl_version < 200) {
-            global_work_size[0] = ((global_work_size[0] + ROUNDING0 - 1)
-                                   >> SHIFT0) << SHIFT0;
+            global_work_size[0] = ((global_work_size[0] + ROUNDING0 - 1) >> SHIFT0) << SHIFT0;
             for (i = 1; i < work_dims; i++) {
-                global_work_size[i] = ((global_work_size[i] + ROUNDING1 - 1)
-                                       >> SHIFT1) << SHIFT1;
+                global_work_size[i] = ((global_work_size[i] + ROUNDING1 - 1) >> SHIFT1) << SHIFT1;
             }
         }
         return true;
@@ -225,53 +199,50 @@ bool validateNDrange(cl_uint work_dims, size_t* global_work_size,
     for (i = 0; i < work_dims; i++) {
         if (local_work_size[i] > max_group_items_per_dim[i]) {
             LOG(ERROR) << "Number of work items in group[" << i
-                       << "] must less than or equal to : "
-                       << max_group_items_per_dim[i];
+                       << "] must less than or equal to : " << max_group_items_per_dim[i];
             return false;
         }
     }
 
     if (opencl_version < 200 || device->getGpuType() == MALI_GPU) {
         for (i = 0; i < work_dims; i++) {
-            global_work_size[i] = ((global_work_size[i] + local_work_size[i] -
-                                   1) / local_work_size[i]) *
-                                   local_work_size[i];
+            global_work_size[i] =
+                ((global_work_size[i] + local_work_size[i] - 1) / local_work_size[i]) * local_work_size[i];
         }
     }
 
     return true;
 }
 
-#define PROFILE_INFO(status, value)                                            \
-    error_code = clGetEventProfilingInfo(event, status, sizeof(cl_ulong),      \
-                                         &value, nullptr);                     \
-    if (error_code != CL_SUCCESS) {                                            \
-        LOG(ERROR) << "Call clGetEventProfilingInfo() failed with code: "      \
-                   << error_code;                                              \
+#define PROFILE_INFO(status, value)                                                          \
+    error_code = clGetEventProfilingInfo(event, status, sizeof(cl_ulong), &value, nullptr);  \
+    if (error_code != CL_SUCCESS) {                                                          \
+        if (!tuning)                                                                         \
+            LOG(ERROR) << "Call clGetEventProfilingInfo() failed with code: " << error_code; \
     }
 
-bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
-                      const cl_kernel& kernel, cl_uint work_dims,
-                      const size_t* global_work_size,
-                      const size_t* local_work_size) {
-    bool profiling = frame_chain->isProfiling();
+bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name, const cl_kernel& kernel, cl_uint work_dims,
+                      const size_t* global_work_size, const size_t* local_work_size) {
+    bool profiling = frame_chain->isProfiling() || frame_chain->getTuningQueueStatus();
+    bool tuning = frame_chain->getTuningQueueStatus();
+    auto queue = tuning ? frame_chain->getTuningQueue() : frame_chain->getQueue();
+    frame_chain->setKernelTime(UINT64_MAX);
 
     cl_int error_code;
     if (profiling) {
         cl_event event;
-        error_code = clEnqueueNDRangeKernel(frame_chain->getQueue(), kernel,
-                         work_dims, nullptr, global_work_size, local_work_size,
-                         0, nullptr, &event);
+        error_code = clEnqueueNDRangeKernel(queue, kernel, work_dims, nullptr, global_work_size, local_work_size, 0,
+                                            nullptr, &event);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: "
-                       << error_code;
+            if (!tuning)
+                LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: " << error_code;
             return false;
         }
 
         error_code = clWaitForEvents(1, &event);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clWaitForEvents() failed with code: "
-                       << error_code;
+            if (!tuning)
+                LOG(ERROR) << "Call clWaitForEvents() failed with code: " << error_code;
             return false;
         }
 
@@ -292,23 +263,21 @@ bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
         PROFILE_INFO(CL_PROFILING_COMMAND_COMPLETE, complete);
 #endif
         time = end - start;
-        LOG(INFO) << "Execution time of " << kernel_name << ": " << time
-                  << " ns.";
+        if (!tuning)
+            LOG(INFO) << "Execution time of " << kernel_name << ": " << time << " ns.";
         frame_chain->setKernelTime(time);
         error_code = clReleaseEvent(event);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clReleaseEvent() failed with code: "
-                       << error_code;
+            if (!tuning)
+                LOG(ERROR) << "Call clReleaseEvent() failed with code: " << error_code;
             return false;
         }
-    }
-    else {
-        error_code = clEnqueueNDRangeKernel(frame_chain->getQueue(), kernel,
-                         work_dims, nullptr, global_work_size, local_work_size,
-                         0, nullptr, nullptr);
+    } else {
+        error_code = clEnqueueNDRangeKernel(queue, kernel, work_dims, nullptr, global_work_size, local_work_size, 0,
+                                            nullptr, nullptr);
         if (error_code != CL_SUCCESS) {
-            LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: "
-                       << error_code;
+            if (!tuning)
+                LOG(ERROR) << "Call clEnqueueNDRangeKernel() failed with code: " << error_code;
             return false;
         }
     }
@@ -316,4 +285,4 @@ bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name,
     return true;
 }
 
-}}}
+}}} // namespace ppl::common::ocl

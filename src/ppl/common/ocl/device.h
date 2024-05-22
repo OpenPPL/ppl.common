@@ -38,7 +38,7 @@ enum GpuTypes {
 };
 
 class Device {
-  public:
+public:
     Device();
     Device(int platform_index, int device_index);
     ~Device();
@@ -65,27 +65,43 @@ class Device {
     GpuTypes checkGpuType(const cl_device_id& device_id);
     int checkOpenCLVersion(const cl_device_id& device_id);
 
-    GpuTypes getGpuType() const { return gpu_type_; }
-    int getOpenCLVersion() const { return opencl_version_; }
-    cl_uint getCUNum() const { return compute_units_; }
-    cl_uint getMaxWorkDims() const { return max_work_dim_; }
-    size_t getMaxWorkItemsInGroup() const { return max_items_in_group_; }
+    GpuTypes getGpuType() const {
+        return gpu_type_;
+    }
+    int getOpenCLVersion() const {
+        return opencl_version_;
+    }
+    cl_uint getCUNum() const {
+        return compute_units_;
+    }
+    cl_uint getMaxWorkDims() const {
+        return max_work_dim_;
+    }
+    size_t getMaxWorkItemsInGroup() const {
+        return max_items_in_group_;
+    }
     std::vector<size_t> getMaxItemsPerGroupDim() const {
         return max_group_items_per_dim_;
     }
-    cl_ulong getGlobalMemSize() const { return global_mem_size_; }
-    size_t getMaxImageWidth(){ return this->image3d_max_width_;}
-    size_t getMaxImageHeight(){ return this->image3d_max_height_;}
-    size_t getMaxImageDepth(){ return this->image3d_max_depth_;}
-  private:
-    bool queryPlatformInfo(const cl_platform_id& platform_id,
-                           cl_platform_info param_name,
-                           std::string& param_value);
-    bool queryDeviceInfo(const cl_device_id& device_id,
-                         cl_device_info param_name, std::string& param_value,
+    cl_ulong getGlobalMemSize() const {
+        return global_mem_size_;
+    }
+    size_t getMaxImageWidth() {
+        return this->image3d_max_width_;
+    }
+    size_t getMaxImageHeight() {
+        return this->image3d_max_height_;
+    }
+    size_t getMaxImageDepth() {
+        return this->image3d_max_depth_;
+    }
+
+private:
+    bool queryPlatformInfo(const cl_platform_id& platform_id, cl_platform_info param_name, std::string& param_value);
+    bool queryDeviceInfo(const cl_device_id& device_id, cl_device_info param_name, std::string& param_value,
                          bool scaling);
 
-  protected:
+protected:
     bool platform_detected_;
     bool device_detected_;
     int platform_index_;
@@ -184,6 +200,6 @@ size_t GetMaxImageWidth();
 size_t GetMaxImageHeight();
 size_t GetMaxImageDepth();
 
-}}}
+}}} // namespace ppl::common::ocl
 
 #endif

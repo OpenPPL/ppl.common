@@ -25,15 +25,13 @@ KernelPool::KernelPool() {}
 
 KernelPool::~KernelPool() {
     // This function should be used before deleting cl_context and command queue.
-    if(!context2kernels_.empty()){
+    if (!context2kernels_.empty()) {
         removeAllKernels();
     }
 }
 
-bool KernelPool::insertKernel(const cl_context &context,
-                              const std::string &project_name,
-                              const std::string &kernel_name,
-                              const cl_kernel &kernel) {
+bool KernelPool::insertKernel(const cl_context& context, const std::string& project_name,
+                              const std::string& kernel_name, const cl_kernel& kernel) {
     if (context == nullptr) {
         LOG(ERROR) << "The context is invalid.";
         return false;
@@ -56,7 +54,7 @@ bool KernelPool::insertKernel(const cl_context &context,
 
     std::lock_guard<std::mutex> lock_guard(locker_);
     auto key = std::make_pair(context, project_name);
-    auto &name2kernel = context2kernels_[key];
+    auto& name2kernel = context2kernels_[key];
     auto iter1 = name2kernel.find(kernel_name);
     if (iter1 != name2kernel.end()) {
         return true;
@@ -66,9 +64,8 @@ bool KernelPool::insertKernel(const cl_context &context,
     return true;
 }
 
-cl_kernel KernelPool::getKernel(const cl_context &context,
-                                const std::string &project_name,
-                                const std::string &kernel_name) {
+cl_kernel KernelPool::getKernel(const cl_context& context, const std::string& project_name,
+                                const std::string& kernel_name) {
     if (context == nullptr) {
         LOG(ERROR) << "The context is invalid.";
         return nullptr;
@@ -91,7 +88,7 @@ cl_kernel KernelPool::getKernel(const cl_context &context,
         return nullptr;
     }
 
-    auto &name2kernel = context2kernels_[key];
+    auto& name2kernel = context2kernels_[key];
     auto iter1 = name2kernel.find(kernel_name);
     if (iter1 == name2kernel.end()) {
         return nullptr;
@@ -100,9 +97,8 @@ cl_kernel KernelPool::getKernel(const cl_context &context,
     return name2kernel[kernel_name];
 }
 
-bool KernelPool::removeKernel(const cl_context &context,
-                              const std::string &project_name,
-                              const std::string &kernel_name) {
+bool KernelPool::removeKernel(const cl_context& context, const std::string& project_name,
+                              const std::string& kernel_name) {
     if (context == nullptr) {
         LOG(ERROR) << "The context is invalid.";
         return false;
@@ -125,7 +121,7 @@ bool KernelPool::removeKernel(const cl_context &context,
         return false;
     }
 
-    auto &name2kernel = context2kernels_[key];
+    auto& name2kernel = context2kernels_[key];
     auto iter1 = name2kernel.find(kernel_name);
     if (iter1 == name2kernel.end()) {
         return false;
@@ -136,8 +132,7 @@ bool KernelPool::removeKernel(const cl_context &context,
     name2kernel.erase(kernel_name);
     error_code = clReleaseKernel(kernel);
     if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clReleaseKernel() failed with code: "
-                   << error_code;
+        LOG(ERROR) << "Call clReleaseKernel() failed with code: " << error_code;
         return false;
     }
 
@@ -155,14 +150,13 @@ bool KernelPool::removeAllKernels() {
     std::lock_guard<std::mutex> lock_guard(locker_);
     auto iter0 = context2kernels_.begin();
     while (iter0 != context2kernels_.end()) {
-        auto &name2kernel = iter0->second;
+        auto& name2kernel = iter0->second;
         auto iter1 = name2kernel.begin();
         while (iter1 != name2kernel.end()) {
             cl_kernel kernel = iter1->second;
             error_code = clReleaseKernel(kernel);
             if (error_code != CL_SUCCESS) {
-                LOG(ERROR) << "Call clReleaseKernel() failed with code: "
-                           << error_code;
+                LOG(ERROR) << "Call clReleaseKernel() failed with code: " << error_code;
                 succeeded = false;
             }
             iter1 = name2kernel.erase(iter1);
@@ -176,22 +170,17 @@ bool KernelPool::removeAllKernels() {
 
 static KernelPool kernel_pool;
 
-bool insertKernelToPool(const cl_context &context,
-                        const std::string &project_name,
-                        const std::string &kernel_name,
-                        const cl_kernel &kernel) {
+bool insertKernelToPool(const cl_context& context, const std::string& project_name, const std::string& kernel_name,
+                        const cl_kernel& kernel) {
     return kernel_pool.insertKernel(context, project_name, kernel_name, kernel);
 }
 
-cl_kernel getKernelFromPool(const cl_context &context,
-                            const std::string &project_name,
-                            const std::string &kernel_name) {
+cl_kernel getKernelFromPool(const cl_context& context, const std::string& project_name,
+                            const std::string& kernel_name) {
     return kernel_pool.getKernel(context, project_name, kernel_name);
 }
 
-bool removeKernelFromPool(const cl_context &context,
-                          const std::string &project_name,
-                          const std::string &kernel_name) {
+bool removeKernelFromPool(const cl_context& context, const std::string& project_name, const std::string& kernel_name) {
     return kernel_pool.removeKernel(context, project_name, kernel_name);
 }
 
@@ -199,4 +188,4 @@ bool removeAllKernelsFromPool() {
     return kernel_pool.removeAllKernels();
 }
 
-}}}
+}}} // namespace ppl::common::ocl

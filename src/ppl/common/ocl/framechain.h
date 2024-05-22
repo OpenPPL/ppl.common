@@ -24,8 +24,7 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-#define SET_PROGRAM_SOURCE(frame_chain, source)                                \
-        frame_chain->setSource(source ## _string);
+#define SET_PROGRAM_SOURCE(frame_chain, source) frame_chain->setSource(source##_string);
 
 enum CreatingProgramTypes {
     WITH_SOURCE = 0,
@@ -35,48 +34,86 @@ enum CreatingProgramTypes {
 };
 
 class FrameChain {
-  public:
+public:
     FrameChain(bool profiling);
     FrameChain(const cl_command_queue& queue);
     ~FrameChain();
 
     void setProgram(const cl_program program);
-    void setCreatingProgramType(const CreatingProgramTypes
-                                creating_program_type);
+    void setCreatingProgramType(const CreatingProgramTypes creating_program_type);
     void setSource(const char* source_string);
     void setSpir(const void* spir_string, size_t spir_size);
     void setProjectName(const char* project_name);
     void setFunctionName(const char* function_string);
     void setCompileOptions(const char* options);
-    void setKernelTime(uint64_t kernel_time) { kernel_time_ = kernel_time; }
-
-    cl_platform_id getPlatformId() const { return platform_id_; }
-    cl_device_id getDeviceId() const { return device_id_; }
-    cl_context getContext() const { return context_; }
-    cl_command_queue getQueue() const { return queue_; }
-    cl_program getProgram() const { return program_; }
-    CreatingProgramTypes getCreatingProgramType() const {
-      return creating_program_type_;
+    void setKernelTime(uint64_t kernel_time) {
+        kernel_time_ = kernel_time;
     }
-    char* getCodeString() const { return source_string_; }
-    void* getSpirString() const { return spir_string_; }
-    size_t getSpirSize() const { return spir_size_; }
-    std::string getProjectName() const { return project_name_; }
-    std::string getFunctionName() const { return function_name_; }
-    std::string getCompileOptions() const { return compile_options_; }
-    bool isProfiling() const { return profiling_; }
-    uint64_t getKernelTime() { return kernel_time_; }
+    void setTuningQueueStatus(bool on) {
+        tuning_queue_on_ = on;
+    }
 
-  protected:
+    cl_platform_id getPlatformId() const {
+        return platform_id_;
+    }
+    cl_device_id getDeviceId() const {
+        return device_id_;
+    }
+    cl_context getContext() const {
+        return context_;
+    }
+    cl_command_queue getQueue() const {
+        return queue_;
+    }
+    cl_program getProgram() const {
+        return program_;
+    }
+    CreatingProgramTypes getCreatingProgramType() const {
+        return creating_program_type_;
+    }
+    char* getCodeString() const {
+        return source_string_;
+    }
+    void* getSpirString() const {
+        return spir_string_;
+    }
+    size_t getSpirSize() const {
+        return spir_size_;
+    }
+    std::string getProjectName() const {
+        return project_name_;
+    }
+    std::string getFunctionName() const {
+        return function_name_;
+    }
+    std::string getCompileOptions() const {
+        return compile_options_;
+    }
+    std::string getDeviceDesc() const {
+        return device_desc_;
+    }
+    bool isProfiling() const {
+        return profiling_;
+    }
+    uint64_t getKernelTime() const {
+        return kernel_time_;
+    }
+    bool getTuningQueueStatus() const {
+        return tuning_queue_on_;
+    }
+    cl_command_queue getTuningQueue();
+
+protected:
     bool createDefaultOclFrame(bool profiling);
     bool queryProfiling();
 
-  private:
+private:
     // shared by all functions/program.
     cl_platform_id platform_id_;
     cl_device_id device_id_;
     cl_context context_;
     cl_command_queue queue_;
+    cl_command_queue tuning_queue_;
 
     // unique to each function/program.
     cl_program program_;
@@ -87,14 +124,16 @@ class FrameChain {
     std::string project_name_;
     std::string function_name_;
     std::string compile_options_;
+    std::string device_desc_;
     bool profiling_;
     uint64_t kernel_time_;
+    bool tuning_queue_on_;
 };
 
 void createSharedFrameChain(bool profiling);
 void createSharedFrameChain(const cl_command_queue& queue);
 FrameChain* getSharedFrameChain();
 
-}}}
+}}} // namespace ppl::common::ocl
 
 #endif

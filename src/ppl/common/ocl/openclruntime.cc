@@ -8,8 +8,8 @@
 
 #ifndef _WIN32
 #include <dlfcn.h>
-extern "C" void *android_load_sphal_library(const char* name, int flag);
-extern "C" int android_unload_sphal_library(void *handel);
+extern "C" void* android_load_sphal_library(const char* name, int flag);
+extern "C" int android_unload_sphal_library(void* handel);
 #define PPL_SYS_TYPE void*
 #define PPL_OPENCL_LIB_FUNC dlsym
 #else
@@ -18,9 +18,7 @@ extern "C" int android_unload_sphal_library(void *handel);
 #define PPL_OPENCL_LIB_FUNC GetProcAddress
 #endif
 
-namespace ppl {
-namespace common {
-namespace ocl {
+namespace ppl { namespace common { namespace ocl {
 
 OpenCLAPI* OpenCLAPI::instance() {
     static OpenCLAPI sInstance;
@@ -49,15 +47,14 @@ namespace {
 class libvndksupport {
 public:
     libvndksupport()
-        : libvndksupport_(nullptr)
-        , android_load_sphal_library_(nullptr)
-        , android_unload_sphal_library_(nullptr)
-    {
+        : libvndksupport_(nullptr), android_load_sphal_library_(nullptr), android_unload_sphal_library_(nullptr) {
 #if defined(__ANDROID__) || defined(ANDROID)
         if (void* lib = dlopen("libvndksupport.so", RTLD_NOW | RTLD_LOCAL)) {
             this->libvndksupport_ = lib;
-            this->android_load_sphal_library_ = (decltype(this->android_load_sphal_library_))dlsym(lib, "android_load_sphal_library");
-            this->android_unload_sphal_library_ = (decltype(this->android_unload_sphal_library_))dlsym(lib, "android_unload_sphal_library");
+            this->android_load_sphal_library_ =
+                (decltype(this->android_load_sphal_library_))dlsym(lib, "android_load_sphal_library");
+            this->android_unload_sphal_library_ =
+                (decltype(this->android_unload_sphal_library_))dlsym(lib, "android_unload_sphal_library");
         }
 #endif // android has libvnksupport.so
         if (!this->android_load_sphal_library_ || !this->android_unload_sphal_library_) {
@@ -74,11 +71,12 @@ public:
     ~libvndksupport() {
         if (this->libvndksupport_) {
             int rc = dlclose(this->libvndksupport_);
-            if(rc != 0)
+            if (rc != 0)
                 LOG(ERROR) << "libvndksupport: " << dlerror();
         }
     }
     static libvndksupport* instance();
+
 private:
     void* libvndksupport_;
     decltype(&android_load_sphal_library) android_load_sphal_library_;
@@ -113,11 +111,10 @@ static void* try_libOpenCLPixel() {
 }
 #endif
 
-OpenCLAPI::OpenCLAPI(const char* libFileName)
-{
+OpenCLAPI::OpenCLAPI(const char* libFileName) {
     //! make sure that the kernel pool is constructed before the OpenCLAPI
     memset(this, 0, sizeof(*this));
-    #ifndef _WIN32
+#ifndef _WIN32
     void* lib = try_libOpenCLPixel();
     if (lib) {
         this->libOpenCL_ = lib;
@@ -125,8 +122,7 @@ OpenCLAPI::OpenCLAPI(const char* libFileName)
     }
     kAlternativeCLLibs[0] = libFileName;
     kAlternativeCLLibs[1] = getenv("PPL3CORE_OPENCL_LIBRARY");
-    for(size_t i = 0; i < sizeof(kAlternativeCLLibs) / sizeof(char*); ++i)
-    {
+    for (size_t i = 0; i < sizeof(kAlternativeCLLibs) / sizeof(char*); ++i) {
         const char* altLib = kAlternativeCLLibs[i];
         if (altLib == nullptr) {
             continue;
@@ -136,29 +132,29 @@ OpenCLAPI::OpenCLAPI(const char* libFileName)
             this->isVndkSupportUsed_ = true;
             LOG(DEBUG) << "load " << altLib << " by vndksupport ok: " << lib;
             goto LABEL_LOAD_CL_SYMBOLS;
-        }
-        else {
+        } else {
             LOG(INFO) << "load " << altLib << " failed: " << dlerror();
         }
     }
-    LOG(ERROR) << "There is no available OpenCL library! You may set environment variable \"PPL3CORE_OPENCL_LIBRARY\".";\
-    
-    #else
+    LOG(ERROR) << "There is no available OpenCL library! You may set environment variable \"PPL3CORE_OPENCL_LIBRARY\".";
+
+#else
     const char* envPath = getenv("PPL3CORE_OPENCL_LIBRARY");
     const char* defaultPath = (envPath ? envPath : "OpenCL.dll");
-    if(void* lib = LoadLibrary(defaultPath)){
+    if (void* lib = LoadLibrary(defaultPath)) {
         this->libOpenCL_ = lib;
         goto LABEL_LOAD_CL_SYMBOLS;
     }
     LOG(ERROR) << "There is no available OpenCL library! You may set environment variable \"PPL3CORE_OPENCL_LIBRARY\".";
-    #endif
+#endif
     return;
 LABEL_LOAD_CL_SYMBOLS:
-#define LOAD_CL_SYMBOL(NAME) \
-    do { \
-        this->NAME##_ = (decltype(this->NAME##_))PPL_OPENCL_LIB_FUNC((PPL_SYS_TYPE)(this->libOpenCL_), "cl"#NAME);\
-        if(NULL == this->NAME##_) LOG(ERROR) << #NAME << "is null";\
-    } while(0)
+#define LOAD_CL_SYMBOL(NAME)                                                                                        \
+    do {                                                                                                            \
+        this->NAME##_ = (decltype(this->NAME##_))PPL_OPENCL_LIB_FUNC((PPL_SYS_TYPE)(this->libOpenCL_), "cl" #NAME); \
+        if (NULL == this->NAME##_)                                                                                  \
+            LOG(ERROR) << #NAME << "is null";                                                                       \
+    } while (0)
     LOAD_CL_SYMBOL(BuildProgram);
     LOAD_CL_SYMBOL(CreateBuffer);
     LOAD_CL_SYMBOL(CreateCommandQueue);
@@ -167,7 +163,7 @@ LABEL_LOAD_CL_SYMBOLS:
     LOAD_CL_SYMBOL(CreateImage2D);
     LOAD_CL_SYMBOL(CreateImage3D);
     LOAD_CL_SYMBOL(CreateKernel);
-    //LOAD_CL_SYMBOL(CloneKernel);
+    // LOAD_CL_SYMBOL(CloneKernel);
     LOAD_CL_SYMBOL(CreateKernelsInProgram);
     LOAD_CL_SYMBOL(CreateProgramWithBinary);
     LOAD_CL_SYMBOL(CreateProgramWithSource);
@@ -247,37 +243,32 @@ LABEL_LOAD_CL_SYMBOLS:
 #undef LOAD_CL_SYMBOL
 }
 
-OpenCLAPI::~OpenCLAPI()
-{
+OpenCLAPI::~OpenCLAPI() {
     if (this->libOpenCL_) {
         if (this->isVndkSupportUsed_) {
-            #ifndef _WIN32
+#ifndef _WIN32
             int rc = libvndksupport::instance()->unload(this->libOpenCL_);
-            if(rc != 0)
+            if (rc != 0)
                 LOG(ERROR) << "unload: " << dlerror();
-            #endif
-        }
-        else {
-            #ifndef _WIN32
+#endif
+        } else {
+#ifndef _WIN32
             int rc = dlclose(this->libOpenCL_);
-            if(rc != 0)
+            if (rc != 0)
                 LOG(ERROR) << "unload: " << dlerror();
-            #else
+#else
             FreeLibrary((HMODULE)(this->libOpenCL_));
             this->libOpenCL_ = NULL;
-            #endif
+#endif
         }
     }
 }
 
-cl_int OpenCLAPI::ReleaseContextInternel_(cl_context ctx)
-{
-   // cl_int rc = ppl::core::ocl::ReleaseAllKernelOfPool(ctx);
-   // rc |= this->ReleaseContext_(ctx);
-    //return rc;
+cl_int OpenCLAPI::ReleaseContextInternel_(cl_context ctx) {
+    // cl_int rc = ppl::core::ocl::ReleaseAllKernelOfPool(ctx);
+    // rc |= this->ReleaseContext_(ctx);
+    // return rc;
     return 0;
 }
 
-} //! namespace ocl
-} //! namespace core
-} //! namespace ppl
+}}} // namespace ppl::common::ocl

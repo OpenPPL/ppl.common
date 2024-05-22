@@ -27,11 +27,11 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-#define CHECK_ERROR(error_code, function)                                      \
-if (error_code != CL_SUCCESS) {                                                \
-  LOG(ERROR) << "Call " << #function << " failed with code: " << error_code;   \
-}
+#define CHECK_ERROR(error_code, function)                                          \
+    if (error_code != CL_SUCCESS) {                                                \
+        LOG(ERROR) << "Call " << #function << " failed with code: " << error_code; \
+    }
 
-}}}
+}}} // namespace ppl::common::ocl
 
 #endif

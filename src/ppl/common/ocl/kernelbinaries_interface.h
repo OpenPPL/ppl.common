@@ -27,12 +27,10 @@ namespace ppl { namespace common { namespace ocl {
 bool detectKernelBinariesFile();
 bool initializeKernelBinariesManager(BinariesManagerStatus status);
 bool buildKernelBinaries();
-bool retrieveKernelBinaries(const std::string &project_name,
-                            const std::string &kernel_name,
-                            size_t* binaries_length,
+bool retrieveKernelBinaries(const std::string& project_name, const std::string& kernel_name, size_t* binaries_length,
                             unsigned char** binaries_data);
 void shutDownKernelBinariesManager(BinariesManagerStatus status);
 
-}}}
+}}} // namespace ppl::common::ocl
 
 #endif
