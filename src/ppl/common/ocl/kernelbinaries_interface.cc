@@ -41,13 +41,14 @@ bool initializeKernelBinariesManager(BinariesManagerStatus status) {
         bool succeeded = binaries_manager.prepareManager(BINARIES_COMPILE);
 
         return succeeded;
-    }
-    else if (status == BINARIES_RETRIEVE) {
+    } else if (status == BINARIES_RETRIEVE) {
         bool status0 = detectKernelBinariesFile();
-        if (!status0) return false;
+        if (!status0)
+            return false;
 
         bool status1 = binaries_manager.prepareManager(BINARIES_RETRIEVE);
-        if (!status1) return false;
+        if (!status1)
+            return false;
 
         status1 = binaries_manager.loadBinariesInfo();
         if (!status1) {
@@ -56,8 +57,7 @@ bool initializeKernelBinariesManager(BinariesManagerStatus status) {
         }
 
         return true;
-    }
-    else {
+    } else {
         return false;
     }
 }
@@ -78,17 +78,14 @@ bool buildKernelBinaries() {
     return status;
 }
 
-bool retrieveKernelBinaries(const std::string &project_name,
-                            const std::string &kernel_name,
-                            size_t* binaries_length,
+bool retrieveKernelBinaries(const std::string& project_name, const std::string& kernel_name, size_t* binaries_length,
                             unsigned char** binaries_data) {
     bool status = binaries_manager.isWorking();
     if (!status) {
         return false;
     }
 
-    bool succeeded = binaries_manager.retrieveKernel(project_name, kernel_name,
-                        binaries_length, binaries_data);
+    bool succeeded = binaries_manager.retrieveKernel(project_name, kernel_name, binaries_length, binaries_data);
     return succeeded;
 }
 
@@ -103,8 +100,8 @@ void shutDownKernelBinariesManager(BinariesManagerStatus status) {
     binaries_manager.setStatus(false);
 
     if (!succeeded) {
-      LOG(ERROR) << "Failed to shut down kernel binaries manager.";
+        LOG(ERROR) << "Failed to shut down kernel binaries manager.";
     }
 }
 
-}}}
+}}} // namespace ppl::common::ocl

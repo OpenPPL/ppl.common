@@ -28,41 +28,28 @@
 namespace ppl { namespace common { namespace ocl {
 
 class KernelPool {
-  public:
+public:
     KernelPool();
     ~KernelPool();
 
-    bool insertKernel(const cl_context &context,
-                      const std::string &project_name,
-                      const std::string &kernel_name,
-                      const cl_kernel &kernel);
-    cl_kernel getKernel(const cl_context &context,
-                        const std::string &project_name,
-                        const std::string &kernel_name);
-    bool removeKernel(const cl_context &context,
-                      const std::string &project_name,
-                      const std::string &kernel_name);
+    bool insertKernel(const cl_context& context, const std::string& project_name, const std::string& kernel_name,
+                      const cl_kernel& kernel);
+    cl_kernel getKernel(const cl_context& context, const std::string& project_name, const std::string& kernel_name);
+    bool removeKernel(const cl_context& context, const std::string& project_name, const std::string& kernel_name);
     bool removeAllKernels();
 
-  private:
+private:
     std::mutex locker_;
-    std::map<std::pair<cl_context, std::string>,
-             std::map<std::string, cl_kernel>> context2kernels_;
+    std::map<std::pair<cl_context, std::string>, std::map<std::string, cl_kernel>> context2kernels_;
 };
 
-bool insertKernelToPool(const cl_context &context,
-                        const std::string &project_name,
-                        const std::string &kernel_name,
-                        const cl_kernel &kernel);
-cl_kernel getKernelFromPool(const cl_context &context,
-                            const std::string &project_name,
-                            const std::string &kernel_name);
-bool removeKernelFromPool(const cl_context &context,
-                          const std::string &project_name,
-                          const std::string &kernel_name);
+bool insertKernelToPool(const cl_context& context, const std::string& project_name, const std::string& kernel_name,
+                        const cl_kernel& kernel);
+cl_kernel getKernelFromPool(const cl_context& context, const std::string& project_name, const std::string& kernel_name);
+bool removeKernelFromPool(const cl_context& context, const std::string& project_name, const std::string& kernel_name);
 
 bool removeAllKernelsFromPool();
 
-}}}
+}}} // namespace ppl::common::ocl
 
 #endif

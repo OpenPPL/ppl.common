@@ -3,12 +3,11 @@
 #include "CL/cl.h"
 #include "CL/cl_ext.h"
 
-namespace ppl {
-namespace common {
-namespace ocl {
+namespace ppl { namespace common { namespace ocl {
 
 class OpenCLAPI {
-    void *libOpenCL_;
+    void* libOpenCL_;
+
 public:
     explicit OpenCLAPI(const char* libFileName = nullptr);
     ~OpenCLAPI();
@@ -18,7 +17,7 @@ public:
 
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-#define DECLARE_CL_SYMBOL_PTR(NAME) decltype(cl##NAME) *NAME##_
+#define DECLARE_CL_SYMBOL_PTR(NAME) decltype(cl##NAME)* NAME##_
     DECLARE_CL_SYMBOL_PTR(BuildProgram);
     DECLARE_CL_SYMBOL_PTR(CreateBuffer);
     DECLARE_CL_SYMBOL_PTR(CreateCommandQueue);
@@ -107,7 +106,7 @@ public:
     DECLARE_CL_SYMBOL_PTR(SetKernelArgSVMPointer);
 #pragma GCC diagnostic pop
 #undef DECLARE_CL_SYMBOL_PTR
- 
+
 private:
     bool isVndkSupportUsed_ = false;
 };
@@ -202,8 +201,6 @@ private:
 
 #define opencl_api ::ppl::common::ocl::OpenCLAPI::instance()
 
-} // namespace ocl
-} // namespace common
-} // namespace ppl
+}}} // namespace ppl::common::ocl
 
 #endif // __ST_HPC_PPL3_CORE_OCL_OPENCLAPI_H_

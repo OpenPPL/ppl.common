@@ -6,9 +6,8 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-cl_mem OpenCLMemeoryAlloc(cl_context ctx, uint64_t size, cl_int *err, cl_mem_flags flags = CL_MEM_READ_WRITE);
+cl_mem OpenCLMemeoryAlloc(cl_context ctx, uint64_t size, cl_int* err, cl_mem_flags flags = CL_MEM_READ_WRITE);
 
-
-}}}
+}}} // namespace ppl::common::ocl
 
 #endif

@@ -21,10 +21,10 @@
 namespace ppl { namespace common { namespace ocl {
 
 enum BinariesManagerStatus {
-    BINARIES_COMPILE  = 0,
+    BINARIES_COMPILE = 0,
     BINARIES_RETRIEVE = 1,
 };
 
-}}}
+}}} // namespace ppl::common::ocl
 
 #endif

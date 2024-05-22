@@ -34,29 +34,31 @@ namespace ppl { namespace common { namespace ocl {
 #define BINARIES_FILE "kernel_binaries.db"
 
 struct KernelBinaryInfo {
-  uint address_offset;
-	uint binaries_size;
+    uint address_offset;
+    uint binaries_size;
 };
 
 struct Kernel2FunctionItem {
-  char kernel_name[KERNEL_LENGTH];
-  char project_name[PROJECT_LENGTH];
-  char function_name[FUNCTION_LENGTH];
+    char kernel_name[KERNEL_LENGTH];
+    char project_name[PROJECT_LENGTH];
+    char function_name[FUNCTION_LENGTH];
 };
 
 struct Function2BinariesItem {
-  char project_name[PROJECT_LENGTH];
-  char function_name[FUNCTION_LENGTH];
-  uint address_offset;
-	uint binaries_size;
+    char project_name[PROJECT_LENGTH];
+    char function_name[FUNCTION_LENGTH];
+    uint address_offset;
+    uint binaries_size;
 };
 
 class KernelBinariesManager {
-  public:
+public:
     KernelBinariesManager();
     ~KernelBinariesManager();
 
-    bool isWorking() const { return is_working_; }
+    bool isWorking() const {
+        return is_working_;
+    }
     void setStatus(bool is_working);
     bool prepareManager(BinariesManagerStatus status);
     bool buildFunctionFromSource(FrameChain* frame_chain);
@@ -64,12 +66,11 @@ class KernelBinariesManager {
     bool storeMapstoFile();
 
     bool loadBinariesInfo();
-    bool retrieveKernel(const std::string &project_name,
-                        const std::string &kernel_name, size_t* binaries_length,
+    bool retrieveKernel(const std::string& project_name, const std::string& kernel_name, size_t* binaries_length,
                         unsigned char** binaries_data);
     void releaseResource();
 
-  private:
+private:
     FILE* fp_;
     uint kernel_offset_;
     uint kernel_count_;
@@ -80,10 +81,9 @@ class KernelBinariesManager {
     // (kernel name, (project name, function name))
     std::map<std::string, std::pair<std::string, std::string>> kernel2function_;
     // (project name, (function name, kernel binaries info))
-    std::map<std::string,
-             std::map<std::string, KernelBinaryInfo>> function2binariesinfo_;
+    std::map<std::string, std::map<std::string, KernelBinaryInfo>> function2binariesinfo_;
 };
 
-}}}
+}}} // namespace ppl::common::ocl
 
 #endif
