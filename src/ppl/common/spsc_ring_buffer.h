@@ -75,8 +75,17 @@ private:
     }
 
 private:
-    std::atomic<size_t> tail_;
-    std::atomic<size_t> head_;
+    // l1 cache line size for most CPUs
+    static constexpr int CACHELINE_SIZE = 64;
+
+    union {
+        std::atomic<size_t> tail_;
+        char padding1[CACHELINE_SIZE];
+    };
+    union {
+        std::atomic<size_t> head_;
+        char padding2[CACHELINE_SIZE];
+    };
     std::vector<T> vec_;
 };
 
