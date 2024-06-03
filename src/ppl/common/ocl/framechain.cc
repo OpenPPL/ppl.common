@@ -102,8 +102,10 @@ FrameChain::FrameChain(bool profiling)
     , queue_(nullptr)
     , program_(nullptr)
     , creating_program_type_(WITH_SOURCE)
+    , source_file_name_(nullptr)
     , source_string_(nullptr)
     , profiling_(false)
+    , save_program_binary_(false)
     , tuning_queue_on_(false)
     , tuning_queue_(nullptr) {
     createDefaultOclFrame(profiling);
@@ -115,8 +117,10 @@ FrameChain::FrameChain(const cl_command_queue& queue)
     , context_(nullptr)
     , program_(nullptr)
     , creating_program_type_(WITH_SOURCE)
+    , source_file_name_(nullptr)
     , source_string_(nullptr)
     , profiling_(false)
+    , save_program_binary_(false)
     , tuning_queue_on_(false)
     , tuning_queue_(nullptr) {
     if (queue == nullptr) {
@@ -171,6 +175,18 @@ void FrameChain::setProgram(const cl_program program) {
 
 void FrameChain::setCreatingProgramType(const CreatingProgramTypes creating_program_type) {
     creating_program_type_ = creating_program_type;
+}
+
+void FrameChain::setSourceFileName(const char* source_file_name) {
+    if (source_file_name == nullptr) {
+        LOG(ERROR) << "Invalid address of the source file name.";
+    }
+
+    source_file_name_ = (char*)source_file_name;
+}
+
+void FrameChain::setSaveProgramBinaryFlag(bool save_program_binary) {
+    save_program_binary_ = save_program_binary;
 }
 
 void FrameChain::setSource(const char* source_string) {

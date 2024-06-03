@@ -24,7 +24,10 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-#define SET_PROGRAM_SOURCE(frame_chain, source) frame_chain->setSource(source##_string);
+#define SET_PROGRAM_SOURCE(frame_chain, source) { \
+    frame_chain->setSourceFileName(#source); \
+    frame_chain->setSource(source##_string); \
+}
 
 enum CreatingProgramTypes {
     WITH_SOURCE = 0,
@@ -41,6 +44,8 @@ public:
 
     void setProgram(const cl_program program);
     void setCreatingProgramType(const CreatingProgramTypes creating_program_type);
+    void setSaveProgramBinaryFlag(bool save_program_binary);
+    void setSourceFileName(const char* source_file_name);
     void setSource(const char* source_string);
     void setSpir(const void* spir_string, size_t spir_size);
     void setProjectName(const char* project_name);
@@ -71,6 +76,9 @@ public:
     CreatingProgramTypes getCreatingProgramType() const {
         return creating_program_type_;
     }
+    char* getSourceFileName() const {
+        return source_file_name_;
+    }
     char* getCodeString() const {
         return source_string_;
     }
@@ -95,6 +103,9 @@ public:
     bool isProfiling() const {
         return profiling_;
     }
+    bool getSaveProgramBinaryFlag() const {
+        return save_program_binary_;
+    }
     uint64_t getKernelTime() const {
         return kernel_time_;
     }
@@ -118,6 +129,7 @@ private:
     // unique to each function/program.
     cl_program program_;
     CreatingProgramTypes creating_program_type_;
+    char* source_file_name_;
     char* source_string_;
     void* spir_string_;
     size_t spir_size_;
@@ -126,6 +138,7 @@ private:
     std::string compile_options_;
     std::string device_desc_;
     bool profiling_;
+    bool save_program_binary_;
     uint64_t kernel_time_;
     bool tuning_queue_on_;
 };
