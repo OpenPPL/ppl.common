@@ -18,6 +18,7 @@
 #include "runkernel.h"
 #include "device.h"
 #include "kernelbinaries_interface.h"
+#include "binary.h"
 
 #include <string.h>
 #include <string>
@@ -97,57 +98,102 @@ bool buildProgram(const cl_program& program, const cl_device_id& device_id, cons
     return true;
 }
 
+bool saveProgramBinary(const cl_program& program, const char* project_name, const char* source_name, const char* options) {
+    size_t size = 0;
+    int rc = clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t), &size, nullptr);
+    const size_t chunk_size = size + sizeof(Chunk);
+    uint8_t* data = (uint8_t*)malloc(chunk_size);
+    memset(data, 0, chunk_size);
+
+    Chunk* chunk = (Chunk*)data;
+    strcpy(chunk->name0, source_name);
+    strcpy(chunk->name1, options);
+    chunk->size = size;
+
+    unsigned char* bin = (unsigned char*)data + sizeof(Chunk);
+    rc = clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(unsigned char*), (void**)&bin, nullptr);
+    if(CL_SUCCESS != rc) {
+        LOG(ERROR) << "Call clGetProgramInfo failed with code: " << rc;
+        return false;
+    }
+    InsertBinaryChunk(project_name, data, chunk_size);
+    free(data);
+
+    return true;
+}
+
 bool compileOclKernels(FrameChain* frame_chain, const std::string& kernel_name) {
     cl_context context = frame_chain->getContext();
-    const char* source_str = frame_chain->getCodeString();
-    const size_t kernel_length = strlen(source_str);
 
     cl_int error_code;
     cl_program program;
     CreatingProgramTypes creating_program_type = frame_chain->getCreatingProgramType();
+    bool save_program_binary_flag = frame_chain->getSaveProgramBinaryFlag();
     cl_device_id device_id = frame_chain->getDeviceId();
     std::string build_options = frame_chain->getCompileOptions();
+    std::string project_name = frame_chain->getProjectName();
+    const char* source_file_name = frame_chain->getSourceFileName();
 
     if (creating_program_type == WITH_BINARIES) {
-        std::string project_name = frame_chain->getProjectName();
-        size_t binaries_length;
-        unsigned char** binaries_data = new unsigned char*[1];
-        bool status = retrieveKernelBinaries(project_name, kernel_name, &binaries_length, binaries_data);
-        if (status) {
-            cl_int bianry_status;
+        //size_t binaries_length;
+        //unsigned char** binaries_data = new unsigned char*[1];
+        //bool status = retrieveKernelBinaries(project_name, kernel_name, &binaries_length, binaries_data);
+        //if (status) {
+        const uint8_t* binaries_data = nullptr;
+        size_t binaries_length = 0;
+        LockKernelBinaryDB();
+        int result = FindKernelBinary(project_name.c_str(), source_file_name, build_options.c_str(),
+                &binaries_data, &binaries_length);
+        UnlockKernelBinaryDB();
+        if (0 == result) {
+            cl_int binary_status;
             cl_device_id gpu_device = frame_chain->getDeviceId();
             program = clCreateProgramWithBinary(context, 1, &gpu_device, &binaries_length,
-                                                (const unsigned char**)binaries_data, &bianry_status, &error_code);
-            if (bianry_status == CL_SUCCESS && error_code == CL_SUCCESS) {
-                delete[](binaries_data[0]);
-                delete[] binaries_data;
-                frame_chain->setProgram(program);
+                    (const unsigned char**)&binaries_data, &binary_status, &error_code);
+            if (binary_status != CL_SUCCESS || error_code != CL_SUCCESS) {
+                LOG(ERROR) << "Call clCreateProgramWithBinary() failed.";
+                return false;
+            }
 
-                bool succeeded = buildProgram(program, device_id, build_options);
-                if (!succeeded) {
-                    delete[] binaries_data;
-                    return false;
-                }
+            bool succeeded = buildProgram(program, device_id, build_options);
+            if (!succeeded) {
+                LOG(ERROR) << "Call buildProgram() failed.";
+                return false;
+            }
+            frame_chain->setProgram(program);
+            return true;
+        } else {
+            LOG(ERROR) << "Call FindKernelBinary() failed.";
+            return false;
+        }
+    } else if (creating_program_type == WITH_SOURCE) {
+        const char* source_str = frame_chain->getCodeString();
+        const size_t kernel_length = strlen(source_str);
+        program = clCreateProgramWithSource(context, 1, &source_str, &kernel_length, &error_code);
+        if (error_code != CL_SUCCESS) {
+            LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: " << error_code;
+            return false;
+        }
 
-                return true;
+        frame_chain->setProgram(program);
+
+        bool succeeded = buildProgram(program, device_id, build_options);
+        if (!succeeded) {
+            return false;
+        }
+
+        if (save_program_binary_flag) {
+            bool succeeded = saveProgramBinary(program, project_name.c_str(), source_file_name, build_options.c_str());
+            if (!succeeded) {
+                return false;
             }
         }
 
-        delete[] binaries_data;
-    }
-
-    program = clCreateProgramWithSource(context, 1, &source_str, &kernel_length, &error_code);
-    if (error_code != CL_SUCCESS) {
-        LOG(ERROR) << "Call clCreateProgramWithSource() failed with code: " << error_code;
+        return true;
+    } else {
+        LOG(ERROR) << "CreateKernel falied, because flag is an invalid value.";
         return false;
     }
-    frame_chain->setProgram(program);
-
-    bool succeeded = buildProgram(program, device_id, build_options);
-    if (!succeeded) {
-        return false;
-    }
-
     return true;
 }
 
