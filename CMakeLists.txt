@@ -10,6 +10,7 @@ option(PPLCOMMON_BUILD_BENCHMARK "build benchmark" ON)
 option(PPLCOMMON_INSTALL "install ppl.common headers and libs" ON)
 option(PPLCOMMON_ENABLE_PYTHON_API "enable python api support" OFF)
 option(PPLCOMMON_HOLD_DEPS "don't update dependencies" OFF)
+option(PPLCOMMON_STDIO_LOG_COLOR "" ON)
 
 option(PPLCOMMON_USE_X86_64 "" OFF)
 option(PPLCOMMON_USE_AARCH64 "" OFF)
@@ -64,6 +65,10 @@ endif()
 
 if(PPLCOMMON_USE_CUDA)
     include(cmake/cuda.cmake)
+endif()
+
+if(PPLCOMMON_STDIO_LOG_COLOR)
+    list(APPEND PPLCOMMON_DEFINITIONS PPLCOMMON_STDIO_LOG_COLOR)
 endif()
 
 list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_unittest\\.cc$")

@@ -257,7 +257,7 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
     int fd = open(filename, flags);
     if (fd < 0) {
         LOG(ERROR) << "open file [" << filename << "] faled: " << strerror(errno);
-        goto errout1;
+        return RC_OTHER_ERROR;
     }
 
     {
@@ -302,11 +302,10 @@ RetCode Mmap::Init(const char* filename, uint32_t permission, uint64_t offset, u
         return RC_SUCCESS;
     }
 
-errout2:
-    close(fd);
-errout1:
     LOG(ERROR) << "mmap from [" << mapping_start_offset << "] with size [" << mapping_length << "] failed: "
                << strerror(errno);
+errout2:
+    close(fd);
     return RC_INVALID_VALUE;
 }
 #endif

@@ -113,9 +113,13 @@ public:
     void Write(uint32_t level, const char* prefix, uint64_t prefix_len, const char* content,
                uint64_t content_len) override {
         auto fp = ((level <= LOG_LEVEL_INFO) ? stdout : stderr);
+#ifdef PPLCOMMON_STDIO_LOG_COLOR
         fwrite(g_color_begin_str[level], 1, g_color_begin_str_len, fp);
+#endif
         fwrite(prefix, 1, prefix_len, fp);
+#ifdef PPLCOMMON_STDIO_LOG_COLOR
         fwrite(g_color_end_str, 1, g_color_end_str_len, fp);
+#endif
         fwrite(content, 1, content_len, fp);
         fwrite("\n", 1, 1, fp);
         fflush(fp);
