@@ -100,14 +100,16 @@ FrameChain::FrameChain(bool profiling)
     , device_id_(nullptr)
     , context_(nullptr)
     , queue_(nullptr)
+    , tuning_queue_(nullptr)
+    , device_desc_("")
+    , vendor_desc_("")
     , program_(nullptr)
     , creating_program_type_(WITH_SOURCE)
     , source_file_name_(nullptr)
     , source_string_(nullptr)
     , profiling_(false)
     , save_program_binary_(false)
-    , tuning_queue_on_(false)
-    , tuning_queue_(nullptr) {
+    , tuning_queue_on_(false) {
     createDefaultOclFrame(profiling);
 }
 
@@ -115,14 +117,16 @@ FrameChain::FrameChain(const cl_command_queue& queue)
     : platform_id_(nullptr)
     , device_id_(nullptr)
     , context_(nullptr)
+    , tuning_queue_(nullptr)
+    , device_desc_("")
+    , vendor_desc_("")
     , program_(nullptr)
     , creating_program_type_(WITH_SOURCE)
     , source_file_name_(nullptr)
     , source_string_(nullptr)
     , profiling_(false)
     , save_program_binary_(false)
-    , tuning_queue_on_(false)
-    , tuning_queue_(nullptr) {
+    , tuning_queue_on_(false) {
     if (queue == nullptr) {
         LOG(ERROR) << "Invalid command queue.";
         return;
@@ -151,6 +155,10 @@ FrameChain::FrameChain(const cl_command_queue& queue)
     }
 
     device_desc_ = GetDeviceDesc(device_id_);
+    
+    std::vector<uint8_t> vendor = GetDeviceInfo(device_id_, CL_DEVICE_VENDOR);
+    std::string dev_vendor((char*)vendor.data());
+    vendor_desc_ = dev_vendor;
 }
 
 FrameChain::~FrameChain() {
@@ -228,6 +236,12 @@ void FrameChain::setFunctionName(const char* function_name) {
 
 void FrameChain::setCompileOptions(const char* options) {
     compile_options_ = options;
+    if (vendor_desc_ == "QUALCOMM")
+        compile_options_ += " -DVENDOR_QUALCOMM";
+    else if (vendor_desc_ == "ARM")
+        compile_options_ += " -DVENDOR_ARM";
+    else 
+        compile_options_ += " -DVENDOR_UNKNOW";
 }
 
 bool FrameChain::createDefaultOclFrame(bool profiling) {
@@ -249,6 +263,10 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
     }
 
     device_desc_ = GetDeviceDesc(device_id_);
+
+    std::vector<uint8_t> vendor = GetDeviceInfo(device_id_, CL_DEVICE_VENDOR);
+    std::string dev_vendor((char*)vendor.data());
+    vendor_desc_ = dev_vendor;
 
     profiling_ = profiling;
 #if CL_TARGET_OPENCL_VERSION < 200

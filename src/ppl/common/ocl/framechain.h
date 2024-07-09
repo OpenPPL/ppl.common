@@ -100,6 +100,9 @@ public:
     std::string getDeviceDesc() const {
         return device_desc_;
     }
+    std::string getVendorDesc() const {
+        return vendor_desc_;
+    }
     bool isProfiling() const {
         return profiling_;
     }
@@ -125,6 +128,8 @@ private:
     cl_context context_;
     cl_command_queue queue_;
     cl_command_queue tuning_queue_;
+    std::string device_desc_;
+    std::string vendor_desc_;
 
     // unique to each function/program.
     cl_program program_;
@@ -136,7 +141,6 @@ private:
     std::string project_name_;
     std::string function_name_;
     std::string compile_options_;
-    std::string device_desc_;
     bool profiling_;
     bool save_program_binary_;
     uint64_t kernel_time_;
