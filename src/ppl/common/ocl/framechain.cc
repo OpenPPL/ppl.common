@@ -244,6 +244,10 @@ void FrameChain::setCompileOptions(const char* options) {
         compile_options_ += " -DVENDOR_UNKNOW";
 }
 
+void arm_printf_callback(const char* buffer, size_t length, size_t final, void* user_data) {
+    fwrite(buffer, 1, length, stdout);
+}
+
 bool FrameChain::createDefaultOclFrame(bool profiling) {
     cl_int error_code;
     createSharedDevice();
@@ -251,22 +255,33 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
     platform_id_ = device->getPlatformId();
     device_id_ = device->getDeviceId();
 
+    device_desc_ = GetDeviceDesc(device_id_);
+    std::vector<uint8_t> vendor = GetDeviceInfo(device_id_, CL_DEVICE_VENDOR);
+    std::string dev_vendor((char*)vendor.data());
+    vendor_desc_ = dev_vendor;
+
     std::vector<cl_context_properties> context_properties;
-    context_properties.resize(3);
-    context_properties[0] = CL_CONTEXT_PLATFORM;
-    context_properties[1] = (cl_context_properties)device->getPlatformId();
-    context_properties[2] = 0;
+    if (vendor_desc_ == "ARM") {
+        //Initializing the printf functionality for ARM GPU
+        context_properties.resize(7);
+        context_properties[0] = CL_CONTEXT_PLATFORM;
+        context_properties[1] = (cl_context_properties)device->getPlatformId();
+        context_properties[2] = CL_PRINTF_CALLBACK_ARM;
+        context_properties[3] = (cl_context_properties)arm_printf_callback;
+        context_properties[4] = CL_PRINTF_BUFFERSIZE_ARM;
+        context_properties[5] = 0X1000;
+        context_properties[6] = 0;
+    } else{
+        context_properties.resize(3);
+        context_properties[0] = CL_CONTEXT_PLATFORM;
+        context_properties[1] = (cl_context_properties)device->getPlatformId();
+        context_properties[2] = 0;
+    }
     context_ = clCreateContext(context_properties.data(), 1, &device_id_, nullptr, nullptr, &error_code);
     if (error_code != CL_SUCCESS) {
         LOG(ERROR) << "Call clCreateContext failed with code: " << error_code;
         return false;
     }
-
-    device_desc_ = GetDeviceDesc(device_id_);
-
-    std::vector<uint8_t> vendor = GetDeviceInfo(device_id_, CL_DEVICE_VENDOR);
-    std::string dev_vendor((char*)vendor.data());
-    vendor_desc_ = dev_vendor;
 
     profiling_ = profiling;
 #if CL_TARGET_OPENCL_VERSION < 200
