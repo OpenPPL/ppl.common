@@ -95,6 +95,9 @@ public:
     size_t getMaxImageDepth() {
         return this->image3d_max_depth_;
     }
+    size_t getMaxMemAllocSize() {
+        return this->max_mem_alloc_size_;
+    }
 
 private:
     bool queryPlatformInfo(const cl_platform_id& platform_id, cl_platform_info param_name, std::string& param_value);
