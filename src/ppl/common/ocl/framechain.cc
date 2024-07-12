@@ -106,6 +106,7 @@ FrameChain::FrameChain(bool profiling)
     , source_string_(nullptr)
     , profiling_(false)
     , save_program_binary_(false)
+    , opt_level_(0)
     , tuning_queue_on_(false)
     , tuning_queue_(nullptr) {
     createDefaultOclFrame(profiling);
@@ -121,6 +122,7 @@ FrameChain::FrameChain(const cl_command_queue& queue)
     , source_string_(nullptr)
     , profiling_(false)
     , save_program_binary_(false)
+    , opt_level_(0)
     , tuning_queue_on_(false)
     , tuning_queue_(nullptr) {
     if (queue == nullptr) {
@@ -187,6 +189,10 @@ void FrameChain::setSourceFileName(const char* source_file_name) {
 
 void FrameChain::setSaveProgramBinaryFlag(bool save_program_binary) {
     save_program_binary_ = save_program_binary;
+}
+
+void FrameChain::setOptLevel(uint32_t opt_level) {
+    opt_level_ = opt_level;
 }
 
 void FrameChain::setSource(const char* source_string) {
