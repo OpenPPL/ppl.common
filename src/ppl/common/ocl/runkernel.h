@@ -67,6 +67,17 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr, cl_uint
     std::string project_name = frame_chain->getProjectName();
     std::string kernel_name = kernel_name_cstr;
 
+#if 0
+    // common used print tool when cross platform
+    fprintf(stderr, "runOclKernel, kernel_name: %s\n", kernel_name_cstr);
+    fprintf(stderr, "work_dims: %d, global_work_size: %d %d %d, local_work_size: %d %d %d\n",
+            work_dims,
+            global_work_size[0], (work_dims > 1) ? global_work_size[1] : 1, (work_dims > 2) ? global_work_size[2] : 1,
+            local_work_size ? local_work_size[0] : 1,
+            (local_work_size && (work_dims > 1)) ? local_work_size[1] : 1,
+            (local_work_size && (work_dims > 2)) ? local_work_size[2] : 1);
+#endif
+
     bool tuning = frame_chain->getTuningQueueStatus();
     frame_chain->setKernelTime(UINT64_MAX);
 

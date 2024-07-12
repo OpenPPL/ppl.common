@@ -45,6 +45,7 @@ public:
     void setProgram(const cl_program program);
     void setCreatingProgramType(const CreatingProgramTypes creating_program_type);
     void setSaveProgramBinaryFlag(bool save_program_binary);
+    void setOptLevel(uint32_t opt_level);
     void setSourceFileName(const char* source_file_name);
     void setSource(const char* source_string);
     void setSpir(const void* spir_string, size_t spir_size);
@@ -109,6 +110,9 @@ public:
     bool getSaveProgramBinaryFlag() const {
         return save_program_binary_;
     }
+    uint32_t getOptLevel() const {
+        return opt_level_;
+    }
     uint64_t getKernelTime() const {
         return kernel_time_;
     }
@@ -143,6 +147,7 @@ private:
     std::string compile_options_;
     bool profiling_;
     bool save_program_binary_;
+    uint32_t opt_level_;
     uint64_t kernel_time_;
     bool tuning_queue_on_;
 };
