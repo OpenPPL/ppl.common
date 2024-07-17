@@ -98,6 +98,9 @@ public:
     size_t getMaxMemAllocSize() {
         return this->max_mem_alloc_size_;
     }
+    size_t getLocalMemSize() {
+        return this->local_mem_size_;
+    }
 
 private:
     bool queryPlatformInfo(const cl_platform_id& platform_id, cl_platform_info param_name, std::string& param_value);
