@@ -104,6 +104,8 @@ public:
     DECLARE_CL_SYMBOL_PTR(EnqueueSVMMap);
     DECLARE_CL_SYMBOL_PTR(EnqueueSVMUnmap);
     DECLARE_CL_SYMBOL_PTR(SetKernelArgSVMPointer);
+    DECLARE_CL_SYMBOL_PTR(GetKernelSubGroupInfoKHR);
+
 #pragma GCC diagnostic pop
 #undef DECLARE_CL_SYMBOL_PTR
 
@@ -198,6 +200,7 @@ private:
 #define clEnqueueSVMMap opencl_api->EnqueueSVMMap_
 #define clEnqueueSVMUnmap opencl_api->EnqueueSVMUnmap_
 #define clSetKernelArgSVMPointer opencl_api->SetKernelArgSVMPointer_
+#define clGetKernelSubGroupInfoKHR opencl_api->GetKernelSubGroupInfoKHR_
 
 #define opencl_api ::ppl::common::ocl::OpenCLAPI::instance()
 
