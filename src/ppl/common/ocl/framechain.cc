@@ -25,6 +25,8 @@
 
 namespace ppl { namespace common { namespace ocl {
 
+#define MAX_EXT_CHAR_LENGTH (1024*16)
+
 // qualcomm 5xx when param_value is null need param_value_size >= sizeof(param_name);
 #define OCLINFOAPI_IMP(api, obj, info)                                    \
     do {                                                                  \
@@ -161,6 +163,8 @@ FrameChain::FrameChain(const cl_command_queue& queue)
     std::vector<uint8_t> vendor = GetDeviceInfo(device_id_, CL_DEVICE_VENDOR);
     std::string dev_vendor((char*)vendor.data());
     vendor_desc_ = dev_vendor;
+
+    get_extention_info();
 }
 
 FrameChain::~FrameChain() {
@@ -254,6 +258,110 @@ void arm_printf_callback(const char* buffer, size_t length, size_t final, void* 
     fwrite(buffer, 1, length, stdout);
 }
 
+void FrameChain::get_extention_info()
+{
+    char ext_info_str[MAX_EXT_CHAR_LENGTH];
+    cl_int err = clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS, MAX_EXT_CHAR_LENGTH, ext_info_str, nullptr);
+     if (err != CL_SUCCESS) {
+        LOG(ERROR) << " Invalid clGetDeviceInfo ! ";
+    }
+
+    if (strstr(ext_info_str, "cl_khr_subgroups") != NULL) {
+        is_support_subgroup = true;
+    }
+
+    if (strstr(ext_info_str, "cl_khr_fp16") != NULL) {
+        is_support_fp16 = true;
+    }
+
+    if (strstr(ext_info_str, "cl_khr_3d_image_writes") != NULL) {
+        is_support_3d_image_write = true;
+    }
+
+    //speed up the vendor conditions 
+    if (vendor_desc_ == "QUALCOMM")
+        platform_type0 = PlatformType0_QCOM;
+    else if (vendor_desc_ == "ARM")
+        platform_type0 = PlatformType0_ARM;
+    else 
+        platform_type0 = PlatformType0_invalid;
+
+        
+    if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) {
+        //qcom
+        if (platform_type0==PlatformType0_QCOM)
+        {
+            if (strstr(ext_info_str, "cl_qcom_dot_product8") != NULL) {
+                 is_support_int8_product = true;
+            }
+        }
+        // others todo
+    }
+
+
+    if (platform_type0==PlatformType0_QCOM)
+    {
+        if (strstr(ext_info_str, "cl_qcom_reqd_sub_group_size") != NULL) {
+            getQcomExtInfo()->is_support_reqd_sub_group_size = true;
+        }
+
+       if (strstr(ext_info_str, "cl_qcom_subgroup_shuffle") != NULL) {
+            getQcomExtInfo()->is_support_subgroup_shuffle = true;
+        }
+    }
+
+    //get max sub group size 
+
+    const char* kernelSource = "__kernel void exampleKernel() {}; ";
+    size_t kernel_length = strlen(kernelSource);
+    cl_program program = clCreateProgramWithSource(context_, 1,&kernelSource, &kernel_length, &err);    
+    if (err != CL_SUCCESS) {
+        LOG(ERROR) << " clCreateProgramWithSource failed when get subgroup size ! ";
+        clReleaseProgram(program);
+        return ;
+    }
+
+    err = clBuildProgram(program, 1, &(device_id_), NULL, NULL, NULL);
+    if (err != CL_SUCCESS) {
+        LOG(ERROR) << " Invalid clBuildProgram when get subgroup size ! ";
+        clReleaseProgram(program);
+        return ;
+    }
+
+    cl_kernel kernel = clCreateKernel(program, "exampleKernel", &err);
+    if (err != CL_SUCCESS) {
+        LOG(ERROR) << " Invalid clCreateKernel when get subgroup size ! ";
+        clReleaseKernel(kernel);
+        clReleaseProgram(program);
+
+        return ;
+    }
+
+    err = clGetKernelSubGroupInfoKHR(kernel,
+                                    device_id_,
+                                    CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE, 
+                                    0,
+                                    (const void *)NULL,
+                                    sizeof(max_subgroup_size_),
+                                    &max_subgroup_size_,
+                                    NULL);
+
+    if (err != CL_SUCCESS) {
+        LOG(ERROR) << " Invalid clGetKernelSubGroupInfo when get subgroup size ! ";
+        clReleaseKernel(kernel);
+        clReleaseProgram(program);
+        return ;
+    }
+
+    //LOG(INFO) << " !!!! successfully get subgroup size  "<<max_subgroup_size_;
+
+    clReleaseKernel(kernel);
+    clReleaseProgram(program);
+
+  //other platform exts
+}
+
+
 bool FrameChain::createDefaultOclFrame(bool profiling) {
     cl_int error_code;
     createSharedDevice();
@@ -288,6 +396,10 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
         LOG(ERROR) << "Call clCreateContext failed with code: " << error_code;
         return false;
     }
+
+
+    get_extention_info();
+
 
     profiling_ = profiling;
 #if CL_TARGET_OPENCL_VERSION < 200

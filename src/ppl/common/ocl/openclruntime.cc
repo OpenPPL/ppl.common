@@ -240,6 +240,8 @@ LABEL_LOAD_CL_SYMBOLS:
     LOAD_CL_SYMBOL(EnqueueSVMMap);
     LOAD_CL_SYMBOL(EnqueueSVMUnmap);
     LOAD_CL_SYMBOL(SetKernelArgSVMPointer);
+    LOAD_CL_SYMBOL(GetKernelSubGroupInfoKHR);
+
 #undef LOAD_CL_SYMBOL
 }
 
