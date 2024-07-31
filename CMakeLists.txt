@@ -78,7 +78,7 @@ list(FILTER PPLCOMMON_SRC EXCLUDE REGEX "(.*)_benchmark\\.cc$")
 
 # for pplcommon_static and pplcommon-config.cmake
 if(NOT MSVC)
-    if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android" AND NOT ANDROID)
+    if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android" AND NOT ANDROID AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "QNX")
         list(APPEND PPLCOMMON_LINK_LIBRARIES pthread)
     endif()
 endif()
