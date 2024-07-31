@@ -41,6 +41,10 @@ endif()
 
 list(APPEND PPLCOMMON_SRC ${PPLCOMMON_ARM_SRC})
 
+if(CMAKE_SYSTEM_NAME STREQUAL "QNX")
+    list(REMOVE_ITEM PPLCOMMON_SRC  ${CMAKE_CURRENT_SOURCE_DIR}/src/ppl/common/futex_wrapper.cc)
+endif()
+
 # ----- installation ----- #
 
 if(PPLCOMMON_INSTALL)
