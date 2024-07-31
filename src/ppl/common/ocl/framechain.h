@@ -24,10 +24,14 @@
 
 namespace ppl { namespace common { namespace ocl {
 
-#define SET_PROGRAM_SOURCE(frame_chain, source) { \
-    frame_chain->setSourceFileName(#source); \
-    frame_chain->setSource(source##_string); \
-}
+#define SET_PROGRAM_SOURCE(frame_chain, source)  \
+    {                                            \
+        frame_chain->setSourceFileName(#source); \
+        frame_chain->setSource(source##_string); \
+    }
+
+#define SET_PROGRAM_SOURCE_FILE(frame_chain, source) \
+    { frame_chain->setSourceFileName(#source); }
 
 enum CreatingProgramTypes {
     WITH_SOURCE = 0,
@@ -36,7 +40,6 @@ enum CreatingProgramTypes {
     WITH_BUILT_IN_KERNELS = 3,
 };
 
-
 enum PlatformType0 {
     PlatformType0_QCOM = 0,
     PlatformType0_ARM = 1,
@@ -44,15 +47,14 @@ enum PlatformType0 {
 };
 
 struct QCOM_ext {
-    bool is_support_reqd_sub_group_size = false ;
-    bool is_support_subgroup_shuffle = false ;
+    bool is_support_reqd_sub_group_size = false;
+    bool is_support_subgroup_shuffle = false;
 };
 
 union PlatformOnly_ext {
     struct QCOM_ext;
     struct ARM_ext;
 };
-
 
 class FrameChain {
 public:
@@ -139,21 +141,32 @@ public:
     }
     cl_command_queue getTuningQueue();
 
-    // extention related interfaces 
-    void get_extention_info() ;
+    // extention related interfaces
+    void get_extention_info();
 
-    size_t getMaxSubGroupSize(){return max_subgroup_size_;}
-    bool isSupportFp16(){return is_support_fp16;};
-    bool isSupportSubgroup(){return is_support_subgroup;}
-    bool isSupport3DImageWrite(){return is_support_3d_image_write;}
-    bool isSupportInt8Product(){return is_support_int8_product;}
-    PlatformType0 getPlatformType( ){ return platform_type0;}
-    
-    QCOM_ext * getQcomExtInfo(){ return  (QCOM_ext *)&PlatformOnly_ext_info;}
-    //todo, other platforms 
-    
- 
+    size_t getMaxSubGroupSize() {
+        return max_subgroup_size_;
+    }
+    bool isSupportFp16() {
+        return is_support_fp16;
+    };
+    bool isSupportSubgroup() {
+        return is_support_subgroup;
+    }
+    bool isSupport3DImageWrite() {
+        return is_support_3d_image_write;
+    }
+    bool isSupportInt8Product() {
+        return is_support_int8_product;
+    }
+    PlatformType0 getPlatformType() {
+        return platform_type0;
+    }
 
+    QCOM_ext* getQcomExtInfo() {
+        return (QCOM_ext*)&PlatformOnly_ext_info;
+    }
+    // todo, other platforms
 
 protected:
     bool createDefaultOclFrame(bool profiling);
@@ -186,17 +199,15 @@ private:
     bool tuning_queue_on_;
 
     //// platform extentions
-    size_t max_subgroup_size_ = 0 ;
+    size_t max_subgroup_size_ = 0;
 
     bool is_support_fp16 = false;
     bool is_support_subgroup = false;
     bool is_support_3d_image_write = false;
     bool is_support_int8_product = false;
 
-    PlatformType0 platform_type0 = PlatformType0_invalid;  //0 qcom, 1 arm ...
-    PlatformOnly_ext PlatformOnly_ext_info ;
-
-
+    PlatformType0 platform_type0 = PlatformType0_invalid; // 0 qcom, 1 arm ...
+    PlatformOnly_ext PlatformOnly_ext_info;
 };
 
 void createSharedFrameChain(bool profiling);
