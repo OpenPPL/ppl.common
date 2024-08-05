@@ -19,6 +19,7 @@
 #define _ST_HPC_PPL_COMMON_OCL_FRAMECHAIN_H_
 
 #include <string>
+#include <vector>
 
 #include "openclruntime.h"
 
@@ -56,12 +57,21 @@ union PlatformOnly_ext {
     struct ARM_ext;
 };
 
+typedef struct eventNode{
+    cl_event event;
+    std::string kernel_name;
+    
+    eventNode(cl_event evt, std::string name)
+        : event(evt), kernel_name(name) {}
+}eventNode;
+
 class FrameChain {
 public:
     FrameChain(bool profiling);
     FrameChain(const cl_command_queue& queue);
     ~FrameChain();
 
+    std::vector<eventNode> event_list;
     void setProgram(const cl_program program);
     void setCreatingProgramType(const CreatingProgramTypes creating_program_type);
     void setSaveProgramBinaryFlag(bool save_program_binary);

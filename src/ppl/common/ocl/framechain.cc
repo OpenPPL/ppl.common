@@ -168,6 +168,28 @@ FrameChain::FrameChain(const cl_command_queue& queue)
 }
 
 FrameChain::~FrameChain() {
+
+    if(this->isProfiling())
+    {
+        for(int i=0;i<this->event_list.size();i++)
+        {
+            cl_int status;
+            cl_ulong start = 0;
+            cl_ulong end = 0;
+            cl_ulong time = 0;
+            clGetEventInfo(this->event_list[i].event,CL_EVENT_COMMAND_EXECUTION_STATUS,sizeof(cl_int),&status,nullptr);
+            if(status == CL_COMPLETE)
+            {
+                clGetEventProfilingInfo(this->event_list[i].event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start, NULL);
+                clGetEventProfilingInfo(this->event_list[i].event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL);
+                time = end - start;
+                LOG(INFO) << "Execution time of " << this->event_list[i].kernel_name << ": " << time << " ns.";
+            }else{
+                 LOG(ERROR) << "clGetEventProfilingInfo status not equal CL_COMPLETE " ;
+            }
+        }
+    }
+    
     if (this->queue_) {
         clReleaseCommandQueue(this->queue_);
     }
