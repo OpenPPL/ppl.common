@@ -72,6 +72,8 @@ public:
     ~FrameChain();
 
     std::vector<eventNode> event_list;
+    void printEventList();
+    void releaseEventList();
     void setProgram(const cl_program program);
     void setCreatingProgramType(const CreatingProgramTypes creating_program_type);
     void setSaveProgramBinaryFlag(bool save_program_binary);
