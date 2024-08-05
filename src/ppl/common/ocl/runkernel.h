@@ -34,6 +34,8 @@ bool compileOclKernels(FrameChain* frame_chain, const std::string& kernel_name);
 bool validateNDrange(cl_uint work_dims, size_t* global_work_size, size_t* local_work_size);
 bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name, const cl_kernel& kernel, cl_uint work_dims,
                       const size_t* global_work_size, const size_t* local_work_size);
+bool enqueueOclKernel_tunning(FrameChain* frame_chain, const char* kernel_name, const cl_kernel& kernel, cl_uint work_dims,
+                      const size_t* global_work_size, const size_t* local_work_size);
 
 template <size_t INDEX, typename T>
 cl_int setKernelArg(const cl_kernel& kernel, const T& value) {
@@ -132,7 +134,12 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr, cl_uint
         return;
     }
 
-    succeeded = enqueueOclKernel(frame_chain, kernel_name_cstr, kernel, work_dims, global_work_size, local_work_size);
+    if(frame_chain->getTuningQueueStatus())
+    {
+        succeeded = enqueueOclKernel_tunning(frame_chain, kernel_name_cstr, kernel, work_dims, global_work_size, local_work_size);
+    }else{
+        succeeded = enqueueOclKernel(frame_chain, kernel_name_cstr, kernel, work_dims, global_work_size, local_work_size);
+    }
     if (!succeeded) {
         if (!tuning)
             LOG(ERROR) << "Failed to enqueue kernel " << kernel_name_cstr;
