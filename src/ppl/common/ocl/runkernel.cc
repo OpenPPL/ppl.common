@@ -319,7 +319,7 @@ bool enqueueOclKernel_tunning(FrameChain* frame_chain, const char* kernel_name, 
 
 bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name, const cl_kernel& kernel, cl_uint work_dims,
                       const size_t* global_work_size, const size_t* local_work_size) {
-    bool profiling = frame_chain->isProfiling() || frame_chain->getTuningQueueStatus();
+    bool profiling = frame_chain->isProfiling();
     auto queue = frame_chain->getQueue();
 
     cl_int error_code;
