@@ -19,6 +19,7 @@
 #define _ST_HPC_PPL_COMMON_CUDA_NCCL_UTILS_H_
 
 #include <cuda_runtime.h>
+#include <vector>
 
 #ifdef PPLCOMMON_ENABLE_NCCL
 #include <nccl.h>
@@ -49,15 +50,7 @@ struct NcclParam {
 };
 
 #ifdef PPLCOMMON_ENABLE_NCCL
-static RetCode InitNccl(uint32_t tensor_parallel_size, std::vector<ncclComm_t>* nccl_comm_list) {
-    nccl_comm_list->resize(tensor_parallel_size);
-    std::vector<int> dev_list(tensor_parallel_size);
-    for (size_t i = 0; i < tensor_parallel_size; ++i) {
-        dev_list[i] = i;
-    }
-    NCCL_CHECK(ncclCommInitAll(nccl_comm_list->data(), tensor_parallel_size, dev_list.data()), "ncclCommInitAll");
-    return RC_SUCCESS;
-}
+RetCode InitNccl(uint32_t tensor_parallel_size, std::vector<ncclComm_t>* nccl_comm_list);
 #endif
 
 #ifdef PPLCOMMON_ENABLE_NCCL
