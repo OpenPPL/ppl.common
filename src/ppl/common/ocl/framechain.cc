@@ -315,15 +315,30 @@ void FrameChain::get_extention_info() {
     else
         platform_type0 = PlatformType0_invalid;
 
-    if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) {
+    //no need for cl_khr_integer_dot_product
+    //if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) 
+    {
         // qcom
         if (platform_type0 == PlatformType0_QCOM) {
             if (strstr(ext_info_str, "cl_qcom_dot_product8") != NULL) {
                 is_support_int8_product = true;
             }
         }
+        else if  (platform_type0 == PlatformType0_ARM){
+            if (strstr(ext_info_str, "cl_arm_integer_dot_product_accumulate_int8") != NULL) {
+                is_support_int8_product = true;
+            }
+        }
+        else{
+            //todo , not exactly 
+            if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) {
+                is_support_int8_product = true;
+            }
+        }
         // others todo
     }
+
+    //shuffle and rotate
 
     if (platform_type0 == PlatformType0_QCOM) {
         if (strstr(ext_info_str, "cl_qcom_reqd_sub_group_size") != NULL) {
@@ -332,6 +347,20 @@ void FrameChain::get_extention_info() {
 
         if (strstr(ext_info_str, "cl_qcom_subgroup_shuffle") != NULL) {
             getQcomExtInfo()->is_support_subgroup_shuffle = true;
+
+            is_support_subgroup_shuffle = true;
+            is_support_subgroup_rotate = true;
+
+        }
+    }
+    else{
+        //arm like
+        if (strstr(ext_info_str, "cl_khr_subgroup_shuffle") != NULL) {
+            is_support_subgroup_shuffle = true;
+        }
+
+        if (strstr(ext_info_str, "cl_khr_subgroup_rotate") != NULL) {
+            is_support_subgroup_rotate = true;
         }
     }
 
