@@ -24,6 +24,8 @@
 #include <map>
 #include <vector>
 #include <string>
+#include <cstring>
+
 using namespace std;
 
 #ifdef _WIN32
