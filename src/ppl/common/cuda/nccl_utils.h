@@ -19,6 +19,7 @@
 #define _ST_HPC_PPL_COMMON_CUDA_NCCL_UTILS_H_
 
 #include <cuda_runtime.h>
+#include <vector>
 
 #ifdef PPLCOMMON_ENABLE_NCCL
 #include <nccl.h>
@@ -47,6 +48,10 @@ struct NcclParam {
     ncclComm_t comm{nullptr};
 #endif
 };
+
+#ifdef PPLCOMMON_ENABLE_NCCL
+RetCode InitNccl(uint32_t tensor_parallel_size, std::vector<ncclComm_t>* nccl_comm_list);
+#endif
 
 #ifdef PPLCOMMON_ENABLE_NCCL
 template<typename T>

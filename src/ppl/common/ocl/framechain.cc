@@ -168,6 +168,9 @@ FrameChain::FrameChain(const cl_command_queue& queue)
 }
 
 FrameChain::~FrameChain() {
+    if (this->isProfiling()) {
+        releaseEventList();
+    }
     if (this->queue_) {
         clReleaseCommandQueue(this->queue_);
     }
@@ -177,6 +180,33 @@ FrameChain::~FrameChain() {
     if (this->context_) {
         clReleaseContext(this->context_);
     }
+}
+
+void FrameChain::printEventList() {
+    for (int i = 0; i < this->event_list.size(); i++) {
+        cl_int status;
+        cl_ulong start = 0;
+        cl_ulong end = 0;
+        cl_ulong time = 0;
+        clGetEventInfo(this->event_list[i].event, CL_EVENT_COMMAND_EXECUTION_STATUS, sizeof(cl_int), &status, nullptr);
+        if (status == CL_COMPLETE) {
+            clGetEventProfilingInfo(this->event_list[i].event, CL_PROFILING_COMMAND_START, sizeof(cl_ulong), &start,
+                                    NULL);
+            clGetEventProfilingInfo(this->event_list[i].event, CL_PROFILING_COMMAND_END, sizeof(cl_ulong), &end, NULL);
+            time = end - start;
+            LOG(INFO) << "Execution time of " << this->event_list[i].kernel_name << ": " << time << " ns.";
+        } else {
+            LOG(ERROR) << "clGetEventProfilingInfo status not equal CL_COMPLETE ";
+        }
+    }
+}
+
+void FrameChain::releaseEventList() {
+    for (int i = 0; i < this->event_list.size(); i++) {
+        if (this->event_list[i].event)
+            clReleaseEvent(this->event_list[i].event);
+    }
+    this->event_list.clear();
 }
 
 void FrameChain::setProgram(const cl_program program) {
@@ -285,15 +315,30 @@ void FrameChain::get_extention_info() {
     else
         platform_type0 = PlatformType0_invalid;
 
-    if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) {
+    //no need for cl_khr_integer_dot_product
+    //if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) 
+    {
         // qcom
         if (platform_type0 == PlatformType0_QCOM) {
             if (strstr(ext_info_str, "cl_qcom_dot_product8") != NULL) {
                 is_support_int8_product = true;
             }
         }
+        else if  (platform_type0 == PlatformType0_ARM){
+            if (strstr(ext_info_str, "cl_arm_integer_dot_product_accumulate_int8") != NULL) {
+                is_support_int8_product = true;
+            }
+        }
+        else{
+            //todo , not exactly 
+            if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) {
+                is_support_int8_product = true;
+            }
+        }
         // others todo
     }
+
+    //shuffle and rotate
 
     if (platform_type0 == PlatformType0_QCOM) {
         if (strstr(ext_info_str, "cl_qcom_reqd_sub_group_size") != NULL) {
@@ -302,6 +347,20 @@ void FrameChain::get_extention_info() {
 
         if (strstr(ext_info_str, "cl_qcom_subgroup_shuffle") != NULL) {
             getQcomExtInfo()->is_support_subgroup_shuffle = true;
+
+            is_support_subgroup_shuffle = true;
+            is_support_subgroup_rotate = true;
+
+        }
+    }
+    else{
+        //arm like
+        if (strstr(ext_info_str, "cl_khr_subgroup_shuffle") != NULL) {
+            is_support_subgroup_shuffle = true;
+        }
+
+        if (strstr(ext_info_str, "cl_khr_subgroup_rotate") != NULL) {
+            is_support_subgroup_rotate = true;
         }
     }
 

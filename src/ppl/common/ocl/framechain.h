@@ -19,6 +19,7 @@
 #define _ST_HPC_PPL_COMMON_OCL_FRAMECHAIN_H_
 
 #include <string>
+#include <vector>
 
 #include "openclruntime.h"
 
@@ -56,12 +57,22 @@ union PlatformOnly_ext {
     struct ARM_ext;
 };
 
+typedef struct eventNode {
+    cl_event event;
+    std::string kernel_name;
+
+    eventNode(cl_event evt, std::string name) : event(evt), kernel_name(name) {}
+} eventNode;
+
 class FrameChain {
 public:
     FrameChain(bool profiling);
     FrameChain(const cl_command_queue& queue);
     ~FrameChain();
 
+    std::vector<eventNode> event_list;
+    void printEventList();
+    void releaseEventList();
     void setProgram(const cl_program program);
     void setCreatingProgramType(const CreatingProgramTypes creating_program_type);
     void setSaveProgramBinaryFlag(bool save_program_binary);
@@ -159,6 +170,15 @@ public:
     bool isSupportInt8Product() {
         return is_support_int8_product;
     }
+
+    bool isSupportSubgroupShuffle() {
+        return is_support_subgroup_shuffle;
+    }
+    bool isSupportSubgroupRotate() {
+        return is_support_subgroup_rotate;
+    }
+
+
     PlatformType0 getPlatformType() {
         return platform_type0;
     }
@@ -205,6 +225,9 @@ private:
     bool is_support_subgroup = false;
     bool is_support_3d_image_write = false;
     bool is_support_int8_product = false;
+
+    bool is_support_subgroup_shuffle = false;
+    bool is_support_subgroup_rotate = false;
 
     PlatformType0 platform_type0 = PlatformType0_invalid; // 0 qcom, 1 arm ...
     PlatformOnly_ext PlatformOnly_ext_info;
