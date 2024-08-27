@@ -391,14 +391,27 @@ void FrameChain::get_extention_info() {
         return;
     }
 
-    err = clGetKernelSubGroupInfoKHR(kernel, device_id_, CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE, 0, (const void*)NULL,
-                                     sizeof(max_subgroup_size_), &max_subgroup_size_, NULL);
+    char extension_string[1024];
+    clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS,
+                    sizeof(extension_string), extension_string, NULL);
+    if (strstr(extension_string, "cl_khr_subgroups") == NULL) {
+        LOG(WARNING) << "Device does not support cl_khr_subgroups extension.";
+    } else {
+        err = clGetKernelSubGroupInfoKHR(kernel,
+                                         device_id_,
+                                         CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
+                                         0,
+                                         (const void*)NULL,
+                                         sizeof(max_subgroup_size_),
+                                         &max_subgroup_size_,
+                                         NULL);
 
-    if (err != CL_SUCCESS) {
-        LOG(ERROR) << " Invalid clGetKernelSubGroupInfo when get subgroup size ! ";
-        clReleaseKernel(kernel);
-        clReleaseProgram(program);
-        return;
+        if (err != CL_SUCCESS) {
+            LOG(ERROR) << " Invalid clGetKernelSubGroupInfo when get subgroup size ! ";
+            clReleaseKernel(kernel);
+            clReleaseProgram(program);
+            return;
+        }
     }
 
     // LOG(INFO) << " !!!! successfully get subgroup size  "<<max_subgroup_size_;
