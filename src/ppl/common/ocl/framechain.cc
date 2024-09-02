@@ -391,12 +391,7 @@ void FrameChain::get_extention_info() {
         return;
     }
 
-    char extension_string[1024];
-    clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS,
-                    sizeof(extension_string), extension_string, NULL);
-    if (strstr(extension_string, "cl_khr_subgroups") == NULL) {
-        LOG(WARNING) << "Device does not support cl_khr_subgroups extension.";
-    } else {
+    if(platform_type0 == PlatformType0_QCOM || platform_type0 == PlatformType0_ARM) {
         err = clGetKernelSubGroupInfoKHR(kernel,
                                          device_id_,
                                          CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
