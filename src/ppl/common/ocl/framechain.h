@@ -44,6 +44,7 @@ enum CreatingProgramTypes {
 enum PlatformType0 {
     PlatformType0_QCOM = 0,
     PlatformType0_ARM = 1,
+    PlatformType0_INTEL = 2,
     PlatformType0_invalid = 0xffffffff,
 };
 
