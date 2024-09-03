@@ -290,11 +290,12 @@ void arm_printf_callback(const char* buffer, size_t length, size_t final, void* 
 
 void FrameChain::get_extention_info() {
     char ext_info_str[MAX_EXT_CHAR_LENGTH];
+
     cl_int err = clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS, MAX_EXT_CHAR_LENGTH, ext_info_str, nullptr);
     if (err != CL_SUCCESS) {
         LOG(ERROR) << " Invalid clGetDeviceInfo ! ";
     }
-
+  
     if (strstr(ext_info_str, "cl_khr_subgroups") != NULL) {
         is_support_subgroup = true;
     }
@@ -312,7 +313,9 @@ void FrameChain::get_extention_info() {
         platform_type0 = PlatformType0_QCOM;
     else if (vendor_desc_ == "ARM")
         platform_type0 = PlatformType0_ARM;
-    else
+    else  if (strstr(vendor_desc_.c_str(), "Intel") != NULL)
+        platform_type0 = PlatformType0_INTEL;
+    else 
         platform_type0 = PlatformType0_invalid;
 
     //no need for cl_khr_integer_dot_product
@@ -364,34 +367,35 @@ void FrameChain::get_extention_info() {
         }
     }
 
-    // get max sub group size
-
-    const char* kernelSource = "__kernel void exampleKernel() {}; ";
-    size_t kernel_length = strlen(kernelSource);
-    cl_program program = clCreateProgramWithSource(context_, 1, &kernelSource, &kernel_length, &err);
-    if (err != CL_SUCCESS) {
-        LOG(ERROR) << " clCreateProgramWithSource failed when get subgroup size ! ";
-        clReleaseProgram(program);
-        return;
-    }
-
-    err = clBuildProgram(program, 1, &(device_id_), NULL, NULL, NULL);
-    if (err != CL_SUCCESS) {
-        LOG(ERROR) << " Invalid clBuildProgram when get subgroup size ! ";
-        clReleaseProgram(program);
-        return;
-    }
-
-    cl_kernel kernel = clCreateKernel(program, "exampleKernel", &err);
-    if (err != CL_SUCCESS) {
-        LOG(ERROR) << " Invalid clCreateKernel when get subgroup size ! ";
-        clReleaseKernel(kernel);
-        clReleaseProgram(program);
-
-        return;
-    }
 
     if(platform_type0 == PlatformType0_QCOM || platform_type0 == PlatformType0_ARM) {
+
+        // get max sub group size
+        const char* kernelSource = "__kernel void exampleKernel() {}; ";
+        size_t kernel_length = strlen(kernelSource);
+        cl_program program = clCreateProgramWithSource(context_, 1, &kernelSource, &kernel_length, &err);
+        if (err != CL_SUCCESS) {
+            LOG(ERROR) << " clCreateProgramWithSource failed when get subgroup size ! ";
+            clReleaseProgram(program);
+            return;
+        }
+
+        err = clBuildProgram(program, 1, &(device_id_), NULL, NULL, NULL);
+        if (err != CL_SUCCESS) {
+            LOG(ERROR) << " Invalid clBuildProgram when get subgroup size ! ";
+            clReleaseProgram(program);
+            return;
+        }
+
+        cl_kernel kernel = clCreateKernel(program, "exampleKernel", &err);
+        if (err != CL_SUCCESS) {
+            LOG(ERROR) << " Invalid clCreateKernel when get subgroup size ! ";
+            clReleaseKernel(kernel);
+            clReleaseProgram(program);
+
+            return;
+        }
+
         err = clGetKernelSubGroupInfoKHR(kernel,
                                          device_id_,
                                          CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
@@ -401,20 +405,96 @@ void FrameChain::get_extention_info() {
                                          &max_subgroup_size_,
                                          NULL);
 
+        clReleaseKernel(kernel);
+        clReleaseProgram(program);
+        
         if (err != CL_SUCCESS) {
             LOG(ERROR) << " Invalid clGetKernelSubGroupInfo when get subgroup size ! ";
-            clReleaseKernel(kernel);
-            clReleaseProgram(program);
             return;
         }
     }
+    else //if(platform_type0 == PlatformType0_INTEL) //todo
+    {
+        auto context = clCreateContext(NULL, 1, &device_id_, NULL, NULL, &err);
+        auto command_queue = clCreateCommandQueue(context, device_id_, 0, &err);
+        auto buffer = clCreateBuffer(context, CL_MEM_WRITE_ONLY, sizeof(float), NULL, &err);
+        const char* kernel_source = "__kernel void example_kernel(__global int *buffer) {\
+            int max_sub_group_size = get_max_sub_group_size();\
+            if (get_global_id(0) == 0) {\
+                buffer[0] = max_sub_group_size;\
+            }\
+        }";
 
-    // LOG(INFO) << " !!!! successfully get subgroup size  "<<max_subgroup_size_;
+        auto program = clCreateProgramWithSource(context, 1, &kernel_source, NULL, &err);
+        err = clBuildProgram(program, 1, &device_id_, NULL, NULL, NULL);
 
-    clReleaseKernel(kernel);
-    clReleaseProgram(program);
+        if (err != CL_SUCCESS) {
+            LOG(ERROR) << " clBuildProgram failed when get subgroup size ! ";
+            clReleaseProgram(program);
+            clReleaseMemObject(buffer);
+            clReleaseCommandQueue(command_queue);
+            clReleaseContext(context);
 
-    // other platform exts
+            return;
+        }
+
+        cl_kernel kernel = clCreateKernel(program, "example_kernel", &err);
+        err = clSetKernelArg(kernel, 0, sizeof(cl_mem), &buffer);
+
+        if (err != CL_SUCCESS) {
+            LOG(ERROR) << " clSetKernelArg failed when get subgroup size ! ";
+            clReleaseProgram(program);
+            clReleaseKernel(kernel);
+            clReleaseMemObject(buffer);
+            clReleaseCommandQueue(command_queue);
+            clReleaseContext(context);
+            return;
+        }
+
+        size_t global_work_size = 1; 
+        err = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, NULL, 0, NULL, NULL);
+ 
+        if (err != CL_SUCCESS) {
+            LOG(ERROR) << " clEnqueueNDRangeKernel failed when get subgroup size ! ";
+            clReleaseProgram(program);
+            clReleaseKernel(kernel);
+            clReleaseMemObject(buffer);
+            clReleaseCommandQueue(command_queue);
+            clReleaseContext(context);
+            return;
+        }
+
+        int max_sub_group_size;
+        err = clEnqueueReadBuffer(command_queue, buffer, CL_TRUE, 0, sizeof(int), &max_sub_group_size, 0, NULL, NULL);
+        if (err != CL_SUCCESS) {
+            LOG(ERROR) << " clEnqueueReadBuffer failed when get subgroup size ! ";
+            clReleaseProgram(program);
+            clReleaseKernel(kernel);
+            clReleaseMemObject(buffer);
+            clReleaseCommandQueue(command_queue);
+            clReleaseContext(context);
+            return;
+        }
+        
+        //printf("Max Sub Group Size: %u\n", (unsigned int)max_sub_group_size);
+        max_subgroup_size_ = max_sub_group_size;
+
+        clReleaseKernel(kernel);
+        clReleaseProgram(program);
+        clReleaseMemObject(buffer);
+        clReleaseCommandQueue(command_queue);
+        clReleaseContext(context);
+        
+    }
+
+    // info if needed to print 
+    
+    //LOG(INFO) << " ext info: pl "<<(int)platform_type0<<" maxsbg: "<<max_subgroup_size_;
+    //LOG(INFO) << " ext info: fp16 "<<is_support_fp16<<" sbg: "<<is_support_subgroup<<" 3d write:"
+    //<<is_support_3d_image_write<<" int8 dot"<<is_support_int8_product<<" shuffle: "<<is_support_subgroup_shuffle
+    //<<" rotate "<<is_support_subgroup_rotate;
+
+    return ;
 }
 
 bool FrameChain::createDefaultOclFrame(bool profiling) {
