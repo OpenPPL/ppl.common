@@ -276,9 +276,9 @@ void FrameChain::setFunctionName(const char* function_name) {
 
 void FrameChain::setCompileOptions(const char* options) {
     compile_options_ = options;
-    if (vendor_desc_ == "QUALCOMM")
+    if (getPlatformType() == ppl::common::ocl::PlatformType0_QCOM)
         compile_options_ += " -DVENDOR_QUALCOMM";
-    else if (vendor_desc_ == "ARM")
+    else if (getPlatformType() == ppl::common::ocl::PlatformType0_ARM)
         compile_options_ += " -DVENDOR_ARM";
     else
         compile_options_ += " -DVENDOR_UNKNOW";
