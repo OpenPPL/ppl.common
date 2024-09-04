@@ -336,6 +336,15 @@ bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name, const cl
         return false;
     }
 
+    if(frame_chain->getPlatformType() == ppl::common::ocl::PlatformType0_ARM)
+    {
+        error_code = clFlush(frame_chain->getQueue());
+        if (error_code != CL_SUCCESS) {
+            return false;
+        }
+    }
+
+
     return true;
 }
 
