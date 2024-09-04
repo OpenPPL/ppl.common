@@ -331,7 +331,10 @@ bool enqueueOclKernel(FrameChain* frame_chain, const char* kernel_name, const cl
         error_code = clEnqueueNDRangeKernel(queue, kernel, work_dims, nullptr, global_work_size, local_work_size, 0,
                                             nullptr, nullptr);
     }
-
+    if(frame_chain->getVendorDesc() == "ARM")
+    {
+        clFlush(frame_chain->getQueue());
+    }
     if (error_code != CL_SUCCESS) {
         return false;
     }
