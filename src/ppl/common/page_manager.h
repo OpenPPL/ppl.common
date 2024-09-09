@@ -37,6 +37,9 @@ public:
     int64_t GetAvail() {
         return max_ - used_;
     }
+    int64_t GetPageSize() const {
+        return page_size_;
+    }
 
 private:
     int64_t max_ = 0;
