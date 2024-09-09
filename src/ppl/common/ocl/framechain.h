@@ -53,9 +53,15 @@ struct QCOM_ext {
     bool is_support_subgroup_shuffle = false;
 };
 
+struct INTEL_ext {
+    //shuffle vectors and rotate2
+    bool is_support_intel_enhanced_shuffle = false;
+};
+
 union PlatformOnly_ext {
     struct QCOM_ext;
     struct ARM_ext;
+    struct INTEL_ext;
 };
 
 typedef struct eventNode {
@@ -187,6 +193,10 @@ public:
     QCOM_ext* getQcomExtInfo() {
         return (QCOM_ext*)&PlatformOnly_ext_info;
     }
+    INTEL_ext* getIntelExtInfo() {
+        return (INTEL_ext*)&PlatformOnly_ext_info;
+    }
+
     // todo, other platforms
 
 protected:
@@ -213,6 +223,7 @@ private:
     std::string project_name_;
     std::string function_name_;
     std::string compile_options_;
+    std::string compile_options_ext_defaults_;
     bool profiling_;
     bool save_program_binary_;
     uint32_t opt_level_;

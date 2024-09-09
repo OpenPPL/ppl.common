@@ -276,12 +276,7 @@ void FrameChain::setFunctionName(const char* function_name) {
 
 void FrameChain::setCompileOptions(const char* options) {
     compile_options_ = options;
-    if (getPlatformType() == ppl::common::ocl::PlatformType0_QCOM)
-        compile_options_ += " -DVENDOR_QUALCOMM";
-    else if (getPlatformType() == ppl::common::ocl::PlatformType0_ARM)
-        compile_options_ += " -DVENDOR_ARM";
-    else
-        compile_options_ += " -DVENDOR_UNKNOW";
+    compile_options_ += compile_options_ext_defaults_ ;
 }
 
 void arm_printf_callback(const char* buffer, size_t length, size_t final, void* user_data) {
@@ -290,6 +285,8 @@ void arm_printf_callback(const char* buffer, size_t length, size_t final, void* 
 
 void FrameChain::get_extention_info() {
     char ext_info_str[MAX_EXT_CHAR_LENGTH];
+
+    compile_options_ext_defaults_ = " ";
 
     cl_int err = clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS, MAX_EXT_CHAR_LENGTH, ext_info_str, nullptr);
     if (err != CL_SUCCESS) {
@@ -310,13 +307,29 @@ void FrameChain::get_extention_info() {
 
     // speed up the vendor conditions
     if (vendor_desc_ == "QUALCOMM")
+    {
+        compile_options_ext_defaults_ += " -DVENDOR_QUALCOMM";
         platform_type0 = PlatformType0_QCOM;
+    }
     else if (vendor_desc_ == "ARM")
+    {
         platform_type0 = PlatformType0_ARM;
+        compile_options_ext_defaults_ += " -DVENDOR_ARM";
+    }
+        
     else  if (strstr(vendor_desc_.c_str(), "Intel") != NULL)
+    {
         platform_type0 = PlatformType0_INTEL;
+        compile_options_ext_defaults_ += " -DVENDOR_INTEL";
+
+    }
+        
     else 
+    {
         platform_type0 = PlatformType0_invalid;
+        compile_options_ext_defaults_ += " -DVENDOR_UNKNOW";
+    }
+        
 
     //no need for cl_khr_integer_dot_product
     //if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) 
@@ -339,6 +352,7 @@ void FrameChain::get_extention_info() {
             }
         }
         // others todo
+
     }
 
     //shuffle and rotate
@@ -346,6 +360,8 @@ void FrameChain::get_extention_info() {
     if (platform_type0 == PlatformType0_QCOM) {
         if (strstr(ext_info_str, "cl_qcom_reqd_sub_group_size") != NULL) {
             getQcomExtInfo()->is_support_reqd_sub_group_size = true;
+
+    
         }
 
         if (strstr(ext_info_str, "cl_qcom_subgroup_shuffle") != NULL) {
@@ -354,16 +370,47 @@ void FrameChain::get_extention_info() {
             is_support_subgroup_shuffle = true;
             is_support_subgroup_rotate = true;
 
+            compile_options_ext_defaults_ += " -DSUBGROUP_SHUFFLE_ENABLED ";
+            compile_options_ext_defaults_ += " -DSUBGROUP_ROTATE_ENABLED ";
+
         }
     }
-    else{
+    else if (platform_type0 == PlatformType0_INTEL) {
+        if (strstr(ext_info_str, "cl_intel_subgroups") != NULL) {
+            is_support_subgroup_shuffle = true;
+            is_support_subgroup_rotate = true;
+
+            getIntelExtInfo()->is_support_intel_enhanced_shuffle = true;
+
+            compile_options_ext_defaults_ += " -DSUBGROUP_SHUFFLE_ENABLED ";
+            compile_options_ext_defaults_ += " -DSUBGROUP_ROTATE_ENABLED ";
+            compile_options_ext_defaults_ += " -DINTEL_SUBGROUP_ENHANCED ";
+
+        }
+        else{
+            if (strstr(ext_info_str, "cl_khr_subgroup_shuffle") != NULL) {
+                is_support_subgroup_shuffle = true;
+                compile_options_ext_defaults_ += " -DSUBGROUP_SHUFFLE_ENABLED ";
+            }
+
+            if (strstr(ext_info_str, "cl_khr_subgroup_rotate") != NULL) {
+                is_support_subgroup_rotate = true;
+                compile_options_ext_defaults_ += " -DSUBGROUP_ROTATE_ENABLED ";
+            }
+        }
+
+    }
+    else {
+
         //arm like
         if (strstr(ext_info_str, "cl_khr_subgroup_shuffle") != NULL) {
             is_support_subgroup_shuffle = true;
+            compile_options_ext_defaults_ += " -DSUBGROUP_SHUFFLE_ENABLED ";
         }
 
         if (strstr(ext_info_str, "cl_khr_subgroup_rotate") != NULL) {
             is_support_subgroup_rotate = true;
+            compile_options_ext_defaults_ += " -DSUBGROUP_ROTATE_ENABLED ";
         }
     }
 
