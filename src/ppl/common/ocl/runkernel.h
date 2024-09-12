@@ -100,7 +100,7 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr, cl_uint
             temp_kernel = clCreateKernel(program, kernel_names[i].c_str(), &error_code);
             if (error_code != CL_SUCCESS) {
                 if (!tuning)
-                    LOG(ERROR) << "Call clCreateKernel() failed with code: " << error_code;
+                    LOG(ERROR) << "Call clCreateKernel() failed with code: " << error_code << ", " << kernel_name_cstr;
                 return;
             }
             if (kernel_names[i] == kernel_name) {
@@ -118,12 +118,13 @@ void runOclKernel(FrameChain* frame_chain, const char* kernel_name_cstr, cl_uint
     }
     if (kernel == nullptr) {
         if (!tuning)
-            LOG(ERROR) << "No valid kernel to run.";
+            LOG(ERROR) << "No valid kernel to run: " << kernel_name_cstr;
         return;
     }
 
     error_code = setKernelArg<0, Args...>(kernel, args...);
     if (error_code != CL_SUCCESS) {
+        LOG(ERROR) << "setKernelArg failed: " << kernel_name_cstr;
         return;
     }
 
