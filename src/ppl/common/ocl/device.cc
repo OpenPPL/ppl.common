@@ -369,6 +369,7 @@ bool Device::getDeviceBasicInfos(const cl_device_id& device_id) {
     }
 
     bool succeeded;
+    QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_NAME, device_name_, true);
     QUERY_DEVICE_INFO(succeeded, device_id, CL_DEVICE_VENDOR, device_vendor_, true);
     if (device_vendor_.find("QUALCOMM") != std::string::npos) {
         gpu_type_ = ADRENO_GPU;
