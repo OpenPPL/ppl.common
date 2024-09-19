@@ -101,6 +101,9 @@ public:
     size_t getLocalMemSize() {
         return this->local_mem_size_;
     }
+    std::string getDeviceName() {
+        return this->device_name_;
+    }
 
 private:
     bool queryPlatformInfo(const cl_platform_id& platform_id, cl_platform_info param_name, std::string& param_value);
