@@ -116,7 +116,7 @@ std::vector<uint8_t> INFO(GetPlatformInfo, cl_platform_id, platform) std::vector
     return (dev_vendor + std::string("_") + dev_desc);
 }
 
-FrameChain::FrameChain(bool profiling)
+FrameChain::FrameChain(bool profiling, int perf_hint, int priority_hint)
     : platform_id_(nullptr)
     , device_id_(nullptr)
     , context_(nullptr)
@@ -132,7 +132,7 @@ FrameChain::FrameChain(bool profiling)
     , save_program_binary_(false)
     , opt_level_(0)
     , tuning_queue_on_(false) {
-    createDefaultOclFrame(profiling);
+    createDefaultOclFrame(profiling, perf_hint, priority_hint);
 }
 
 FrameChain::FrameChain(const cl_command_queue& queue)
@@ -582,7 +582,7 @@ void FrameChain::get_extention_info() {
     return ;
 }
 
-bool FrameChain::createDefaultOclFrame(bool profiling) {
+bool FrameChain::createDefaultOclFrame(bool profiling, int perf_hint, int priority_hint) {
     cl_int error_code;
     createSharedDevice();
     Device* device = getSharedDevice();
@@ -606,11 +606,19 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
         context_properties[5] = 0X1000;
         context_properties[6] = 0;
     } else if (vendor_desc_ == "QUALCOMM" && ifSupportQcomnPriorityHints()) {
+        if (perf_hint != 0 && perf_hint != -1 && perf_hint != 1) {
+            LOG(ERROR) << "Invalid perf hint value.";
+        }
+        if (priority_hint != 0 && priority_hint != -1 && priority_hint != 1) {
+            LOG(ERROR) << "Invalid priority hint value.";
+        }
         context_properties.resize(7);
         context_properties[0] = CL_CONTEXT_PERF_HINT_QCOM;
-        context_properties[1] = CL_PERF_HINT_HIGH_QCOM;
+        context_properties[1] = (perf_hint == 0 ? CL_PERF_HINT_NORMAL_QCOM :
+                (perf_hint == 1 ? CL_PERF_HINT_HIGH_QCOM : CL_PERF_HINT_LOW_QCOM));
         context_properties[2] = CL_CONTEXT_PRIORITY_HINT_QCOM;
-        context_properties[3] = CL_PRIORITY_HINT_LOW_QCOM;
+        context_properties[3] = (priority_hint == 0 ? CL_PRIORITY_HINT_NORMAL_QCOM :
+                (priority_hint == 1 ? CL_PRIORITY_HINT_HIGH_QCOM : CL_PRIORITY_HINT_LOW_QCOM));
         context_properties[4] = CL_CONTEXT_PLATFORM;
         context_properties[5] = (cl_context_properties)device->getPlatformId();
         context_properties[6] = 0;
@@ -729,8 +737,8 @@ cl_command_queue FrameChain::getTuningQueue() {
 
 static FrameChain* shared_frame_chain;
 
-void createSharedFrameChain(bool profiling) {
-    static FrameChain frame_chain(profiling);
+void createSharedFrameChain(bool profiling, int perf_hint, int priority_hint) {
+    static FrameChain frame_chain(profiling, perf_hint, priority_hint);
 
     shared_frame_chain = &frame_chain;
 }
