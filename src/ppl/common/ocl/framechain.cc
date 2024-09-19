@@ -302,7 +302,7 @@ void arm_printf_callback(const char* buffer, size_t length, size_t final, void* 
     fwrite(buffer, 1, length, stdout);
 }
 
-bool FrameChain::ifSupportQcomnPriorityHints(){
+bool FrameChain::ifSupportQcomHints(){
     char ext_info_str[MAX_EXT_CHAR_LENGTH];
     cl_int err = clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS, MAX_EXT_CHAR_LENGTH, ext_info_str, nullptr);
     if (err != CL_SUCCESS) {
@@ -605,7 +605,7 @@ bool FrameChain::createDefaultOclFrame(bool profiling, int perf_hint, int priori
         context_properties[4] = CL_PRINTF_BUFFERSIZE_ARM;
         context_properties[5] = 0X1000;
         context_properties[6] = 0;
-    } else if (vendor_desc_ == "QUALCOMM" && ifSupportQcomnPriorityHints()) {
+    } else if (vendor_desc_ == "QUALCOMM" && ifSupportQcomHints()) {
         if (perf_hint != 0 && perf_hint != -1 && perf_hint != 1) {
             LOG(ERROR) << "Invalid perf hint value.";
         }

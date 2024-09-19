@@ -159,7 +159,7 @@ public:
     }
     cl_command_queue getTuningQueue();
 
-    bool ifSupportQcomnPriorityHints();
+    bool ifSupportQcomHints();
 
     // extention related interfaces
     void get_extention_info();
