@@ -23,6 +23,25 @@
 
 #include "ppl/common/log.h"
 
+//    cl_qcom_perf_hint extension
+typedef cl_uint cl_perf_hint;
+#define CL_CONTEXT_PERF_HINT_QCOM   0x40C2
+
+//   cl_perf_hint
+#define CL_PERF_HINT_HIGH_QCOM      0x40C3
+#define CL_PERF_HINT_NORMAL_QCOM    0x40C4
+#define CL_PERF_HINT_LOW_QCOM       0x40C5
+
+//    cl_qcom_priority_hint extension
+typedef cl_uint cl_priority_hint;
+#define CL_PRIORITY_HINT_NONE_QCOM 0
+#define CL_CONTEXT_PRIORITY_HINT_QCOM   0x40C9
+
+//    cl_priority_hint
+#define CL_PRIORITY_HINT_HIGH_QCOM      0x40CA
+#define CL_PRIORITY_HINT_NORMAL_QCOM    0x40CB
+#define CL_PRIORITY_HINT_LOW_QCOM       0x40CC
+
 namespace ppl { namespace common { namespace ocl {
 
 #define MAX_EXT_CHAR_LENGTH (1024 * 16)
@@ -281,6 +300,25 @@ void FrameChain::setCompileOptions(const char* options) {
 
 void arm_printf_callback(const char* buffer, size_t length, size_t final, void* user_data) {
     fwrite(buffer, 1, length, stdout);
+}
+
+bool FrameChain::ifSupportQcomnPriorityHints(){
+    char ext_info_str[MAX_EXT_CHAR_LENGTH];
+    cl_int err = clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS, MAX_EXT_CHAR_LENGTH, ext_info_str, nullptr);
+    if (err != CL_SUCCESS) {
+        LOG(ERROR) << " Invalid clGetDeviceInfo ! ";
+    }
+
+    bool perf_flag = false;
+    if (strstr(ext_info_str, "cl_qcom_perf_hint") != NULL) {
+        perf_flag = true;
+    }
+    bool priority_flag = false;
+    if (strstr(ext_info_str, "cl_qcom_priority_hint") != NULL) {
+        priority_flag = true;
+    }
+
+    return (perf_flag && priority_flag);
 }
 
 void FrameChain::get_extention_info() {
@@ -566,6 +604,15 @@ bool FrameChain::createDefaultOclFrame(bool profiling) {
         context_properties[3] = (cl_context_properties)arm_printf_callback;
         context_properties[4] = CL_PRINTF_BUFFERSIZE_ARM;
         context_properties[5] = 0X1000;
+        context_properties[6] = 0;
+    } else if (vendor_desc_ == "QUALCOMM" && ifSupportQcomnPriorityHints()) {
+        context_properties.resize(7);
+        context_properties[0] = CL_CONTEXT_PERF_HINT_QCOM;
+        context_properties[1] = CL_PERF_HINT_HIGH_QCOM;
+        context_properties[2] = CL_CONTEXT_PRIORITY_HINT_QCOM;
+        context_properties[3] = CL_PRIORITY_HINT_LOW_QCOM;
+        context_properties[4] = CL_CONTEXT_PLATFORM;
+        context_properties[5] = (cl_context_properties)device->getPlatformId();
         context_properties[6] = 0;
     } else {
         context_properties.resize(3);
