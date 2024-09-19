@@ -73,7 +73,7 @@ typedef struct eventNode {
 
 class FrameChain {
 public:
-    FrameChain(bool profiling);
+    FrameChain(bool profiling, int perf_hint, int priority_hint);
     FrameChain(const cl_command_queue& queue);
     ~FrameChain();
 
@@ -159,6 +159,8 @@ public:
     }
     cl_command_queue getTuningQueue();
 
+    bool ifSupportQcomHints();
+
     // extention related interfaces
     void get_extention_info();
 
@@ -200,7 +202,7 @@ public:
     // todo, other platforms
 
 protected:
-    bool createDefaultOclFrame(bool profiling);
+    bool createDefaultOclFrame(bool profiling, int perf_hint, int priority_hint);
     bool queryProfiling();
 
 private:
@@ -245,7 +247,7 @@ private:
     PlatformOnly_ext PlatformOnly_ext_info;
 };
 
-void createSharedFrameChain(bool profiling);
+void createSharedFrameChain(bool profiling, int perf_hint, int priority_hint);
 void createSharedFrameChain(const cl_command_queue& queue);
 FrameChain* getSharedFrameChain();
 
