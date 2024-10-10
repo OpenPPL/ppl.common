@@ -18,7 +18,11 @@
 #include "kernelbinaries_interface.h"
 #include "kernelbinariesmanager.h"
 
+#ifdef _WIN32
+#include <windows.h>
+#else
 #include <unistd.h>
+#endif
 
 #include "CL/cl.h"
 
@@ -29,9 +33,18 @@ namespace ppl { namespace common { namespace ocl {
 static KernelBinariesManager binaries_manager;
 
 bool detectKernelBinariesFile() {
+#ifdef _WIN32
+    DWORD fileAttributes = GetFileAttributesA(BINARIES_FILE);
+
+    if (fileAttributes != INVALID_FILE_ATTRIBUTES && !(fileAttributes &
+                                                       FILE_ATTRIBUTE_DIRECTORY)) {
+        return true;
+    }
+#else
     if (access(BINARIES_FILE, R_OK) == 0) {
         return true;
     }
+#endif
 
     return false;
 }

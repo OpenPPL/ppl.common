@@ -44,30 +44,30 @@ bool KernelBinariesManager::prepareManager(BinariesManagerStatus status) {
             return false;
         }
 
-        kernel_offset_ = sizeof(uint) * 4;
+        kernel_offset_ = sizeof(uint32_t) * 4;
         function_offset_ = kernel_offset_;
         size_t written_count;
-        written_count = fwrite(&kernel_offset_, sizeof(uint), 1, fp_);
+        written_count = fwrite(&kernel_offset_, sizeof(uint32_t), 1, fp_);
         if (written_count != 1) {
             LOG(ERROR) << "Error in writing kernel info offset, written count: " << written_count
                        << ", writing count: " << 1;
             return false;
         }
 
-        written_count = fwrite(&kernel_count_, sizeof(uint), 1, fp_);
+        written_count = fwrite(&kernel_count_, sizeof(uint32_t), 1, fp_);
         if (written_count != 1) {
             LOG(ERROR) << "Error in writing kernel count, written count: " << written_count << ", writing count: " << 1;
             return false;
         }
 
-        written_count = fwrite(&function_offset_, sizeof(uint), 1, fp_);
+        written_count = fwrite(&function_offset_, sizeof(uint32_t), 1, fp_);
         if (written_count != 1) {
             LOG(ERROR) << "Error in writing function info offset, written "
                        << "count: " << written_count << ", writing count: " << 1;
             return false;
         }
 
-        written_count = fwrite(&function_count_, sizeof(uint), 1, fp_);
+        written_count = fwrite(&function_count_, sizeof(uint32_t), 1, fp_);
         if (written_count != 1) {
             LOG(ERROR) << "Error in writing function count, written count: " << written_count
                        << ", writing count: " << 1;
@@ -84,26 +84,26 @@ bool KernelBinariesManager::prepareManager(BinariesManagerStatus status) {
         }
 
         size_t read_count;
-        read_count = fread(&kernel_offset_, sizeof(uint), 1, fp_);
+        read_count = fread(&kernel_offset_, sizeof(uint32_t), 1, fp_);
         if (read_count != 1) {
             LOG(ERROR) << "Error in reading kernel info offset, read count: " << read_count << ", reading count: " << 1;
             return false;
         }
 
-        read_count = fread(&kernel_count_, sizeof(uint), 1, fp_);
+        read_count = fread(&kernel_count_, sizeof(uint32_t), 1, fp_);
         if (read_count != 1) {
             LOG(ERROR) << "Error in reading kernel count, read count: " << read_count << ", reading count: " << 1;
             return false;
         }
 
-        read_count = fread(&function_offset_, sizeof(uint), 1, fp_);
+        read_count = fread(&function_offset_, sizeof(uint32_t), 1, fp_);
         if (read_count != 1) {
             LOG(ERROR) << "Error in reading function info offset, read count: " << read_count
                        << ", reading count: " << 1;
             return false;
         }
 
-        read_count = fread(&function_count_, sizeof(uint), 1, fp_);
+        read_count = fread(&function_count_, sizeof(uint32_t), 1, fp_);
         if (read_count != 1) {
             LOG(ERROR) << "Error in reading function count, read count: " << read_count << ", reading count: " << 1;
             return false;
@@ -320,25 +320,25 @@ bool KernelBinariesManager::storeMapstoFile() {
         return false;
     }
 
-    written_count = fwrite(&kernel_offset_, sizeof(uint), 1, fp_);
+    written_count = fwrite(&kernel_offset_, sizeof(uint32_t), 1, fp_);
     if (written_count != 1) {
         LOG(ERROR) << "Error in writing kernel to function map offset, "
                    << "written count: " << written_count << ", writing count: " << 1;
         return false;
     }
-    written_count = fwrite(&kernel_count_, sizeof(uint), 1, fp_);
+    written_count = fwrite(&kernel_count_, sizeof(uint32_t), 1, fp_);
     if (written_count != 1) {
         LOG(ERROR) << "Error in writing kernel count, written count: " << written_count << ", writing count: " << 1;
         return false;
     }
 
-    written_count = fwrite(&function_offset_, sizeof(uint), 1, fp_);
+    written_count = fwrite(&function_offset_, sizeof(uint32_t), 1, fp_);
     if (written_count != 1) {
         LOG(ERROR) << "Error in writing function to binaries map offset, "
                    << "written count: " << written_count << ", writing count: " << 1;
         return false;
     }
-    written_count = fwrite(&function_count_, sizeof(uint), 1, fp_);
+    written_count = fwrite(&function_count_, sizeof(uint32_t), 1, fp_);
     if (written_count != 1) {
         LOG(ERROR) << "Error in writing function count, written count: " << written_count << ", writing count: " << 1;
         return false;
@@ -370,7 +370,7 @@ bool KernelBinariesManager::loadBinariesInfo() {
 
     size_t read_count;
     std::lock_guard<std::mutex> lock_guard(locker_);
-    for (uint i = 0; i < kernel_count_; i++) {
+    for (uint32_t i = 0; i < kernel_count_; i++) {
         read_count = fread(&kernel_storage, item_size0, 1, fp_);
         if (read_count != 1) {
             LOG(ERROR) << "Error in reading kernel to function map item " << i << ", read count: " << read_count
@@ -389,14 +389,14 @@ bool KernelBinariesManager::loadBinariesInfo() {
         kernel2function_[kernel_name] = make_pair(project_name, function_name);
     }
 
-    uint file_offset = ftell(fp_);
+    uint32_t file_offset = ftell(fp_);
     if (file_offset != function_offset_) {
         LOG(ERROR) << " Inconsistency in " << BINARIES_FILE << ", the current location: " << file_offset
                    << ", desired location: " << function_offset_;
         return false;
     }
 
-    for (uint i = 0; i < function_count_; i++) {
+    for (uint32_t i = 0; i < function_count_; i++) {
         read_count = fread(&function_storage, item_size1, 1, fp_);
         if (read_count != 1) {
             LOG(ERROR) << "Error in reading function to binaries info map item " << i << ", read count: " << read_count
