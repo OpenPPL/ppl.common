@@ -22,6 +22,8 @@
 #include <mutex>
 #include <map>
 #include <utility>
+#include <stddef.h>
+#include <stdint.h>
 
 #include "framechain.h"
 #include "types_interface.h"
@@ -34,8 +36,8 @@ namespace ppl { namespace common { namespace ocl {
 #define BINARIES_FILE "kernel_binaries.db"
 
 struct KernelBinaryInfo {
-    uint address_offset;
-    uint binaries_size;
+    uint32_t address_offset;
+    uint32_t binaries_size;
 };
 
 struct Kernel2FunctionItem {
@@ -47,8 +49,8 @@ struct Kernel2FunctionItem {
 struct Function2BinariesItem {
     char project_name[PROJECT_LENGTH];
     char function_name[FUNCTION_LENGTH];
-    uint address_offset;
-    uint binaries_size;
+    uint32_t address_offset;
+    uint32_t binaries_size;
 };
 
 class KernelBinariesManager {
@@ -72,10 +74,10 @@ public:
 
 private:
     FILE* fp_;
-    uint kernel_offset_;
-    uint kernel_count_;
-    uint function_offset_;
-    uint function_count_;
+    uint32_t kernel_offset_;
+    uint32_t kernel_count_;
+    uint32_t function_offset_;
+    uint32_t function_count_;
     bool is_working_;
     std::mutex locker_;
     // (kernel name, (project name, function name))
