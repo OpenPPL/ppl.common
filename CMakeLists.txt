@@ -81,6 +81,8 @@ if(NOT MSVC)
     if(NOT ${CMAKE_SYSTEM_NAME} STREQUAL "Android" AND NOT ANDROID AND NOT ${CMAKE_SYSTEM_NAME} STREQUAL "QNX")
         list(APPEND PPLCOMMON_LINK_LIBRARIES pthread)
     endif()
+else()
+    list(APPEND PPLCOMMON_LINK_LIBRARIES Synchronization.lib)
 endif()
 
 add_library(pplcommon_static STATIC ${PPLCOMMON_SRC})
