@@ -323,6 +323,7 @@ bool FrameChain::ifSupportQcomHints() {
 
 void FrameChain::get_extention_info() {
     char ext_info_str[MAX_EXT_CHAR_LENGTH];
+
     // add by jiangqingfeng 2024.10.16
     Device* device = getSharedDevice();
     int opencl_version = device->getOpenCLVersion();
@@ -330,6 +331,7 @@ void FrameChain::get_extention_info() {
         LOG(WARNING) << " The OpenCL version is too old, Please update. opencl_version:" << opencl_version;
     }
     // add by jiangqingfeng 2024.10.16
+    
     compile_options_ext_defaults_ = " ";
 
     cl_int err = clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS, MAX_EXT_CHAR_LENGTH, ext_info_str, nullptr);
