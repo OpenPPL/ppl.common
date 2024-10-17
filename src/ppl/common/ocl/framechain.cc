@@ -25,22 +25,22 @@
 
 //    cl_qcom_perf_hint extension
 typedef cl_uint cl_perf_hint;
-#define CL_CONTEXT_PERF_HINT_QCOM   0x40C2
+#define CL_CONTEXT_PERF_HINT_QCOM 0x40C2
 
 //   cl_perf_hint
-#define CL_PERF_HINT_HIGH_QCOM      0x40C3
-#define CL_PERF_HINT_NORMAL_QCOM    0x40C4
-#define CL_PERF_HINT_LOW_QCOM       0x40C5
+#define CL_PERF_HINT_HIGH_QCOM 0x40C3
+#define CL_PERF_HINT_NORMAL_QCOM 0x40C4
+#define CL_PERF_HINT_LOW_QCOM 0x40C5
 
 //    cl_qcom_priority_hint extension
 typedef cl_uint cl_priority_hint;
 #define CL_PRIORITY_HINT_NONE_QCOM 0
-#define CL_CONTEXT_PRIORITY_HINT_QCOM   0x40C9
+#define CL_CONTEXT_PRIORITY_HINT_QCOM 0x40C9
 
 //    cl_priority_hint
-#define CL_PRIORITY_HINT_HIGH_QCOM      0x40CA
-#define CL_PRIORITY_HINT_NORMAL_QCOM    0x40CB
-#define CL_PRIORITY_HINT_LOW_QCOM       0x40CC
+#define CL_PRIORITY_HINT_HIGH_QCOM 0x40CA
+#define CL_PRIORITY_HINT_NORMAL_QCOM 0x40CB
+#define CL_PRIORITY_HINT_LOW_QCOM 0x40CC
 
 namespace ppl { namespace common { namespace ocl {
 
@@ -295,14 +295,14 @@ void FrameChain::setFunctionName(const char* function_name) {
 
 void FrameChain::setCompileOptions(const char* options) {
     compile_options_ = options;
-    compile_options_ += compile_options_ext_defaults_ ;
+    compile_options_ += compile_options_ext_defaults_;
 }
 
 void arm_printf_callback(const char* buffer, size_t length, size_t final, void* user_data) {
     fwrite(buffer, 1, length, stdout);
 }
 
-bool FrameChain::ifSupportQcomHints(){
+bool FrameChain::ifSupportQcomHints() {
     char ext_info_str[MAX_EXT_CHAR_LENGTH];
     cl_int err = clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS, MAX_EXT_CHAR_LENGTH, ext_info_str, nullptr);
     if (err != CL_SUCCESS) {
@@ -323,14 +323,20 @@ bool FrameChain::ifSupportQcomHints(){
 
 void FrameChain::get_extention_info() {
     char ext_info_str[MAX_EXT_CHAR_LENGTH];
-
+    // add by jiangqingfeng 2024.10.16
+    Device* device = getSharedDevice();
+    int opencl_version = device->getOpenCLVersion();
+    if (opencl_version < 200) {
+        LOG(WARNING) << " The OpenCL version is too old, Please update. opencl_version:" << opencl_version;
+    }
+    // add by jiangqingfeng 2024.10.16
     compile_options_ext_defaults_ = " ";
 
     cl_int err = clGetDeviceInfo(device_id_, CL_DEVICE_EXTENSIONS, MAX_EXT_CHAR_LENGTH, ext_info_str, nullptr);
     if (err != CL_SUCCESS) {
         LOG(ERROR) << " Invalid clGetDeviceInfo ! ";
     }
-  
+
     if (strstr(ext_info_str, "cl_khr_subgroups") != NULL) {
         is_support_subgroup = true;
     }
@@ -344,62 +350,51 @@ void FrameChain::get_extention_info() {
     }
 
     // speed up the vendor conditions
-    if (vendor_desc_ == "QUALCOMM")
-    {
+    if (vendor_desc_ == "QUALCOMM") {
         compile_options_ext_defaults_ += " -DVENDOR_QUALCOMM";
         platform_type0 = PlatformType0_QCOM;
-    }
-    else if (vendor_desc_ == "ARM")
-    {
+    } else if (vendor_desc_ == "ARM") {
         platform_type0 = PlatformType0_ARM;
         compile_options_ext_defaults_ += " -DVENDOR_ARM";
     }
-        
-    else  if (strstr(vendor_desc_.c_str(), "Intel") != NULL)
-    {
+
+    else if (strstr(vendor_desc_.c_str(), "Intel") != NULL) {
         platform_type0 = PlatformType0_INTEL;
         compile_options_ext_defaults_ += " -DVENDOR_INTEL";
 
     }
-        
-    else 
-    {
+
+    else {
         platform_type0 = PlatformType0_invalid;
         compile_options_ext_defaults_ += " -DVENDOR_UNKNOW";
     }
-        
 
-    //no need for cl_khr_integer_dot_product
-    //if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) 
+    // no need for cl_khr_integer_dot_product
+    // if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL)
     {
         // qcom
         if (platform_type0 == PlatformType0_QCOM) {
             if (strstr(ext_info_str, "cl_qcom_dot_product8") != NULL) {
                 is_support_int8_product = true;
             }
-        }
-        else if  (platform_type0 == PlatformType0_ARM){
+        } else if (platform_type0 == PlatformType0_ARM) {
             if (strstr(ext_info_str, "cl_arm_integer_dot_product_accumulate_int8") != NULL) {
                 is_support_int8_product = true;
             }
-        }
-        else{
-            //todo , not exactly 
+        } else {
+            // todo , not exactly
             if (strstr(ext_info_str, "cl_khr_integer_dot_product") != NULL) {
                 is_support_int8_product = true;
             }
         }
         // others todo
-
     }
 
-    //shuffle and rotate
+    // shuffle and rotate
 
     if (platform_type0 == PlatformType0_QCOM) {
         if (strstr(ext_info_str, "cl_qcom_reqd_sub_group_size") != NULL) {
             getQcomExtInfo()->is_support_reqd_sub_group_size = true;
-
-    
         }
 
         if (strstr(ext_info_str, "cl_qcom_subgroup_shuffle") != NULL) {
@@ -410,10 +405,8 @@ void FrameChain::get_extention_info() {
 
             compile_options_ext_defaults_ += " -DSUBGROUP_SHUFFLE_ENABLED ";
             compile_options_ext_defaults_ += " -DSUBGROUP_ROTATE_ENABLED ";
-
         }
-    }
-    else if (platform_type0 == PlatformType0_INTEL) {
+    } else if (platform_type0 == PlatformType0_INTEL) {
         if (strstr(ext_info_str, "cl_intel_subgroups") != NULL) {
             is_support_subgroup_shuffle = true;
             is_support_subgroup_rotate = true;
@@ -424,8 +417,7 @@ void FrameChain::get_extention_info() {
             compile_options_ext_defaults_ += " -DSUBGROUP_ROTATE_ENABLED ";
             compile_options_ext_defaults_ += " -DINTEL_SUBGROUP_ENHANCED ";
 
-        }
-        else{
+        } else {
             if (strstr(ext_info_str, "cl_khr_subgroup_shuffle") != NULL) {
                 is_support_subgroup_shuffle = true;
                 compile_options_ext_defaults_ += " -DSUBGROUP_SHUFFLE_ENABLED ";
@@ -437,10 +429,8 @@ void FrameChain::get_extention_info() {
             }
         }
 
-    }
-    else {
-
-        //arm like
+    } else {
+        // arm like
         if (strstr(ext_info_str, "cl_khr_subgroup_shuffle") != NULL) {
             is_support_subgroup_shuffle = true;
             compile_options_ext_defaults_ += " -DSUBGROUP_SHUFFLE_ENABLED ";
@@ -452,9 +442,7 @@ void FrameChain::get_extention_info() {
         }
     }
 
-
-    if(platform_type0 == PlatformType0_QCOM || platform_type0 == PlatformType0_ARM) {
-
+    if (platform_type0 == PlatformType0_QCOM || platform_type0 == PlatformType0_ARM) {
         // get max sub group size
         const char* kernelSource = "__kernel void exampleKernel() {}; ";
         size_t kernel_length = strlen(kernelSource);
@@ -481,24 +469,17 @@ void FrameChain::get_extention_info() {
             return;
         }
 
-        err = clGetKernelSubGroupInfoKHR(kernel,
-                                         device_id_,
-                                         CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE,
-                                         0,
-                                         (const void*)NULL,
-                                         sizeof(max_subgroup_size_),
-                                         &max_subgroup_size_,
-                                         NULL);
+        err = clGetKernelSubGroupInfoKHR(kernel, device_id_, CL_KERNEL_MAX_SUB_GROUP_SIZE_FOR_NDRANGE, 0,
+                                         (const void*)NULL, sizeof(max_subgroup_size_), &max_subgroup_size_, NULL);
 
         clReleaseKernel(kernel);
         clReleaseProgram(program);
-        
+
         if (err != CL_SUCCESS) {
             LOG(ERROR) << " Invalid clGetKernelSubGroupInfo when get subgroup size ! ";
             return;
         }
-    }
-    else //if(platform_type0 == PlatformType0_INTEL) //todo
+    } else // if(platform_type0 == PlatformType0_INTEL) //todo
     {
         auto context = clCreateContext(NULL, 1, &device_id_, NULL, NULL, &err);
         auto command_queue = clCreateCommandQueue(context, device_id_, 0, &err);
@@ -536,9 +517,9 @@ void FrameChain::get_extention_info() {
             return;
         }
 
-        size_t global_work_size = 1; 
+        size_t global_work_size = 1;
         err = clEnqueueNDRangeKernel(command_queue, kernel, 1, NULL, &global_work_size, NULL, 0, NULL, NULL);
- 
+
         if (err != CL_SUCCESS) {
             LOG(ERROR) << " clEnqueueNDRangeKernel failed when get subgroup size ! ";
             clReleaseProgram(program);
@@ -560,8 +541,8 @@ void FrameChain::get_extention_info() {
             clReleaseContext(context);
             return;
         }
-        
-        //printf("Max Sub Group Size: %u\n", (unsigned int)max_sub_group_size);
+
+        // printf("Max Sub Group Size: %u\n", (unsigned int)max_sub_group_size);
         max_subgroup_size_ = max_sub_group_size;
 
         clReleaseKernel(kernel);
@@ -569,17 +550,16 @@ void FrameChain::get_extention_info() {
         clReleaseMemObject(buffer);
         clReleaseCommandQueue(command_queue);
         clReleaseContext(context);
-        
     }
 
-    // info if needed to print 
-    
-    //LOG(INFO) << " ext info: pl "<<(int)platform_type0<<" maxsbg: "<<max_subgroup_size_;
-    //LOG(INFO) << " ext info: fp16 "<<is_support_fp16<<" sbg: "<<is_support_subgroup<<" 3d write:"
+    // info if needed to print
+
+    // LOG(INFO) << " ext info: pl "<<(int)platform_type0<<" maxsbg: "<<max_subgroup_size_;
+    // LOG(INFO) << " ext info: fp16 "<<is_support_fp16<<" sbg: "<<is_support_subgroup<<" 3d write:"
     //<<is_support_3d_image_write<<" int8 dot"<<is_support_int8_product<<" shuffle: "<<is_support_subgroup_shuffle
     //<<" rotate "<<is_support_subgroup_rotate;
 
-    return ;
+    return;
 }
 
 bool FrameChain::createDefaultOclFrame(bool profiling, int perf_hint, int priority_hint) {
@@ -614,11 +594,12 @@ bool FrameChain::createDefaultOclFrame(bool profiling, int perf_hint, int priori
         }
         context_properties.resize(7);
         context_properties[0] = CL_CONTEXT_PERF_HINT_QCOM;
-        context_properties[1] = (perf_hint == 0 ? CL_PERF_HINT_NORMAL_QCOM :
-                (perf_hint == 1 ? CL_PERF_HINT_HIGH_QCOM : CL_PERF_HINT_LOW_QCOM));
+        context_properties[1] = (perf_hint == 0 ? CL_PERF_HINT_NORMAL_QCOM
+                                                : (perf_hint == 1 ? CL_PERF_HINT_HIGH_QCOM : CL_PERF_HINT_LOW_QCOM));
         context_properties[2] = CL_CONTEXT_PRIORITY_HINT_QCOM;
-        context_properties[3] = (priority_hint == 0 ? CL_PRIORITY_HINT_NORMAL_QCOM :
-                (priority_hint == 1 ? CL_PRIORITY_HINT_HIGH_QCOM : CL_PRIORITY_HINT_LOW_QCOM));
+        context_properties[3] =
+            (priority_hint == 0 ? CL_PRIORITY_HINT_NORMAL_QCOM
+                                : (priority_hint == 1 ? CL_PRIORITY_HINT_HIGH_QCOM : CL_PRIORITY_HINT_LOW_QCOM));
         context_properties[4] = CL_CONTEXT_PLATFORM;
         context_properties[5] = (cl_context_properties)device->getPlatformId();
         context_properties[6] = 0;
