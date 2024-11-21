@@ -162,7 +162,7 @@ float TestIsaFMA()
 
 // About __AVX512F__ see: https://docs.microsoft.com/en-us/cpp/build/reference/arch-x64?view=vs-2019
 // AVX512 was landed in VS2017 and GCC-4.9.2
-#if (GCC_VERSION >= 40902 || _MSC_VER >= 1910)
+#if defined(__AVX512F__) && (GCC_VERSION >= 40902 || _MSC_VER >= 1910)
 static float
 #ifdef __GNUC__
 __attribute__((__target__("avx512f"))) __attribute__((optimize(0)))
@@ -275,7 +275,7 @@ void GetCPUInfoByCPUID(struct CpuInfo* info) {
 }
 
 void GetCPUInfoByRun(CpuInfo* info) {
-#if (GCC_VERSION >= 40902 || _MSC_VER >= 1910)
+#if defined(__AVX512F__) && (GCC_VERSION >= 40902 || _MSC_VER >= 1910)
     if (0 == try_run(&TestIsaAVX512)) {
         info->isa |= ISA_X86_AVX512;
     }
