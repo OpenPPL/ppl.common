@@ -115,13 +115,13 @@ uintptr_t CompactAddrManager::Alloc(uint64_t needed) {
 
     // find size of the chosen block and remove it from addr2size_
     auto a2s_iter = addr2size_.find(res_addr);
+    auto block_rest_size = a2s_iter->second;
+    addr2size_.erase(a2s_iter);
 
     // insert the rest of block into free list
-    if (a2s_iter->second > needed) {
-        AddFreeBlock(res_addr + needed, a2s_iter->second - needed, &size2addr_, &addr2size_);
+    if (block_rest_size > needed) {
+        AddFreeBlock(res_addr + needed, block_rest_size - needed, &size2addr_, &addr2size_);
     }
-
-    addr2size_.erase(a2s_iter);
 
     return res_addr;
 }
